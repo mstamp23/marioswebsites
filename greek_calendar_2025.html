@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ημερολόγιο 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #0f0f1e;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 1px solid #2a2a4a;
+        }
+        
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        
+        .today-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+        
+        .today-date {
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .today-nameday {
+            color: #4ecdc4;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #b0b0d0;
+        }
+        
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .holiday { background: #ff6b6b; }
+        .today-color { 
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .month {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #2a2a4a;
+        }
+        
+        .month-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+        
+        .day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 8px 4px;
+            font-size: 0.85em;
+            color: #8888aa;
+        }
+        
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        
+        .day:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .day.empty {
+            background: transparent;
+        }
+        
+        .day.normal {
+            background: #252540;
+            color: #b0b0d0;
+        }
+        
+        .day.holiday-day {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        }
+        
+        .day.today {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%) !important;
+            color: #1a1a2e !important;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            border: 2px solid #ffd700;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .day.sunday {
+            color: #ff8a8a;
+            font-weight: bold;
+        }
+        
+        .events-list {
+            margin-top: 10px;
+            padding: 10px;
+            background: #252540;
+            border-radius: 8px;
+            font-size: 0.85em;
+            border: 1px solid #2a2a4a;
+        }
+        
+        .event {
+            padding: 6px;
+            margin: 4px 0;
+            border-radius: 4px;
+            border-left: 4px solid;
+            color: #d0d0e0;
+        }
+        
+        .event.holiday-event {
+            background: rgba(255, 107, 107, 0.15);
+            border-color: #ff6b6b;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8em; }
+            .months-grid { grid-template-columns: 1fr; }
+            .legend { flex-direction: column; align-items: center; }
+            .today-date { font-size: 1.2em; }
+            .today-nameday { font-size: 1em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Ημερολόγιο 2025</h1>
+        
+        <div class="today-banner" id="todayBanner"></div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box holiday"></div>
+                <span>Αργίες</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box today-color"></div>
+                <span>Σημερινή Ημέρα</span>
+            </div>
+        </div>
+        
+        <div class="months-grid" id="calendar"></div>
+    </div>
+
+    <script>
+        const monthNames = [
+            'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+            'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+        ];
+        
+        const dayNames = ['Δευ', 'Τρί', 'Τετ', 'Πέμ', 'Παρ', 'Σάβ', 'Κυρ'];
+        
+        const holidays = {
+            '1-1': 'Πρωτοχρονιά',
+            '1-6': 'Θεοφάνεια',
+            '3-25': '25η Μαρτίου',
+            '4-20': 'Πάσχα',
+            '4-21': 'Δευτέρα του Πάσχα',
+            '5-1': 'Πρωτομαγιά',
+            '6-9': 'Αγίου Πνεύματος',
+            '8-15': 'Κοίμηση Θεοτόκου',
+            '10-28': '28η Οκτωβρίου',
+            '12-25': 'Χριστούγεννα',
+            '12-26': 'Σύναξη Θεοτόκου'
+        };
+        
+        const namedays = {
+            '1-1': 'Βασίλης, Βασιλική',
+            '1-7': 'Ιωάννης, Ιωάννα',
+            '1-17': 'Αντώνης, Αντωνία',
+            '1-30': 'Τρεις Ιεράρχες',
+            '2-10': 'Χαράλαμπος',
+            '3-9': 'Άγιοι 40 Μάρτυρες',
+            '3-25': 'Ευαγγελισμός - Ευαγγελία',
+            '4-23': 'Γεώργιος',
+            '5-21': 'Κωνσταντίνος, Ελένη',
+            '6-29': 'Πέτρος, Παύλος',
+            '7-17': 'Μαρίνα',
+            '7-20': 'Ηλίας',
+            '7-26': 'Παρασκευή',
+            '7-27': 'Παντελεήμων',
+            '8-15': 'Παναγιώτης, Παναγιώτα, Μαρία',
+            '9-8': 'Γέννηση Θεοτόκου - Μαρία',
+            '10-26': 'Δημήτριος',
+            '11-8': 'Μιχαήλ, Γαβριήλ',
+            '11-25': 'Αικατερίνη',
+            '11-30': 'Ανδρέας',
+            '12-4': 'Βάρβαρα',
+            '12-6': 'Νικόλαος',
+            '12-9': 'Άννα',
+            '12-12': 'Σπυρίδων',
+            '12-25': 'Χριστός, Χριστίνα'
+        };
+        
+        const today = new Date();
+        const todayMonth = today.getMonth() + 1;
+        const todayDay = today.getDate();
+        const todayYear = today.getFullYear();
+        const todayKey = `${todayMonth}-${todayDay}`;
+        
+        function displayTodayBanner() {
+            const banner = document.getElementById('todayBanner');
+            const greekDays = ['Κυριακή', 'Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο'];
+            const dayName = greekDays[today.getDay()];
+            
+            let html = `<div class="today-date">Σήμερα: ${dayName}, ${todayDay} ${monthNames[todayMonth - 1]} ${todayYear}</div>`;
+            
+            if (holidays[todayKey]) {
+                html += `<div class="today-nameday">🎉 ${holidays[todayKey]}</div>`;
+            } else if (namedays[todayKey]) {
+                html += `<div class="today-nameday">🎊 Γιορτάζουν: ${namedays[todayKey]}</div>`;
+            }
+            
+            banner.innerHTML = html;
+        }
+        
+        function createCalendar() {
+            const calendar = document.getElementById('calendar');
+            
+            for (let month = 0; month < 12; month++) {
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'month';
+                
+                const header = document.createElement('div');
+                header.className = 'month-header';
+                header.textContent = monthNames[month];
+                monthDiv.appendChild(header);
+                
+                const daysGrid = document.createElement('div');
+                daysGrid.className = 'days-grid';
+                
+                dayNames.forEach(day => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.textContent = day;
+                    daysGrid.appendChild(dayHeader);
+                });
+                
+                const firstDay = new Date(2025, month, 1).getDay();
+                const daysInMonth = new Date(2025, month + 1, 0).getDate();
+                const startDay = firstDay === 0 ? 6 : firstDay - 1;
+                
+                for (let i = 0; i < startDay; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'day empty';
+                    daysGrid.appendChild(emptyDay);
+                }
+                
+                const eventsList = document.createElement('div');
+                eventsList.className = 'events-list';
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'day';
+                    dayDiv.textContent = day;
+                    
+                    const dateKey = `${month + 1}-${day}`;
+                    const date = new Date(2025, month, day);
+                    const dayOfWeek = date.getDay();
+                    
+                    if (todayYear === 2025 && month + 1 === todayMonth && day === todayDay) {
+                        dayDiv.classList.add('today');
+                    } else if (holidays[dateKey]) {
+                        dayDiv.classList.add('holiday-day');
+                        const event = document.createElement('div');
+                        event.className = 'event holiday-event';
+                        event.textContent = `${day} - ${holidays[dateKey]}`;
+                        eventsList.appendChild(event);
+                    } else {
+                        dayDiv.classList.add('normal');
+                        if (dayOfWeek === 0) {
+                            dayDiv.classList.add('sunday');
+                        }
+                    }
+                    
+                    daysGrid.appendChild(dayDiv);
+                }
+                
+                monthDiv.appendChild(daysGrid);
+                if (eventsList.children.length > 0) {
+                    monthDiv.appendChild(eventsList);
+                }
+                calendar.appendChild(monthDiv);
+            }
+        }
+        
+        displayTodayBanner();
+        createCalendar();
+    </script>
+</body>
+</html>
