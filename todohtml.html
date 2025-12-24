@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Reminder App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .firebase-status {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .firebase-status.connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .firebase-status.error {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .setup-notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .setup-notice h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .setup-notice p {
+            color: #856404;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+
+        .add-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .image-upload {
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .image-upload:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 10px auto;
+            display: none;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .todos-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .todo-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .todo-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .todo-item.overdue {
+            border-color: #f5576c;
+            background: #fff5f5;
+        }
+
+        .todo-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .todo-details {
+            flex-grow: 1;
+        }
+
+        .todo-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .todo-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .todo-description {
+            color: #555;
+            font-size: 0.95em;
+            margin: 10px 0;
+            line-height: 1.5;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .reminder-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-top: 8px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 350px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .notification h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Todo Reminder</h1>
+            <p>Never forget important tasks</p>
+            <div class="firebase-status" id="firebaseStatus">Connecting to Firebase...</div>
+        </div>
+
+        <div class="content">
+            <div class="setup-notice" id="setupNotice">
+                <h3>⚠️ Firebase Configuration Required</h3>
+                <p>Please add your Firebase configuration in the code (see instructions below)</p>
+                <p>The app will work once you set up Firebase!</p>
+            </div>
+
+            <div class="add-section">
+                <h2 style="margin-bottom: 20px;">Add New Todo</h2>
+                <form id="todoForm">
+                    <div class="form-group">
+                        <label>Task Title</label>
+                        <input type="text" id="taskTitle" placeholder="What do you need to do?" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="taskDescription" placeholder="Add details about your task..." rows="4"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Due Date & Time</label>
+                        <input type="datetime-local" id="dueDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reminder Frequency</label>
+                        <select id="reminderFreq">
+                            <option value="once">Once (at due date)</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Attach Image (Optional)</label>
+                        <div class="image-upload" onclick="document.getElementById('imageInput').click()">
+                            <p>📷 Click to upload image</p>
+                            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="image-preview" id="imagePreview">
+                            <img id="previewImg" src="" alt="Preview">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">Add Todo</button>
+                </form>
+            </div>
+
+            <h2 style="margin-bottom: 20px;">Your Todos</h2>
+            <div id="todosList" class="todos-list">
+                <div class="loading">Loading todos...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <h3>🔔 Reminder</h3>
+        <div id="notificationContent"></div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script>
+        const USER_EMAIL = 'mstamp23@gmail.com';
+        let imageFile = null;
+        let db, storage;
+
+        // ====================================
+        // FIREBASE CONFIGURATION
+        // Replace this with your Firebase config
+        // ====================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyB8bZbV-bp4eVkYfOc0zklAoaHppLLMOfA",
+          authDomain: "todo-reminder-ap.firebaseapp.com",
+          projectId: "todo-reminder-ap",
+          storageBucket: "todo-reminder-ap.firebasestorage.app",
+          messagingSenderId: "581240651940",
+          appId: "1:581240651940:web:22c432e975d6d04e57e631"
+        };
+
+        // Check if Firebase is configured
+        const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
+
+        // Initialize Firebase
+        if (isFirebaseConfigured) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                storage = firebase.storage();
+                
+                document.getElementById('firebaseStatus').textContent = '✅ Connected to Firebase';
+                document.getElementById('firebaseStatus').classList.add('connected');
+                document.getElementById('setupNotice').style.display = 'none';
+                
+                loadTodos();
+                setInterval(checkReminders, 60000);
+            } catch (error) {
+                document.getElementById('firebaseStatus').textContent = '❌ Firebase Error: ' + error.message;
+                document.getElementById('firebaseStatus').classList.add('error');
+            }
+        } else {
+            document.getElementById('firebaseStatus').textContent = '⚠️ Firebase Not Configured';
+            document.getElementById('firebaseStatus').classList.add('error');
+            document.getElementById('todosList').innerHTML = '<div class="empty-state"><p>Please configure Firebase to use the app</p></div>';
+        }
+
+        // Image upload handling
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                imageFile = file;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('previewImg').src = event.target.result;
+                    document.getElementById('imagePreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form submission
+        document.getElementById('todoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!isFirebaseConfigured) {
+                showNotification('Please configure Firebase first!');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding...';
+
+            try {
+                let imageUrl = null;
+
+                // Upload image if exists
+                if (imageFile) {
+                    const imageName = `todo-images/${Date.now()}_${imageFile.name}`;
+                    const imageRef = storage.ref().child(imageName);
+                    await imageRef.put(imageFile);
+                    imageUrl = await imageRef.getDownloadURL();
+                }
+
+                // Create todo
+                const todo = {
+                    email: USER_EMAIL,
+                    title: document.getElementById('taskTitle').value,
+                    description: document.getElementById('taskDescription').value,
+                    dueDate: document.getElementById('dueDate').value,
+                    frequency: document.getElementById('reminderFreq').value,
+                    imageUrl: imageUrl,
+                    created: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastReminder: null
+                };
+
+                await db.collection('todos').add(todo);
+
+                // Reset form
+                this.reset();
+                imageFile = null;
+                document.getElementById('imagePreview').style.display = 'none';
+
+                showNotification('Todo added successfully!');
+                loadTodos();
+
+            } catch (error) {
+                console.error('Error adding todo:', error);
+                showNotification('Error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Todo';
+            }
+        });
+
+        // Load todos from Firebase
+        async function loadTodos() {
+            if (!isFirebaseConfigured) return;
+
+            try {
+                const snapshot = await db.collection('todos').orderBy('created', 'desc').get();
+                const todos = [];
+                
+                snapshot.forEach(doc => {
+                    todos.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderTodos(todos);
+            } catch (error) {
+                console.error('Error loading todos:', error);
+                document.getElementById('todosList').innerHTML = '<div class="empty-state"><p>Error loading todos</p></div>';
+            }
+        }
+
+        // Render todos
+        function renderTodos(todos) {
+            const container = document.getElementById('todosList');
+            
+            if (todos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                        </svg>
+                        <h3>No todos yet</h3>
+                        <p>Add your first task above</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const now = new Date();
+            container.innerHTML = todos.map(todo => {
+                const dueDate = new Date(todo.dueDate);
+                const isOverdue = dueDate < now;
+                
+                return `
+                    <div class="todo-item ${isOverdue ? 'overdue' : ''}">
+                        ${todo.imageUrl ? `<img src="${todo.imageUrl}" class="todo-image" alt="Task">` : ''}
+                        <div class="todo-details">
+                            <div class="todo-title">${todo.title}</div>
+                            ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
+                            <div class="todo-info">📅 Due: ${formatDate(dueDate)}</div>
+                            <span class="reminder-badge">${formatFrequency(todo.frequency)}</span>
+                            ${isOverdue ? '<span class="reminder-badge" style="background: #f5576c;">Overdue</span>' : ''}
+                        </div>
+                        <button class="btn btn-delete" onclick="deleteTodo('${todo.id}', '${todo.imageUrl || ''}')">Delete</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Delete todo
+        async function deleteTodo(id, imageUrl) {
+            if (!confirm('Delete this todo?')) return;
+
+            try {
+                // Delete image if exists
+                if (imageUrl) {
+                    const imageRef = storage.refFromURL(imageUrl);
+                    await imageRef.delete();
+                }
+
+                // Delete todo
+                await db.collection('todos').doc(id).delete();
+                
+                showNotification('Todo deleted');
+                loadTodos();
+            } catch (error) {
+                console.error('Error deleting todo:', error);
+                showNotification('Error: ' + error.message);
+            }
+        }
+
+        // Check reminders
+        async function checkReminders() {
+            if (!isFirebaseConfigured) return;
+
+            try {
+                const snapshot = await db.collection('todos').get();
+                const now = new Date();
+                
+                snapshot.forEach(async (doc) => {
+                    const todo = { id: doc.id, ...doc.data() };
+                    const dueDate = new Date(todo.dueDate);
+                    
+                    if (shouldSendReminder(todo, now, dueDate)) {
+                        await sendEmailReminder(todo);
+                        
+                        // Update last reminder time
+                        await db.collection('todos').doc(doc.id).update({
+                            lastReminder: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+
+                    // Delete if overdue by more than 7 days and frequency is "once"
+                    if (todo.frequency === 'once' && now - dueDate > 7 * 24 * 60 * 60 * 1000) {
+                        await deleteTodo(doc.id, todo.imageUrl);
+                    }
+                });
+            } catch (error) {
+                console.error('Error checking reminders:', error);
+            }
+        }
+
+        // Check if reminder should be sent
+        function shouldSendReminder(todo, now, dueDate) {
+            const timeDiff = Math.abs(now - dueDate);
+            
+            if (!todo.lastReminder) {
+                return now >= dueDate;
+            }
+
+            const lastReminder = todo.lastReminder.toDate();
+            const daysSinceLastReminder = Math.floor((now - lastReminder) / (1000 * 60 * 60 * 24));
+
+            switch(todo.frequency) {
+                case 'once':
+                    return false;
+                case 'daily':
+                    return daysSinceLastReminder >= 1;
+                case 'weekly':
+                    return daysSinceLastReminder >= 7;
+                case 'monthly':
+                    return daysSinceLastReminder >= 30;
+                case 'yearly':
+                    return daysSinceLastReminder >= 365;
+                default:
+                    return false;
+            }
+        }
+
+        // Send email reminder
+        async function sendEmailReminder(todo) {
+            const message = `
+                <strong>${todo.title}</strong><br>
+                ${todo.description ? `${todo.description}<br>` : ''}
+                Due: ${formatDate(new Date(todo.dueDate))}<br>
+                <em>Email sent to: ${USER_EMAIL}</em>
+            `;
+            
+            showNotification(message);
+            
+            // Web3Forms integration
+            await sendWeb3FormsEmail(todo);
+        }
+
+        // Send actual email via Web3Forms
+        async function sendWeb3FormsEmail(todo) {
+            const accessKey = '82f04509-9c55-4be4-8e9c-0fe5331ff995';
+            
+            const formData = new FormData();
+            formData.append('access_key', accessKey);
+            formData.append('subject', `Reminder: ${todo.title}`);
+            formData.append('from_name', 'Todo Reminder App');
+            formData.append('email', USER_EMAIL);
+            
+            let emailBody = `Task Reminder\n\n`;
+            emailBody += `Title: ${todo.title}\n`;
+            if (todo.description) {
+                emailBody += `Description: ${todo.description}\n`;
+            }
+            emailBody += `Due Date: ${formatDate(new Date(todo.dueDate))}\n`;
+            emailBody += `Frequency: ${todo.frequency}\n`;
+            
+            formData.append('message', emailBody);
+
+            try {
+                const response = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Email sent successfully via Web3Forms');
+                } else {
+                    console.error('Failed to send email:', result);
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+            }
+        }
+
+        // Format date
+        function formatDate(date) {
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Format frequency
+        function formatFrequency(freq) {
+            const map = {
+                'once': '🔔 Once',
+                'daily': '📆 Daily',
+                'weekly': '📅 Weekly',
+                'monthly': '🗓️ Monthly',
+                'yearly': '📌 Yearly'
+            };
+            return map[freq] || freq;
+        }
+
+        // Show notification
+        function showNotification(content) {
+            const notification = document.getElementById('notification');
+            const notificationContent = document.getElementById('notificationContent');
+            
+            notificationContent.innerHTML = content;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
