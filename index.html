@@ -18,6 +18,80 @@
             padding: 20px;
         }
 
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .login-container p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            color: #f5576c;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .app-container {
+            display: none;
+        }
+
+        .app-container.unlocked {
+            display: block;
+        }
+
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -32,11 +106,30 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
             font-size: 2em;
             margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .firebase-status {
@@ -57,25 +150,6 @@
 
         .content {
             padding: 30px;
-        }
-
-        .setup-notice {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .setup-notice h3 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        .setup-notice p {
-            color: #856404;
-            margin-bottom: 5px;
-            font-size: 0.95em;
         }
 
         .add-section {
@@ -298,67 +372,78 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📝 Todo Reminder</h1>
-            <p>Never forget important tasks</p>
-            <div class="firebase-status" id="firebaseStatus">Connecting to Firebase...</div>
-        </div>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <h1>🔒 Todo Reminder</h1>
+        <p>Please enter your password to continue</p>
+        <form class="login-form" id="loginForm">
+            <input type="text" name="username" value="TodoApp" autocomplete="username" style="display: none;">
+            <input type="password" class="login-input" id="passwordInput" name="password" placeholder="Enter password" required autocomplete="current-password">
+            <div class="error-message" id="errorMessage">❌ Incorrect password. Please try again.</div>
+            <button type="submit" class="login-btn">Unlock</button>
+        </form>
+        <p style="margin-top: 20px; font-size: 12px; color: #999;">Default password: todo2024</p>
+    </div>
 
-        <div class="content">
-            <div class="setup-notice" id="setupNotice">
-                <h3>⚠️ Firebase Configuration Required</h3>
-                <p>Please add your Firebase configuration in the code (see instructions below)</p>
-                <p>The app will work once you set up Firebase!</p>
+    <!-- Main App (Hidden until unlocked) -->
+    <div class="app-container" id="appContainer">
+        <div class="container">
+            <div class="header">
+                <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+                <h1>📝 Todo Reminder</h1>
+                <p>Never forget important tasks</p>
+                <div class="firebase-status" id="firebaseStatus">Connecting to Firebase...</div>
             </div>
 
-            <div class="add-section">
-                <h2 style="margin-bottom: 20px;">Add New Todo</h2>
-                <form id="todoForm">
-                    <div class="form-group">
-                        <label>Task Title</label>
-                        <input type="text" id="taskTitle" placeholder="What do you need to do?" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="taskDescription" placeholder="Add details about your task..." rows="4"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Due Date & Time</label>
-                        <input type="datetime-local" id="dueDate" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Reminder Frequency</label>
-                        <select id="reminderFreq">
-                            <option value="once">Once (at due date)</option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Attach Image (Optional)</label>
-                        <div class="image-upload" onclick="document.getElementById('imageInput').click()">
-                            <p>📷 Click to upload image</p>
-                            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <div class="content">
+                <div class="add-section">
+                    <h2 style="margin-bottom: 20px;">Add New Todo</h2>
+                    <form id="todoForm">
+                        <div class="form-group">
+                            <label>Task Title</label>
+                            <input type="text" id="taskTitle" placeholder="What do you need to do?" required>
                         </div>
-                        <div class="image-preview" id="imagePreview">
-                            <img id="previewImg" src="" alt="Preview">
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="taskDescription" placeholder="Add details about your task..." rows="4"></textarea>
                         </div>
-                    </div>
 
-                    <button type="submit" class="btn" id="submitBtn">Add Todo</button>
-                </form>
-            </div>
+                        <div class="form-group">
+                            <label>Due Date & Time</label>
+                            <input type="datetime-local" id="dueDate" required>
+                        </div>
 
-            <h2 style="margin-bottom: 20px;">Your Todos</h2>
-            <div id="todosList" class="todos-list">
-                <div class="loading">Loading todos...</div>
+                        <div class="form-group">
+                            <label>Reminder Frequency</label>
+                            <select id="reminderFreq">
+                                <option value="once">Once (at due date)</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Attach Image (Optional)</label>
+                            <div class="image-upload" onclick="document.getElementById('imageInput').click()">
+                                <p>📷 Click to upload image</p>
+                                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                            </div>
+                            <div class="image-preview" id="imagePreview">
+                                <img id="previewImg" src="" alt="Preview">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn" id="submitBtn">Add Todo</button>
+                    </form>
+                </div>
+
+                <h2 style="margin-bottom: 20px;">Your Todos</h2>
+                <div id="todosList" class="todos-list">
+                    <div class="loading">Loading todos...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -379,8 +464,13 @@
         let db, storage;
 
         // ====================================
+        // PASSWORD CONFIGURATION
+        // Change this to your desired password
+        // ====================================
+        const CORRECT_PASSWORD = 'todo2024';
+
+        // ====================================
         // FIREBASE CONFIGURATION
-        // Replace this with your Firebase config
         // ====================================
         const firebaseConfig = {
           apiKey: "AIzaSyB8bZbV-bp4eVkYfOc0zklAoaHppLLMOfA",
@@ -391,11 +481,44 @@
           appId: "1:581240651940:web:22c432e975d6d04e57e631"
         };
 
-        // Check if Firebase is configured
-        const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
+        // Check if already logged in
+        if (localStorage.getItem('todoAppLoggedIn') === 'true') {
+            unlockApp();
+        }
 
-        // Initialize Firebase
-        if (isFirebaseConfigured) {
+        // Login form handling
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('passwordInput').value;
+            
+            if (password === CORRECT_PASSWORD) {
+                localStorage.setItem('todoAppLoggedIn', 'true');
+                unlockApp();
+            } else {
+                document.getElementById('errorMessage').classList.add('show');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        });
+
+        // Unlock the app
+        function unlockApp() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appContainer').classList.add('unlocked');
+            initializeApp();
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('todoAppLoggedIn');
+            document.getElementById('appContainer').classList.remove('unlocked');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        // Initialize Firebase and app
+        function initializeApp() {
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
@@ -403,7 +526,6 @@
                 
                 document.getElementById('firebaseStatus').textContent = '✅ Connected to Firebase';
                 document.getElementById('firebaseStatus').classList.add('connected');
-                document.getElementById('setupNotice').style.display = 'none';
                 
                 loadTodos();
                 setInterval(checkReminders, 60000);
@@ -411,10 +533,6 @@
                 document.getElementById('firebaseStatus').textContent = '❌ Firebase Error: ' + error.message;
                 document.getElementById('firebaseStatus').classList.add('error');
             }
-        } else {
-            document.getElementById('firebaseStatus').textContent = '⚠️ Firebase Not Configured';
-            document.getElementById('firebaseStatus').classList.add('error');
-            document.getElementById('todosList').innerHTML = '<div class="empty-state"><p>Please configure Firebase to use the app</p></div>';
         }
 
         // Image upload handling
@@ -435,11 +553,6 @@
         document.getElementById('todoForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            if (!isFirebaseConfigured) {
-                showNotification('Please configure Firebase first!');
-                return;
-            }
-
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Adding...';
@@ -447,7 +560,6 @@
             try {
                 let imageUrl = null;
 
-                // Upload image if exists
                 if (imageFile) {
                     const imageName = `todo-images/${Date.now()}_${imageFile.name}`;
                     const imageRef = storage.ref().child(imageName);
@@ -455,7 +567,6 @@
                     imageUrl = await imageRef.getDownloadURL();
                 }
 
-                // Create todo
                 const todo = {
                     email: USER_EMAIL,
                     title: document.getElementById('taskTitle').value,
@@ -469,7 +580,6 @@
 
                 await db.collection('todos').add(todo);
 
-                // Reset form
                 this.reset();
                 imageFile = null;
                 document.getElementById('imagePreview').style.display = 'none';
@@ -486,10 +596,7 @@
             }
         });
 
-        // Load todos from Firebase
         async function loadTodos() {
-            if (!isFirebaseConfigured) return;
-
             try {
                 const snapshot = await db.collection('todos').orderBy('created', 'desc').get();
                 const todos = [];
@@ -505,7 +612,6 @@
             }
         }
 
-        // Render todos
         function renderTodos(todos) {
             const container = document.getElementById('todosList');
             
@@ -543,18 +649,15 @@
             }).join('');
         }
 
-        // Delete todo
         async function deleteTodo(id, imageUrl) {
             if (!confirm('Delete this todo?')) return;
 
             try {
-                // Delete image if exists
                 if (imageUrl) {
                     const imageRef = storage.refFromURL(imageUrl);
                     await imageRef.delete();
                 }
 
-                // Delete todo
                 await db.collection('todos').doc(id).delete();
                 
                 showNotification('Todo deleted');
@@ -565,10 +668,7 @@
             }
         }
 
-        // Check reminders
         async function checkReminders() {
-            if (!isFirebaseConfigured) return;
-
             try {
                 const snapshot = await db.collection('todos').get();
                 const now = new Date();
@@ -580,13 +680,11 @@
                     if (shouldSendReminder(todo, now, dueDate)) {
                         await sendEmailReminder(todo);
                         
-                        // Update last reminder time
                         await db.collection('todos').doc(doc.id).update({
                             lastReminder: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     }
 
-                    // Delete if overdue by more than 7 days and frequency is "once"
                     if (todo.frequency === 'once' && now - dueDate > 7 * 24 * 60 * 60 * 1000) {
                         await deleteTodo(doc.id, todo.imageUrl);
                     }
@@ -596,10 +694,7 @@
             }
         }
 
-        // Check if reminder should be sent
         function shouldSendReminder(todo, now, dueDate) {
-            const timeDiff = Math.abs(now - dueDate);
-            
             if (!todo.lastReminder) {
                 return now >= dueDate;
             }
@@ -623,7 +718,6 @@
             }
         }
 
-        // Send email reminder
         async function sendEmailReminder(todo) {
             const message = `
                 <strong>${todo.title}</strong><br>
@@ -633,12 +727,9 @@
             `;
             
             showNotification(message);
-            
-            // Web3Forms integration
             await sendWeb3FormsEmail(todo);
         }
 
-        // Send actual email via Web3Forms
         async function sendWeb3FormsEmail(todo) {
             const accessKey = '82f04509-9c55-4be4-8e9c-0fe5331ff995';
             
@@ -676,7 +767,6 @@
             }
         }
 
-        // Format date
         function formatDate(date) {
             return date.toLocaleString('en-US', {
                 year: 'numeric',
@@ -687,7 +777,6 @@
             });
         }
 
-        // Format frequency
         function formatFrequency(freq) {
             const map = {
                 'once': '🔔 Once',
@@ -699,7 +788,6 @@
             return map[freq] || freq;
         }
 
-        // Show notification
         function showNotification(content) {
             const notification = document.getElementById('notification');
             const notificationContent = document.getElementById('notificationContent');
