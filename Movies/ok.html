@@ -1,108 +1,176 @@
-import os
-import re
-import urllib.parse
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marios approved movies</title>
+    <style>
+        /* Dark Mode Theme */
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
 
-# --- CONFIGURATION FOR YOUR COMPUTER ---
-# This is where your movies actually are on your hard drive
-SOURCE_FOLDER = r'E:\OK' 
-# This is where the script will save the finished webpage on your computer
-OUTPUT_FILE = r'E:\ok.html' 
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
 
-def generate_html():
-    movies = []
-    if not os.path.exists(SOURCE_FOLDER):
-        print(f"Error: Folder {SOURCE_FOLDER} not found.")
-        return
+        h1 {
+            text-align: center;
+            color: #bb86fc;
+            font-weight: 300;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+        }
 
-    pattern = re.compile(r"(.+?)\s*\((\d{4})\)\s*-\s*(.+?)\s*-\s*([\d,.]+)")
+        /* Search and Filter Bars */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
 
-    for folder_name in os.listdir(SOURCE_FOLDER):
-        folder_path = os.path.join(SOURCE_FOLDER, folder_name)
-        if os.path.isdir(folder_path):
-            match = pattern.search(folder_name)
-            if match:
-                title, year, genres_str, rating = match.groups()
-                genre_list = [g.strip() for g in genres_str.split(',')]
-                
-                # PATH FIX: This tells the website to look in the 'ok' folder 
-                # for the posters. (Matches your GitHub structure)
-                encoded_folder = urllib.parse.quote(folder_name)
-                img_src = f"ok/{encoded_folder}/poster.jpg"
+        input, select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #2c2c2c;
+            color: white;
+            min-width: 200px;
+            outline: none;
+        }
 
-                movies.append({
-                    'title': title.strip(),
-                    'year': year,
-                    'genres': genre_list,
-                    'rating': rating.replace(',', '.'),
-                    'poster': img_src
-                })
+        input:focus { border-color: #bb86fc; }
 
-    all_genres = sorted(list(set(g for m in movies for g in m['genres'])))
-    all_years = sorted(list(set(m['year'] for m in movies)), reverse=True)
+        /* Movie Grid */
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 30px;
+        }
 
-    # --- THE HTML CONTENT ---
-    html_template = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Marios approved movies</title>
-        <style>
-            body {{ background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 20px; }}
-            .container {{ max-width: 1200px; margin: auto; }}
-            h1 {{ text-align: center; color: #bb86fc; }}
-            .controls {{ display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; background: #1e1e1e; padding: 20px; border-radius: 12px; }}
-            input, select {{ padding: 12px; border-radius: 8px; border: 1px solid #333; background: #2c2c2c; color: white; }}
-            .movie-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }}
-            .movie-card {{ background: #1e1e1e; border-radius: 12px; overflow: hidden; transition: 0.3s; }}
-            .movie-card:hover {{ transform: translateY(-8px); }}
-            .poster-container {{ width: 100%; height: 320px; background: #000; }}
-            .poster-container img {{ width: 100%; height: 100%; object-fit: cover; }}
-            .content {{ padding: 15px; }}
-            .rating {{ color: #03dac6; font-weight: bold; }}
-            .hidden {{ display: none; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Marios approved movies</h1>
-            <div class="controls">
-                <input type="text" id="searchInput" placeholder="Search title..." onkeyup="filter()">
-                <select id="genreSelect" onchange="filter()"><option value="">All Genres</option>{''.join([f'<option value="{g}">{g}</option>' for g in all_genres])}</select>
-                <select id="yearSelect" onchange="filter()"><option value="">All Years</option>{''.join([f'<option value="{y}">{y}</option>' for y in all_years])}</select>
+        .movie-card {
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.5);
+        }
+
+        /* Poster Styling */
+        .poster-container {
+            width: 100%;
+            height: 320px;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .poster-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .content {
+            padding: 15px;
+            flex-grow: 1;
+        }
+
+        .movie-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin: 0;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .rating {
+            color: #03dac6;
+            font-weight: bold;
+            margin: 10px 0;
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Marios approved movies</h1>
+
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search by title..." onkeyup="filterMovies()">
+        
+        <select id="genreSelect" onchange="filterMovies()">
+            <option value="">All Genres</option>
+            <option value="Action">Action</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Drama">Drama</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+        </select>
+
+        <input type="number" id="yearInput" placeholder="Year (e.g. 1995)" onkeyup="filterMovies()" onchange="filterMovies()">
+    </div>
+
+    <div class="movie-grid" id="movieGrid">
+        
+        <div class="movie-card" data-title="Ace Ventura When Nature Calls" data-genres="Comedy,Adventure" data-year="1995">
+            <div class="poster-container">
+                <img src="ok/Ace Ventura When Nature Calls (1995) - Adventure, Comedy - 6,4/poster.jpg" alt="Poster" loading="lazy">
             </div>
-            <div class="movie-grid">
-                {''.join([f'''
-                <div class="movie-card" data-title="{m['title'].lower()}" data-genres="{','.join(m['genres'])}" data-year="{m['year']}">
-                    <div class="poster-container"><img src="{m['poster']}" loading="lazy"></div>
-                    <div class="content">
-                        <div style="font-weight:bold">{m['title']} ({m['year']})</div>
-                        <span class="rating">★ {m['rating']}</span>
-                    </div>
-                </div>
-                ''' for m in movies])}
+            <div class="content">
+                <div class="movie-title">Ace Ventura When Nature Calls (1995)</div>
+                <span class="rating">★ 6.4</span>
             </div>
         </div>
-        <script>
-            function filter() {{
-                const s = document.getElementById('searchInput').value.toLowerCase();
-                const g = document.getElementById('genreSelect').value;
-                const y = document.getElementById('yearSelect').value;
-                document.querySelectorAll('.movie-card').forEach(card => {{
-                    const matchS = card.dataset.title.includes(s);
-                    const matchG = g === "" || card.dataset.genres.split(',').includes(g);
-                    const matchY = y === "" || card.dataset.year === y;
-                    card.classList.toggle('hidden', !(matchS && matchG && matchY));
-                }});
-            }}
-        </script>
-    </body>
-    </html>
-    """
+        </div>
+</div>
 
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        f.write(html_template)
-    print(f"Created {OUTPUT_FILE} successfully!")
+<script>
+    function filterMovies() {
+        const searchTxt = document.getElementById('searchInput').value.toLowerCase();
+        const genreFilter = document.getElementById('genreSelect').value;
+        const yearFilter = document.getElementById('yearInput').value;
 
-if __name__ == "__main__":
-    generate_html()
+        const cards = document.querySelectorAll('.movie-card');
+
+        cards.forEach(card => {
+            const title = card.getAttribute('data-title').toLowerCase();
+            const genres = card.getAttribute('data-genres');
+            const year = card.getAttribute('data-year');
+
+            const matchesSearch = title.includes(searchTxt);
+            const matchesGenre = genreFilter === "" || genres.includes(genreFilter);
+            const matchesYear = yearFilter === "" || year === yearFilter;
+
+            if (matchesSearch && matchesGenre && matchesYear) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
