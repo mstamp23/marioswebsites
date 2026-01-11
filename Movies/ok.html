@@ -1,0 +1,108 @@
+import os
+import re
+import urllib.parse
+
+# --- CONFIGURATION FOR YOUR COMPUTER ---
+# This is where your movies actually are on your hard drive
+SOURCE_FOLDER = r'E:\OK' 
+# This is where the script will save the finished webpage on your computer
+OUTPUT_FILE = r'E:\ok.html' 
+
+def generate_html():
+    movies = []
+    if not os.path.exists(SOURCE_FOLDER):
+        print(f"Error: Folder {SOURCE_FOLDER} not found.")
+        return
+
+    pattern = re.compile(r"(.+?)\s*\((\d{4})\)\s*-\s*(.+?)\s*-\s*([\d,.]+)")
+
+    for folder_name in os.listdir(SOURCE_FOLDER):
+        folder_path = os.path.join(SOURCE_FOLDER, folder_name)
+        if os.path.isdir(folder_path):
+            match = pattern.search(folder_name)
+            if match:
+                title, year, genres_str, rating = match.groups()
+                genre_list = [g.strip() for g in genres_str.split(',')]
+                
+                # PATH FIX: This tells the website to look in the 'ok' folder 
+                # for the posters. (Matches your GitHub structure)
+                encoded_folder = urllib.parse.quote(folder_name)
+                img_src = f"ok/{encoded_folder}/poster.jpg"
+
+                movies.append({
+                    'title': title.strip(),
+                    'year': year,
+                    'genres': genre_list,
+                    'rating': rating.replace(',', '.'),
+                    'poster': img_src
+                })
+
+    all_genres = sorted(list(set(g for m in movies for g in m['genres'])))
+    all_years = sorted(list(set(m['year'] for m in movies)), reverse=True)
+
+    # --- THE HTML CONTENT ---
+    html_template = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Marios approved movies</title>
+        <style>
+            body {{ background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 20px; }}
+            .container {{ max-width: 1200px; margin: auto; }}
+            h1 {{ text-align: center; color: #bb86fc; }}
+            .controls {{ display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; background: #1e1e1e; padding: 20px; border-radius: 12px; }}
+            input, select {{ padding: 12px; border-radius: 8px; border: 1px solid #333; background: #2c2c2c; color: white; }}
+            .movie-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }}
+            .movie-card {{ background: #1e1e1e; border-radius: 12px; overflow: hidden; transition: 0.3s; }}
+            .movie-card:hover {{ transform: translateY(-8px); }}
+            .poster-container {{ width: 100%; height: 320px; background: #000; }}
+            .poster-container img {{ width: 100%; height: 100%; object-fit: cover; }}
+            .content {{ padding: 15px; }}
+            .rating {{ color: #03dac6; font-weight: bold; }}
+            .hidden {{ display: none; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Marios approved movies</h1>
+            <div class="controls">
+                <input type="text" id="searchInput" placeholder="Search title..." onkeyup="filter()">
+                <select id="genreSelect" onchange="filter()"><option value="">All Genres</option>{''.join([f'<option value="{g}">{g}</option>' for g in all_genres])}</select>
+                <select id="yearSelect" onchange="filter()"><option value="">All Years</option>{''.join([f'<option value="{y}">{y}</option>' for y in all_years])}</select>
+            </div>
+            <div class="movie-grid">
+                {''.join([f'''
+                <div class="movie-card" data-title="{m['title'].lower()}" data-genres="{','.join(m['genres'])}" data-year="{m['year']}">
+                    <div class="poster-container"><img src="{m['poster']}" loading="lazy"></div>
+                    <div class="content">
+                        <div style="font-weight:bold">{m['title']} ({m['year']})</div>
+                        <span class="rating">★ {m['rating']}</span>
+                    </div>
+                </div>
+                ''' for m in movies])}
+            </div>
+        </div>
+        <script>
+            function filter() {{
+                const s = document.getElementById('searchInput').value.toLowerCase();
+                const g = document.getElementById('genreSelect').value;
+                const y = document.getElementById('yearSelect').value;
+                document.querySelectorAll('.movie-card').forEach(card => {{
+                    const matchS = card.dataset.title.includes(s);
+                    const matchG = g === "" || card.dataset.genres.split(',').includes(g);
+                    const matchY = y === "" || card.dataset.year === y;
+                    card.classList.toggle('hidden', !(matchS && matchG && matchY));
+                }});
+            }}
+        </script>
+    </body>
+    </html>
+    """
+
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+        f.write(html_template)
+    print(f"Created {OUTPUT_FILE} successfully!")
+
+if __name__ == "__main__":
+    generate_html()
