@@ -22,6 +22,9 @@ if ! id -u m &>/dev/null; then
 fi
 usermod -aG sudo,vboxsf m 2>/dev/null || usermod -aG sudo m
 
+# FIX: Create sudoers.d directory first
+mkdir -p /etc/sudoers.d
+
 cat > /etc/sudoers.d/m << 'EOF'
 m ALL=(ALL) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get, /usr/bin/aptitude
 m ALL=(ALL) ALL
@@ -120,7 +123,8 @@ mv /tmp/Windows-10-Dark-master /usr/share/themes/Windows-10-Dark 2>/dev/null || 
 rm -f /tmp/win10-dark.zip
 
 # Create launchers folder
-sudo -u m mkdir -p /home/m/launchers /home/m/My-Drive
+mkdir -p /home/m/launchers /home/m/My-Drive
+chown -R m:m /home/m/launchers /home/m/My-Drive
 
 # Speedtest launcher
 cat > /home/m/launchers/speedtest.desktop << 'EOF'
@@ -262,11 +266,12 @@ systemctl enable monthly-maintenance.timer
 
 # 12. PYTHON ENVIRONMENT
 echo "🐍 Setting up Python environment..."
-sudo -u m mkdir -p /home/m/My-Drive/python_projects
+mkdir -p /home/m/My-Drive/python_projects
+chown -R m:m /home/m/My-Drive
 sudo -u m python3 -m venv /home/m/My-Drive/python_env
 
 # Geany configuration for Python
-sudo -u m mkdir -p /home/m/.config/geany
+mkdir -p /home/m/.config/geany
 cat > /home/m/.config/geany/geany.conf << 'EOF'
 [build]
 python_command=python3
@@ -334,7 +339,7 @@ echo "- USB Unlock: sudo setup-usb-unlock"
 echo "- Rclone: rclone config (create 'gdrive' remote)"
 echo "- ProtonVPN: sudo protonvpn init"
 echo ""
-echo "SCHEDULED TASTS:"
+echo "SCHEDULED TASKS:"
 echo "- Security updates: Automatic"
 echo "- Monthly maintenance: 1st of each month, 3:00 AM"
 echo ""
