@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================================
 # DEBIAN 13 (TRIXIE) - THE "IRONCLAD" INSTALLER
-# Fix: Keyboard "Access Denied" & zRAM service race condition
+# Fix: GUI Auto-Start, LightDM Service, Graphical Target
 # ============================================================================
 
 set -e
@@ -54,24 +54,21 @@ EndSection
 EOF
 fi
 
-# 5. RAM OPTIMIZATION
-echo "💾 Configuring RAM & SSD..."
+# 5. RAM & SSD
 apt install -y zram-tools smartmontools
-sleep 2 
 if [ -f /etc/default/zram-tools ]; then
     echo "ALGO=zstd" > /etc/default/zram-tools
     echo "PERCENT=25" >> /etc/default/zram-tools
 fi
 echo "vm.swappiness=10" >> /etc/sysctl.conf
 
-# 6. LOCALES & KEYBOARD (DIRECT FILE ACCESS FIX)
-echo "🌐 Setting Locales & Keyboard (Direct Fix)..."
+# 6. LOCALES & KEYBOARD
+echo "🌐 Setting Locales & Keyboard..."
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 echo "el_GR.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
 update-locale LANG=en_US.UTF-8
 
-# Bypassing localectl to avoid "Access Denied"
 cat <<EOF > /etc/default/keyboard
 XKBMODEL="pc105"
 XKBLAYOUT="us,gr"
@@ -80,7 +77,7 @@ XKBOPTIONS="grp:alt_shift_toggle"
 BACKSPACE="guess"
 EOF
 
-# 7. CHROME & XFCE DESKTOP
+# 7. CHROME & XFCE DESKTOP (Added explicit LightDM and Target fix)
 echo "🖥️ Installing Desktop and Apps..."
 wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -P /tmp/
 apt install -y /tmp/google-chrome-stable_current_amd64.deb || true
@@ -90,13 +87,20 @@ apt install -y --no-install-recommends \
     xfce4-power-manager network-manager-gnome lightdm lightdm-gtk-greeter \
     fonts-inter pavucontrol rclone vlc firefox-esr qbittorrent yt-dlp flameshot
 
-# 8. FINAL CLEANUP
+# 8. FORCE GUI STARTUP
+echo "🚀 Enabling Graphical Interface..."
+systemctl set-default graphical.target
+systemctl enable lightdm
+# Force-link LightDM as the primary manager
+echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
+
+# 9. FINAL CLEANUP
 apt autoremove -y
 chown -R m:m /home/m/
 update-grub
 
 echo "=========================================="
-echo "✅ SUCCESS! REBOOTING IN 5 SECONDS..."
+echo "✅ SUCCESS! REBOOTING INTO GUI..."
 echo "=========================================="
 sleep 5
 reboot
