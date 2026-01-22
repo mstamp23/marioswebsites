@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================================
 # DEBIAN 13 (TRIXIE) - THE "IRONCLAD" INSTALLER
-# Fix: zram-tools service check & hardware stability
+# Fix: Keyboard "Access Denied" & zRAM service race condition
 # ============================================================================
 
 set -e
@@ -54,28 +54,31 @@ EndSection
 EOF
 fi
 
-# 5. RAM OPTIMIZATION (Fixing the zram-tools error)
+# 5. RAM OPTIMIZATION
 echo "💾 Configuring RAM & SSD..."
 apt install -y zram-tools smartmontools
-# Give the system a second to register the new service
 sleep 2 
 if [ -f /etc/default/zram-tools ]; then
     echo "ALGO=zstd" > /etc/default/zram-tools
     echo "PERCENT=25" >> /etc/default/zram-tools
-    # Only restart if the service unit actually exists
-    if systemctl list-unit-files | grep -q zram-tools; then
-        systemctl restart zram-tools.service || true
-    fi
 fi
 echo "vm.swappiness=10" >> /etc/sysctl.conf
 
-# 6. LOCALES & KEYBOARD
-echo "🌐 Setting Locales..."
+# 6. LOCALES & KEYBOARD (DIRECT FILE ACCESS FIX)
+echo "🌐 Setting Locales & Keyboard (Direct Fix)..."
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 echo "el_GR.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
 update-locale LANG=en_US.UTF-8
-localectl set-x11-keymap us,gr pc105 "" grp:alt_shift_toggle
+
+# Bypassing localectl to avoid "Access Denied"
+cat <<EOF > /etc/default/keyboard
+XKBMODEL="pc105"
+XKBLAYOUT="us,gr"
+XKBVARIANT=""
+XKBOPTIONS="grp:alt_shift_toggle"
+BACKSPACE="guess"
+EOF
 
 # 7. CHROME & XFCE DESKTOP
 echo "🖥️ Installing Desktop and Apps..."
