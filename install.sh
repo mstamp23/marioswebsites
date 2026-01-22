@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# DEBIAN 13 (TRIXIE) UNIVERSAL INSTALLER - BEAST EDITION
+# DEBIAN 13 (TRIXIE) PROFESSIONAL INSTALLER - CLEAN VERSION
 # ============================================================================
 
 set -e
@@ -12,10 +12,10 @@ exec > >(tee -a /var/log/debian-install.log)
 exec 2>&1
 if [ "$EUID" -ne 0 ]; then echo "❌ Run as root"; exit 1; fi
 
-# 2. CORE TOOLS & USER (Password: 1)
-echo "📦 Setting up user and base tools..."
+# 2. CORE DEPENDENCIES & USER (Fixes Line 48)
+echo "📦 Installing sudo and creating user m..."
 apt update
-apt install -y sudo wget ca-certificates
+apt install -y sudo 
 mkdir -p /etc/sudoers.d
 
 if ! id -u m &>/dev/null; then
@@ -28,7 +28,7 @@ echo 'Defaults:m timestamp_timeout=30' >> /etc/sudoers.d/m
 chmod 0440 /etc/sudoers.d/m
 adduser m sudo || true
 
-# 3. SOURCES (Trixie + Non-Free)
+# 3. SOURCES & UPDATES
 cat <<EOF > /etc/apt/sources.list
 deb http://deb.debian.org/debian/ trixie main contrib non-free non-free-firmware
 deb http://deb.debian.org/debian/ trixie-updates main contrib non-free non-free-firmware
@@ -36,16 +36,17 @@ deb http://security.debian.org/debian-security trixie-security main contrib non-
 EOF
 apt update && apt upgrade -y
 
-# 4. NVIDIA & INTEL i9 OPTIMIZATION (Fixed Line 64)
-echo "🔧 Configuring Hardware..."
-apt install -y intel-microcode thermald linux-headers-amd64
-systemctl enable thermald
+# 4. HARDWARE OPTIMIZATION (i9 & NVIDIA)
+echo "🔧 Optimizing Hardware..."
+if grep -q "Intel" /proc/cpuinfo; then
+    apt install -y intel-microcode thermald
+    systemctl enable thermald
+fi
 
 if lspci | grep -qi nvidia; then
-    echo "🎮 NVIDIA GPU Detected. Installing drivers..."
-    # We install the driver and headers directly to avoid detection script errors
-    apt install -y nvidia-driver firmware-misc-nonfree nvidia-settings
-    
+    apt install -y nvidia-detect linux-headers-amd64
+    NVIDIA_PKG=$(nvidia-detect 2>/dev/null | grep -o 'nvidia-driver' || echo "nvidia-driver")
+    apt install -y $NVIDIA_PKG firmware-misc-nonfree nvidia-settings
     mkdir -p /etc/X11/xorg.conf.d/
     cat <<EOF > /etc/X11/xorg.conf.d/20-nvidia.conf
 Section "Device"
@@ -61,6 +62,8 @@ apt install -y zram-tools smartmontools
 echo "ALGO=zstd" > /etc/default/zram-tools
 echo "PERCENT=25" >> /etc/default/zram-tools
 systemctl restart zram-tools
+cp /usr/share/systemd/tmp.mount /etc/systemd/system/
+systemctl enable tmp.mount
 echo "vm.swappiness=10" >> /etc/sysctl.conf
 
 # 6. LOCALES & KEYBOARD
@@ -70,23 +73,31 @@ locale-gen
 update-locale LANG=en_US.UTF-8
 localectl set-x11-keymap us,gr pc105 "" grp:alt_shift_toggle
 
-# 7. CHROME & XFCE DESKTOP
+# 7. SOFTWARE STACK
+echo "🌐 Installing Chrome & XFCE..."
 wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -P /tmp/
-apt install -y /tmp/google-chrome-stable_current_amd64.deb || true
+apt install -y /tmp/google-chrome-stable_current_amd64.deb
 
 apt install -y --no-install-recommends \
     xfce4 xfce4-terminal thunar xfce4-settings xfce4-panel xfce4-session \
     xfce4-power-manager network-manager-gnome lightdm lightdm-gtk-greeter \
-    fonts-inter pavucontrol rclone vlc firefox-esr qbittorrent yt-dlp flameshot
+    fonts-inter pavucontrol rclone vlc firefox-esr qbittorrent yt-dlp flameshot \
+    geany cpufrequtils ntfs-3g hdparm gparted htop lm-sensors vulkan-tools
 
-# 8. FINAL CLEANUP
-apt autoremove -y
-chown -R m:m /home/m/
+# 8. VIRTUALIZATION & SECURITY
+apt install -y qemu-system qemu-utils libvirt-daemon-system virt-manager bridge-utils
+usermod -aG libvirt,kvm m
+apt install -y unattended-upgrades ufw libpam-usb pamusb-tools
+ufw --force enable
+ufw default deny incoming
+
+# 9. FINAL REBOOT
+systemctl mask bluetooth.service cups.service
+sed -i 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/' /etc/default/grub
 update-grub
+chown -R m:m /home/m/
+apt autoremove -y
 
-echo "=========================================="
-echo "✅ INSTALLATION COMPLETE!"
-echo "🚀 Now we are rebooting..."
-echo "=========================================="
+echo "✅ SUCCESS! REBOOTING..."
 sleep 5
-sudo reboot
+reboot
