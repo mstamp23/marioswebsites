@@ -1,0 +1,6 @@
+[Allow Shutdown and Reboot]
+Identity=unix-group:sudo
+Action=org.freedesktop.login1.power-off;org.freedesktop.login1.reboot;org.freedesktop.login1.suspend
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
