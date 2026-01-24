@@ -1,3 +1,20 @@
-protonvpn
-mstamp23@gmail.com
-/6Zd(eyWEfFy_fx
+sudo bash -c 'cat > /usr/share/themes/Xfce-Dark-Pro/gtk-3.0/gtk.css <<EOF
+/* Professional Dark - Improved Contrast Patch */
+@define-color theme_bg_color #1e1e1e;
+@define-color theme_fg_color #dedede;
+@define-color theme_base_color #252525;
+@define-color theme_text_color #ffffff;
+@define-color theme_selected_bg_color #005fb8;
+@define-color theme_selected_fg_color #ffffff;
+
+window, grid, stack { background-color: @theme_bg_color; color: @theme_fg_color; }
+headerbar, .titlebar { background-color: #121212; color: @theme_fg_color; border-bottom: 1px solid #333; }
+entry { background-color: @theme_base_color; color: @theme_text_color; border: 1px solid #444; padding: 4px; }
+button { background-color: #333; color: #eee; border: 1px solid #444; }
+button:hover { background-color: #444; }
+/* Fix for invisible menu items */
+menu, menuitem { background-color: #252525; color: #eee; border: 1px solid #444; }
+EOF'
+
+# Refresh the settings for your user
+xfconf-query -c xsettings -p /Net/ThemeName -s "Xfce-Dark-Pro"
