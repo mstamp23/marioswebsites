@@ -1,6 +1,6 @@
 sudo visudo
 
-m ALL=(ALL) NOPASSWD: /usr/bin/apt
+m ALL=(ALL) NOPASSWD: /usr/bin/apt update, /usr/bin/apt dist-upgrade -y, /usr/bin/apt autoremove -y, /usr/bin/apt autoclean
 
 Right-click on your desktop or XFCE panel and select Create Launcher.
 
