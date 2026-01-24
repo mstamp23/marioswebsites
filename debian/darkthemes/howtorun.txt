@@ -1,0 +1,1 @@
+wget -qO - https://raw.githubusercontent.com/mstamp23/marioswebsites/refs/heads/main/debian/darkthemes/dark.sh | sudo bash
