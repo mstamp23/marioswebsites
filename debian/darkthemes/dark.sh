@@ -13,6 +13,11 @@ fi
 REAL_USER=${SUDO_USER:-$USER}
 USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 
+# --- Define Function First ---
+run_as_user() {
+    sudo -u "$REAL_USER" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u "$REAL_USER")/bus "$@"
+}
+
 echo "Step 1: Cleaning up..."
 rm -rf /usr/share/themes/Xfce-Dark-Pro
 
@@ -26,7 +31,6 @@ apt install -y \
     xfconf
 
 echo "Step 3: Setting Global Defaults for new users..."
-# This ensures any new account created starts with your look
 mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
 cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -40,24 +44,23 @@ cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml <<EOF
 EOF
 
 echo "Step 4: Applying to current user: $REAL_USER"
-run_as_user xfconf-query -c xfce4-keyboard-shortcuts -p "/commands/custom/<Super>_L" -n -t string -s "xfce4-popup-whiskermenu" || true
-
-# Function to run xfconf-query as the real user safely
-run_as_user() {
-    sudo -u "$REAL_USER" DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u "$REAL_USER")/bus "$@"
-}
 
 # Apply UI Theme, Icons, and Window Borders
 run_as_user xfconf-query -c xsettings -p /Net/ThemeName -s "Greybird-dark" || true
 run_as_user xfconf-query -c xsettings -p /Net/IconThemeName -s "Papirus-Dark" || true
 run_as_user xfconf-query -c xfwm4 -p /general/theme -s "Greybird-dark" || true
 
+# Set Windows Key (Super) to open Whisker Menu
+run_as_user xfconf-query -c xfce4-keyboard-shortcuts -p "/commands/custom/<Super>_L" -n -t string -s "xfce4-popup-whiskermenu" || true
+
 # Optional: Set the Whisker Menu to use the Dark theme specifically 
-# (Whisker Menu usually follows the GTK theme automatically, but this ensures it)
-run_as_user xfconf-query -c xfce4-panel -p /plugins/plugin-$(run_as_user xfconf-query -c xfce4-panel -p /plugins -lv | grep whiskermenu | cut -d' ' -f1)/view-mode -n -t int -s 1 || true
+# (This logic finds the plugin ID automatically)
+PLUGIN_ID=$(run_as_user xfconf-query -c xfce4-panel -p /plugins -lv | grep whiskermenu | cut -d' ' -f1 || echo "")
+if [ -n "$PLUGIN_ID" ]; then
+    run_as_user xfconf-query -c xfce4-panel -p "/plugins/$PLUGIN_ID/view-mode" -n -t int -s 1 || true
+fi
 
 echo "-------------------------------------------------------"
 echo "Done! Greybird-dark and Whisker Menu are ready."
-echo "NOTE: If you don't see the Whisker Menu yet:"
-echo "Right-click Panel -> Add New Items -> Whisker Menu."
+echo "Press the 'Windows' key to test your new menu!"
 echo "-------------------------------------------------------"
