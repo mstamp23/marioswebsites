@@ -1,8 +1,2 @@
-# Reset GTK Theme
-xfconf-query -c xsettings -p /Net/ThemeName -s "Adwaita-dark"
-
-# Reset Window Manager (Borders)
-xfconf-query -c xfwm4 -p /general/theme -s "Default"
-
-# Reset Icons
-xfconf-query -c xsettings -p /Net/IconThemeName -s "Papirus-Dark"
+sudo apt update && sudo apt install -y greybird-gtk-theme arc-theme materia-gtk-theme breeze-gtk-theme
+sudo rm -rf /usr/share/themes/Xfce-Dark-Pro
