@@ -10,7 +10,7 @@ Name: Update System
 
 Comment: Update, Upgrade, and Clean
 
-Command: xfce4-terminal -e 'sh -c "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo apt autoclean; read -p \"Done. Press enter to close...\""'
+Command: xfce4-terminal -e 'sh -c "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo apt autoclean; echo; read -p \"System is up to date! Press Enter to close...\""' enter to close...\""'
 
 Crucial: Ensure "Run in terminal" is checked. This allows you to see the progress and any potential errors.
 
