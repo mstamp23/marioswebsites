@@ -1,3 +1,22 @@
-sudo apt update && sudo apt install -y greybird-gtk-theme arc-theme orchis-gtk-theme breeze-gtk-theme
-sudo rm -rf /usr/share/themes/Xfce-Dark-Pro
+sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo apt autoclean
+
+sudo visudo
+
+m ALL=(ALL) NOPASSWD: /usr/bin/apt
+
+Right-click on your desktop or XFCE panel and select Create Launcher.
+
+Fill in the details:
+
+Name: Update System
+
+Comment: Update, Upgrade, and Clean
+
+Command: xfce4-terminal -e 'sh -c "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo apt autoclean; read -p \"Done. Press enter to close...\""'
+
+Crucial: Ensure "Run in terminal" is checked. This allows you to see the progress and any potential errors.
+
+Pick an icon (like a "system-software-update" icon) and click Create
+
+
 
