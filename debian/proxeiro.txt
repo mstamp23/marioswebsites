@@ -1,0 +1,6 @@
+sudo journalctl -p 3 -xb
+systemctl --failed
+sudo dmesg | grep -i error
+sudo apt update && sudo apt check
+sudo apt install -f
+glxinfo | grep "direct rendering"
