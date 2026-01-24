@@ -40,6 +40,7 @@ cat > /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml <<EOF
 EOF
 
 echo "Step 4: Applying to current user: $REAL_USER"
+run_as_user xfconf-query -c xfce4-keyboard-shortcuts -p "/commands/custom/<Super>_L" -n -t string -s "xfce4-popup-whiskermenu" || true
 
 # Function to run xfconf-query as the real user safely
 run_as_user() {
