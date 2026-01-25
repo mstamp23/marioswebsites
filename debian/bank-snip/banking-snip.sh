@@ -7,7 +7,8 @@ TEMP_PNG="/tmp/bank_capture.png"
 mkdir -p "$SAVE_DIR"
 
 # --- 2. CAPTURE ---
-xfce4-screenshooter -r -s "$TEMP_PNG"
+#xfce4-screenshooter -r -s "$TEMP_PNG"
+flameshot gui -r > "$TEMP_PNG"
 if [ ! -f "$TEMP_PNG" ]; then exit 1; fi
 
 # --- 3. FIRST MENU: MAIN CATEGORY ---
