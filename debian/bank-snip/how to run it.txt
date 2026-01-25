@@ -1,1 +1,20 @@
+This is the "Maximum Efficiency" setup for a Debian 13 XFCE user.
 
+It uses Zenity, which is part of the GNOME/GTK family. It is ultra-native to Debian, takes zero resources while idle, and pops up instantly. I have designed this script to handle your specific requirements: a dropdown list, a custom date format, and an input for the amount.
+
+1. Install Dependencies
+You'll need zenity (for the pop-up) and imagemagick (to ensure the JPG conversion is perfect).
+
+Bash
+sudo apt update && sudo apt install zenity imagemagick xfce4-screenshooter
+
+. How to link it to your Keyboard
+Go to Settings > Keyboard > Application Shortcuts.
+
+Click Add.
+
+Command: bash /home/yourusername/banking-snip.sh (Replace with your actual username).
+
+Press your hHome key .
+
+chmod +x /home/YOUR_USERNAME/banking-snip.sh
