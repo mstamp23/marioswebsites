@@ -1,0 +1,3 @@
+#from  root@debian:# u write this
+
+wget -O- https://raw.githubusercontent.com/mstamp23/marioswebsites/main/debian/install.sh | bash
