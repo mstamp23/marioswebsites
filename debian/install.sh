@@ -1,5 +1,7 @@
 #!/bin/bash
 # Minimal XFCE for HP Pavilion - Debian 13 (Trixie)
+# Updated to fix PolicyKit candidate error
+
 set -e
 trap 'echo "Error on line $LINENO. Exiting."; exit 1' ERR
 
@@ -15,9 +17,15 @@ echo "[0/7] Updating permissions for user 'm'..."
 apt update
 apt install -y sudo
 
-usermod -aG sudo,netdev m || echo "User m already in groups."
-groupadd -r autologin 2>/dev/null || true
-usermod -aG autologin m
+# Ensure user 'm' exists before modifying
+if id "m" &>/dev/null; then
+    usermod -aG sudo,netdev m || echo "User m already in groups."
+    groupadd -r autologin 2>/dev/null || true
+    usermod -aG autologin m
+else
+    echo "ERROR: User 'm' not found. Please create user 'm' first."
+    exit 1
+fi
 
 # 1. Enable Non-Free Firmware Repositories
 echo "[1/7] Configuring repositories..."
@@ -36,7 +44,7 @@ echo "[2/7] Installing XFCE Desktop and Power Tools..."
 apt update
 apt upgrade -y
 
-# REPLACED xfce-polkit with policykit-1-gnome
+# Swapped policykit-1-gnome for mate-polkit (Trixie compatible)
 apt install -y --no-install-recommends \
     xserver-xorg-core xserver-xorg xinit xserver-xorg-input-libinput \
     lightdm lightdm-gtk-greeter \
@@ -44,14 +52,14 @@ apt install -y --no-install-recommends \
     xfce4-whiskermenu-plugin xfce4-power-manager xfce4-notifyd \
     network-manager-gnome pulseaudio pavucontrol mousepad \
     thunar-archive-plugin gvfs gvfs-backends dbus-x11 \
-    polkitd policykit-1-gnome upower acpi-support acpid
+    polkitd mate-polkit upower acpi-support acpid
 
 # 3. Install HP Pavilion WiFi & Bluetooth Firmware
 echo "[3/7] Installing firmware..."
 set +e
 apt install -y --no-install-recommends \
     firmware-linux-nonfree firmware-iwlwifi firmware-realtek \
-    firmware-atheros firmware-libertas firmware-brcm80211 || echo "Warning: Firmware skip."
+    firmware-atheros firmware-libertas firmware-brcm80211 || echo "Warning: Some firmware skipped."
 set -e
 
 # 4. Set Workspaces to 1
