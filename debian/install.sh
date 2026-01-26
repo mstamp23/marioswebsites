@@ -88,5 +88,5 @@ echo "Installation complete!"
 echo "Autologin enabled for user 'm'."
 echo "================================"
 echo "Rebooting in 10 seconds..."
-sleep 10
+sleep 3
 reboot
