@@ -25,7 +25,6 @@ else
 fi
 
 usermod -aG sudo m
-# Add user 'm' to autologin group (created later if needed)
 groupadd -r autologin 2>/dev/null || true
 usermod -aG autologin m
 
@@ -73,7 +72,8 @@ EOF
 
 # 5. Enable Login Screen and Autologin
 echo "[5/6] Configuring LightDM and Autologin..."
-# Create a clean autologin config
+# The fix: Ensure the directory exists before writing to it
+mkdir -p /etc/lightdm/lightdm.conf.d/
 cat > /etc/lightdm/lightdm.conf.d/01-autologin.conf <<EOF
 [Seat:*]
 autologin-user=m
@@ -82,11 +82,24 @@ EOF
 
 systemctl enable lightdm
 
-# 6. Finalize
+# 6. Bonus: Enable Tap-to-Click for HP Touchpad (System-wide)
+echo "[6/6] Enabling Tap-to-Click for touchpad..."
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/40-libinput.conf <<EOF
+Section "InputClass"
+        Identifier "libinput touchpad catchall"
+        MatchIsTouchpad "on"
+        MatchDevicePath "/dev/input/event*"
+        Driver "libinput"
+        Option "Tapping" "on"
+EndSection
+EOF
+
+# Finalize
 echo "================================"
 echo "Installation complete!"
-echo "Autologin enabled for user 'm'."
+echo "Autologin and Tap-to-click enabled."
 echo "================================"
 echo "Rebooting in 10 seconds..."
-sleep 3
+sleep 10
 reboot
