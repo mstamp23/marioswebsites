@@ -100,6 +100,6 @@ echo "================================"
 echo "Installation complete!"
 echo "Autologin and Tap-to-click enabled."
 echo "================================"
-echo "Rebooting in 10 seconds..."
-sleep 10
+echo "Rebooting in 3 seconds..."
+sleep 2
 reboot
