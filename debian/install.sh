@@ -36,7 +36,7 @@ echo "[2/7] Installing XFCE Desktop and Power Tools..."
 apt update
 apt upgrade -y
 
-# Using policykit-1-gnome instead of xfce-polkit for better availability
+# REPLACED xfce-polkit with policykit-1-gnome
 apt install -y --no-install-recommends \
     xserver-xorg-core xserver-xorg xinit xserver-xorg-input-libinput \
     lightdm lightdm-gtk-greeter \
@@ -51,7 +51,7 @@ echo "[3/7] Installing firmware..."
 set +e
 apt install -y --no-install-recommends \
     firmware-linux-nonfree firmware-iwlwifi firmware-realtek \
-    firmware-atheros firmware-libertas firmware-brcm80211 || echo "Some firmware skipped."
+    firmware-atheros firmware-libertas firmware-brcm80211 || echo "Warning: Firmware skip."
 set -e
 
 # 4. Set Workspaces to 1
@@ -91,14 +91,15 @@ EndSection
 EOF
 
 # 7. Final Power Fix: Polkit permissions
-echo "[7/7] Applying Polkit rules..."
+echo "[7/7] Applying Polkit permissions..."
 mkdir -p /etc/polkit-1/rules.d/
 cat > /etc/polkit-1/rules.d/50-power.rules <<'EOF'
 polkit.addRule(function(action, subject) {
-    if ((action.id.indexOf("org.freedesktop.login1.power-off") == 0 ||
-         action.id.indexOf("org.freedesktop.login1.reboot") == 0 ||
-         action.id.indexOf("org.freedesktop.login1.suspend") == 0) &&
-        subject.isInGroup("sudo")) {
+    if ((action.id == "org.freedesktop.login1.power-off" ||
+         action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.reboot" ||
+         action.id == "org.freedesktop.login1.reboot-multiple-sessions") &&
+        subject.user == "m") {
         return polkit.Result.YES;
     }
 });
@@ -106,7 +107,8 @@ EOF
 
 # Finalize
 echo "================================"
-echo "SUCCESS! Installation complete."
+echo "Installation complete!"
+echo "Autologin and Power fixed."
 echo "================================"
 echo "Rebooting in 5 seconds..."
 sleep 5
