@@ -15,11 +15,7 @@ echo "[0/7] Updating permissions for user 'm'..."
 apt update
 apt install -y sudo
 
-# Ensure user 'm' is in the right groups (removed powerdev as it's redundant/missing)
-# netdev allows managing WiFi via the panel
 usermod -aG sudo,netdev m || echo "User m already in groups."
-
-# Set up autologin group
 groupadd -r autologin 2>/dev/null || true
 usermod -aG autologin m
 
@@ -35,24 +31,30 @@ if [ -f /etc/apt/sources.list.d/debian.sources ]; then
     sed -i 's/Components: main/Components: main contrib non-free non-free-firmware/g' /etc/apt/sources.list.d/debian.sources
 fi
 
-# 2. Update and Install Core System + Power Management Fixes
+# 2. Update and Install Core System + Power Management
 echo "[2/7] Installing XFCE Desktop and Power Tools..."
 apt update
 apt upgrade -y
+
 apt install -y --no-install-recommends \
-    xserver-xorg-core xserver-xorg xinit \
+    xserver-xorg-core xserver-xorg xinit xserver-xorg-input-libinput \
     lightdm lightdm-gtk-greeter \
     xfce4-session xfwm4 xfce4-panel xfdesktop4 thunar xfce4-terminal xfce4-settings \
     xfce4-whiskermenu-plugin xfce4-power-manager xfce4-notifyd \
     network-manager-gnome pulseaudio pavucontrol mousepad \
     thunar-archive-plugin gvfs gvfs-backends dbus-x11 \
-    policykit-1 upower acpi-support acpid
+    polkitd xfce-polkit upower acpi-support acpid
 
 # 3. Install HP Pavilion WiFi & Bluetooth Firmware
 echo "[3/7] Installing firmware..."
+set +e  # Temporarily disable exit on error
 apt install -y --no-install-recommends \
     firmware-linux-nonfree firmware-iwlwifi firmware-realtek \
-    firmware-atheros firmware-libertas firmware-brcm80211 || echo "Warning: Firmware failed."
+    firmware-atheros firmware-libertas firmware-brcm80211
+if [ $? -ne 0 ]; then
+    echo "Warning: Some firmware packages failed to install."
+fi
+set -e  # Re-enable exit on error
 
 # 4. Set Workspaces to 1
 echo "[4/7] Setting workspace count..."
@@ -91,21 +93,24 @@ EndSection
 EOF
 
 # 7. Final Power Fix: Polkit permissions
-echo "[7/7] Applying final Polkit permissions..."
-mkdir -p /etc/polkit-1/localauthority/50-local.d/
-cat > /etc/polkit-1/localauthority/50-local.d/consolekit.pkla <<EOF
-[Allow Shutdown and Reboot]
-Identity=unix-user:m
-Action=org.freedesktop.consolekit.system.stop;org.freedesktop.consolekit.system.restart;org.freedesktop.login1.reboot;org.freedesktop.login1.reboot-multiple-sessions;org.freedesktop.login1.power-off;org.freedesktop.login1.power-off-multiple-sessions
-ResultAny=yes
-ResultInactive=no
-ResultActive=yes
+echo "[7/7] Applying Polkit permissions for power management..."
+mkdir -p /etc/polkit-1/rules.d/
+cat > /etc/polkit-1/rules.d/50-power.rules <<'EOF'
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.freedesktop.login1.power-off" ||
+         action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.reboot" ||
+         action.id == "org.freedesktop.login1.reboot-multiple-sessions") &&
+        subject.user == "m") {
+        return polkit.Result.YES;
+    }
+});
 EOF
 
 # Finalize
 echo "================================"
 echo "Installation complete!"
-echo "User 'm' configured and power buttons fixed."
+echo "User 'm' configured for autologin with power management."
 echo "================================"
 echo "Rebooting in 5 seconds..."
 sleep 5
