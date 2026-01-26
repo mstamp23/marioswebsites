@@ -10,22 +10,16 @@ fi
 
 echo "Starting XFCE installation for HP Pavilion..."
 
-# 0. Install Sudo and Configure User "m"
-echo "[0/7] Installing sudo and adding user 'm' to groups..."
+# 0. Configure Existing User "m"
+echo "[0/7] Updating permissions for user 'm'..."
 apt update
 apt install -y sudo
 
-if id "m" &>/dev/null; then
-    echo "User 'm' already exists."
-else
-    echo "Creating user 'm'..."
-    useradd -m -s /bin/bash m
-    echo "Please set a password for user 'm':"
-    passwd m
-fi
+# Ensure user 'm' is in the right groups (removed powerdev as it's redundant/missing)
+# netdev allows managing WiFi via the panel
+usermod -aG sudo,netdev m || echo "User m already in groups."
 
-# Add user 'm' to necessary groups for power, network, and sudo
-usermod -aG sudo,powerdev,netdev m
+# Set up autologin group
 groupadd -r autologin 2>/dev/null || true
 usermod -aG autologin m
 
@@ -111,7 +105,7 @@ EOF
 # Finalize
 echo "================================"
 echo "Installation complete!"
-echo "User 'm' configured with Autologin and Power Permissions."
+echo "User 'm' configured and power buttons fixed."
 echo "================================"
 echo "Rebooting in 5 seconds..."
 sleep 5
