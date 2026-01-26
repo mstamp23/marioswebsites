@@ -36,6 +36,7 @@ echo "[2/7] Installing XFCE Desktop and Power Tools..."
 apt update
 apt upgrade -y
 
+# Using policykit-1-gnome instead of xfce-polkit for better availability
 apt install -y --no-install-recommends \
     xserver-xorg-core xserver-xorg xinit xserver-xorg-input-libinput \
     lightdm lightdm-gtk-greeter \
@@ -43,18 +44,15 @@ apt install -y --no-install-recommends \
     xfce4-whiskermenu-plugin xfce4-power-manager xfce4-notifyd \
     network-manager-gnome pulseaudio pavucontrol mousepad \
     thunar-archive-plugin gvfs gvfs-backends dbus-x11 \
-    polkitd xfce-polkit upower acpi-support acpid
+    polkitd policykit-1-gnome upower acpi-support acpid
 
 # 3. Install HP Pavilion WiFi & Bluetooth Firmware
 echo "[3/7] Installing firmware..."
-set +e  # Temporarily disable exit on error
+set +e
 apt install -y --no-install-recommends \
     firmware-linux-nonfree firmware-iwlwifi firmware-realtek \
-    firmware-atheros firmware-libertas firmware-brcm80211
-if [ $? -ne 0 ]; then
-    echo "Warning: Some firmware packages failed to install."
-fi
-set -e  # Re-enable exit on error
+    firmware-atheros firmware-libertas firmware-brcm80211 || echo "Some firmware skipped."
+set -e
 
 # 4. Set Workspaces to 1
 echo "[4/7] Setting workspace count..."
@@ -93,15 +91,14 @@ EndSection
 EOF
 
 # 7. Final Power Fix: Polkit permissions
-echo "[7/7] Applying Polkit permissions for power management..."
+echo "[7/7] Applying Polkit rules..."
 mkdir -p /etc/polkit-1/rules.d/
 cat > /etc/polkit-1/rules.d/50-power.rules <<'EOF'
 polkit.addRule(function(action, subject) {
-    if ((action.id == "org.freedesktop.login1.power-off" ||
-         action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
-         action.id == "org.freedesktop.login1.reboot" ||
-         action.id == "org.freedesktop.login1.reboot-multiple-sessions") &&
-        subject.user == "m") {
+    if ((action.id.indexOf("org.freedesktop.login1.power-off") == 0 ||
+         action.id.indexOf("org.freedesktop.login1.reboot") == 0 ||
+         action.id.indexOf("org.freedesktop.login1.suspend") == 0) &&
+        subject.isInGroup("sudo")) {
         return polkit.Result.YES;
     }
 });
@@ -109,8 +106,7 @@ EOF
 
 # Finalize
 echo "================================"
-echo "Installation complete!"
-echo "User 'm' configured for autologin with power management."
+echo "SUCCESS! Installation complete."
 echo "================================"
 echo "Rebooting in 5 seconds..."
 sleep 5
