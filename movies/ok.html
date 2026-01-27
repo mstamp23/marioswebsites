@@ -767,17 +767,36 @@
             
             if (decade === '') {
                 moviesData = [...allMoviesData];
+                currentSort = 'default';
             } else {
                 const range = getDecadeRange(decade);
                 moviesData = allMoviesData.filter(movie => 
                     movie.year >= range.start && movie.year <= range.end
                 );
+                // When filtering by decade, automatically sort by year ascending
+                currentSort = 'year-asc';
             }
             
             // Re-apply current sort to filtered results
             applyCurrentSort();
             updateMovieCount();
+            updateSortButtons();
             renderMovies();
+        }
+
+        function updateSortButtons() {
+            document.querySelectorAll('.sort-btn:not(.decade-filter)').forEach(btn => btn.classList.remove('active'));
+            if (currentSort === 'year-asc') {
+                document.querySelector('button[onclick="sortMovies(\'year-asc\')"]').classList.add('active');
+            } else if (currentSort === 'year-desc') {
+                document.querySelector('button[onclick="sortMovies(\'year-desc\')"]').classList.add('active');
+            } else if (currentSort === 'rating') {
+                document.querySelector('button[onclick="sortMovies(\'rating\')"]').classList.add('active');
+            } else if (currentSort === 'title') {
+                document.querySelector('button[onclick="sortMovies(\'title\')"]').classList.add('active');
+            } else {
+                document.querySelector('button[onclick="sortMovies(\'default\')"]').classList.add('active');
+            }
         }
 
         function updateMovieCount() {
@@ -791,11 +810,9 @@
         function sortMovies(type) {
             currentSort = type;
             
-            // Update active button
-            document.querySelectorAll('.sort-btn:not(.decade-filter)').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-
+            // Re-apply current sort to filtered results
             applyCurrentSort();
+            updateSortButtons();
             renderMovies();
         }
 
