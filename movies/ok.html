@@ -65,6 +65,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: all 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .sort-btn:hover {
@@ -77,6 +78,17 @@
             background: #4ecdc4;
             color: #1a1a2e;
             border-color: #4ecdc4;
+        }
+
+        .decade-filter {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234ecdc4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 20px;
+            padding-right: 35px;
         }
 
         .movie-grid {
@@ -188,6 +200,19 @@
             <button class="sort-btn" onclick="sortMovies('year-desc')">Year (Newest First)</button>
             <button class="sort-btn" onclick="sortMovies('rating')">Rating (High to Low)</button>
             <button class="sort-btn" onclick="sortMovies('title')">Title (A-Z)</button>
+            <select class="sort-btn decade-filter" id="decadeFilter" onchange="filterByDecade(this.value)">
+                <option value="">All Decades</option>
+                <option value="1900-1939">1900-1939</option>
+                <option value="1940-1949">1940-1949</option>
+                <option value="1950-1959">1950-1959</option>
+                <option value="1960-1969">1960-1969</option>
+                <option value="1970-1979">1970-1979</option>
+                <option value="1980-1989">1980-1989</option>
+                <option value="1990-1999">1990-1999</option>
+                <option value="2000-2009">2000-2009</option>
+                <option value="2010-2019">2010-2019</option>
+                <option value="2020-2029">2020-2029</option>
+            </select>
         </div>
 
         <div id="debugInfo"></div>
@@ -396,7 +421,7 @@
             "Koyaanisqatsi (1983) - Documentary, Music - 7,9.jpg",
             "Krull (1983) - Action, Adventure - 6,1.jpg",
             "Kung Fu Hustle (2004) - Action, Comedy - 7,5.jpg",
-            "La Ch\u00e8vre (1981) - Comedy, Crime - 7,1.jpg",
+            "La Chèvre (1981) - Comedy, Crime - 7,1.jpg",
             "La Grande Bouffe (1973) - Drama, Comedy - 7,1.jpg",
             "Law Abiding Citizen (2009) - Drama, Crime - 7,4.jpg",
             "Le Trou (1960) - Drama, Thriller - 8,2.jpg",
@@ -423,7 +448,7 @@
             "Murder by Decree (1979) - Crime, Mystery - 6,4.jpg",
             "Murder by Numbers (2002) - Crime, Drama - 6,2.jpg",
             "Murder on the Orient Express (1974) - Drama, Thriller - 7,1.jpg",
-            "Naked Gun 33\u2153 The Final Insult (1994) - Comedy, Crime - 6,5.jpg",
+            "Naked Gun 33⅓ The Final Insult (1994) - Comedy, Crime - 6,5.jpg",
             "National Lampoon's Christmas Vacation (1989) - Comedy - 7,2.jpg",
             "National Lampoon's European Vacation (1985) - Adventure, Comedy - 6,2.jpg",
             "National Lampoon's Loaded Weapon 1 (1993) - Comedy, Crime - 6,0.jpg",
@@ -585,7 +610,7 @@
             "The Mummy (1999) - Adventure, Action - 7,0.jpg",
             "The Mummy Returns (2001) - Adventure, Action - 6,4.jpg",
             "The Naked Gun (2025) - Action, Comedy - 6,4.jpg",
-            "The Naked Gun 2\u00bd The Smell of Fear (1991) - Comedy, Crime - 6,8.jpg",
+            "The Naked Gun 2½ The Smell of Fear (1991) - Comedy, Crime - 6,8.jpg",
             "The Naked Gun From the Files of Police Squad! (1988) - Comedy, Crime - 7,3.jpg",
             "The Name of the Rose (1986) - Drama, Thriller - 7,5.jpg",
             "The Ninth Gate (1999) - Mystery,  Thriller - 6,7.jpg",
@@ -683,7 +708,9 @@
         console.log('First 3 movies:', movies.slice(0, 3));
 
         let currentSort = 'default';
+        let currentDecade = '';
         let moviesData = [];
+        let allMoviesData = [];
 
         function parseMovieName(filename) {
             const nameWithoutExt = filename.replace('.jpg', '');
@@ -720,22 +747,62 @@
                 return;
             }
 
-            moviesData = movies.map(parseMovieName);
-            console.log('Parsed movies:', moviesData.slice(0, 3));
-            document.getElementById('movieCount').textContent = `${movies.length} Movies`;
+            allMoviesData = movies.map(parseMovieName);
+            moviesData = [...allMoviesData];
+            console.log('Parsed movies:', allMoviesData.slice(0, 3));
+            updateMovieCount();
             renderMovies();
+        }
+
+        function getDecadeRange(decade) {
+            const parts = decade.split('-');
+            return {
+                start: parseInt(parts[0]),
+                end: parseInt(parts[1])
+            };
+        }
+
+        function filterByDecade(decade) {
+            currentDecade = decade;
+            
+            if (decade === '') {
+                moviesData = [...allMoviesData];
+            } else {
+                const range = getDecadeRange(decade);
+                moviesData = allMoviesData.filter(movie => 
+                    movie.year >= range.start && movie.year <= range.end
+                );
+            }
+            
+            // Re-apply current sort to filtered results
+            applyCurrentSort();
+            updateMovieCount();
+            renderMovies();
+        }
+
+        function updateMovieCount() {
+            if (currentDecade === '') {
+                document.getElementById('movieCount').textContent = `${moviesData.length} Movies`;
+            } else {
+                document.getElementById('movieCount').textContent = `${moviesData.length} Movies (${currentDecade})`;
+            }
         }
 
         function sortMovies(type) {
             currentSort = type;
-
+            
             // Update active button
-            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.sort-btn:not(.decade-filter)').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
 
+            applyCurrentSort();
+            renderMovies();
+        }
+
+        function applyCurrentSort() {
             let sorted = [...moviesData];
 
-            switch(type) {
+            switch(currentSort) {
                 case 'year-asc':
                     sorted.sort((a, b) => a.year - b.year);
                     break;
@@ -749,12 +816,11 @@
                     sorted.sort((a, b) => a.title.localeCompare(b.title));
                     break;
                 default:
-                    // Keep original order
+                    // Keep order of allMoviesData or currently filtered data
                     break;
             }
 
             moviesData = sorted;
-            renderMovies();
         }
 
         function renderMovies() {
