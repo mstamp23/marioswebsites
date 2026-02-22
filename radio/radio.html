@@ -18,6 +18,18 @@
   #bg.on{opacity:.2;}
   .wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 20px 80px;}
 
+  /* Νέο στυλ για την προειδοποίηση */
+  .warning-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ff4d4d;
+    text-align: center;
+    margin-top: 20px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
+  }
+
   header{padding:30px 0 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:28px;gap:16px;flex-wrap:wrap;}
   .logo h1{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;letter-spacing:-1px;}
   .logo h1 span{color:var(--accent);}
@@ -51,27 +63,48 @@
   #cnt{font-size:.72rem;color:var(--muted);padding:2px 0 16px;}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:14px;}
 
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 15px 14px;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;}
+  /* Αναβαθμισμένη κάρτα ως όλο κουμπί */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: all .22s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
   .card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(232,168,56,.07),transparent);opacity:0;transition:opacity .25s;pointer-events:none;border-radius:14px;}
-  .card:hover{background:var(--card-h);border-color:rgba(232,168,56,.22);transform:translateY(-2px);}
+  .card:hover{background:var(--card-h);border-color:rgba(232,168,56,0.4);transform:translateY(-3px);}
   .card:hover::before{opacity:1;}
-  .card.playing{border-color:var(--accent);box-shadow:var(--glow);background:rgba(232,168,56,.06);}
+  .card.playing {
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+    background: rgba(232,168,56,0.12);
+  }
   .card.playing::before{opacity:1;}
-  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
-  .ico{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(255,255,255,.05);flex-shrink:0;}
-  .pbtn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.65rem;transition:all .2s;flex-shrink:0;}
-  .pbtn:hover{border-color:var(--accent);color:var(--accent);background:rgba(232,168,56,.1);}
-  .card.playing .pbtn{border-color:var(--accent);background:var(--accent);color:#0d0d0d;animation:pulse 1.8s ease infinite;}
+  
+  .card-top{display:flex;justify-content:center;align-items:center;gap:6px;}
+  .ico{width:60px;height:60px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:rgba(255,255,255,0.05);transition: transform 0.2s;}
+  .card:hover .ico {transform: scale(1.1);}
+  .card.playing .ico {background: var(--accent); color: #0d0d0d; animation: pulse 1.8s ease infinite;}
+
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,168,56,.4)}70%{box-shadow:0 0 0 10px rgba(232,168,56,0)}100%{box-shadow:0 0 0 0 rgba(232,168,56,0)}}
-  .name{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;line-height:1.25;}
-  .gtag{font-size:.67rem;color:var(--muted);background:rgba(255,255,255,.04);padding:2px 8px;border-radius:50px;width:fit-content;}
-  .err{position:absolute;bottom:7px;right:9px;font-size:.58rem;color:#ff6b6b;opacity:.8;cursor:pointer;}
+  
+  .name{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;line-height:1.25;text-align: center;}
+  .gtag{font-size:.67rem;color:var(--muted);background:rgba(255,255,255,.04);padding:4px 10px;border-radius:50px;width:fit-content;margin: 0 auto;}
+  .err{position:absolute;bottom:7px;right:9px;font-size:.58rem;color:#ff6b6b;font-weight: bold;}
 
   footer{text-align:center;padding-top:40px;font-size:.72rem;color:#3a3a3a;border-top:1px solid var(--border);margin-top:40px;}
   footer a{color:#555;text-decoration:none;}
   audio{display:none;}
 
   @media(max-width:600px){
+    .warning-text { font-size: 2rem; }
     .logo h1{font-size:1.5rem;}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
     header{flex-direction:column;align-items:flex-start;}.searchbox input{width:110px;}
     .tabs{gap:6px;}
@@ -82,6 +115,8 @@
 <div id="bg"></div>
 <audio id="player" preload="none"></audio>
 <div class="wrap">
+
+<h2 class="warning-text">ΔΕΝ ΠΑΙΖΟΥΝ ΟΛΑ</h2>
 
 <header>
   <div class="logo">
@@ -462,7 +497,7 @@ function render(){
   document.getElementById('cg').textContent=`(${gc})`;
 
   const list = q ? S.filter(s=>s.name.toLowerCase().includes(q))
-                 : S.filter(s=>s.tab===activeTab);
+                   : S.filter(s=>s.tab===activeTab);
 
   document.getElementById('cnt').textContent =
     q ? `${list.length} αποτελέσματα για "${q}"` : `${list.length} σταθμοί`;
@@ -473,7 +508,6 @@ function render(){
     card.innerHTML=`
       <div class="card-top">
         <div class="ico">${s.e}</div>
-        <button class="pbtn"><span>▶</span></button>
       </div>
       <div class="name">${s.name}</div>
       <div class="gtag">${s.tab==='int'?'🌍 Διεθνής':'🇬🇷 Ελληνικά'}</div>
@@ -501,14 +535,13 @@ function play(card,s){
 
 function onOk(card,s){
   card.classList.add('playing');
-  const sp=card.querySelector('.pbtn span');if(sp)sp.textContent='■';
   npname.textContent=s.name; npbar.classList.add('on');
 }
 
 function onFail(card){
   cur=null;
   const e=document.createElement('span');
-  e.className='err'; e.textContent='⚠ No stream';
+  e.className='err'; e.textContent='⚠ Offline';
   card.appendChild(e);
   setTimeout(()=>e.remove(),5000);
 }
@@ -517,7 +550,6 @@ function stopAll(){
   player.pause();player.src='';
   document.querySelectorAll('.card.playing').forEach(c=>{
     c.classList.remove('playing');
-    const sp=c.querySelector('.pbtn span');if(sp)sp.textContent='▶';
   });
   npbar.classList.remove('on'); cur=null;
 }
