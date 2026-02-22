@@ -8,634 +8,595 @@
 <style>
   :root {
     --accent: #e8a838;
-    --accent2: #c45c2e;
     --bg: #0d0d0d;
     --card: rgba(255,255,255,0.04);
-    --card-hover: rgba(255,255,255,0.09);
-    --border: rgba(255,255,255,0.08);
+    --card-hover: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.07);
     --text: #f0ece3;
-    --muted: #888;
-    --playing-glow: 0 0 30px rgba(232,168,56,0.4);
+    --muted: #777;
+    --glow: 0 0 28px rgba(232,168,56,0.35);
   }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  #bg-overlay { position:fixed; inset:0; z-index:0; background-size:cover; background-position:center; opacity:0; transition:opacity 0.8s; pointer-events:none; }
+  #bg-overlay.on { opacity:0.2; }
+  .wrapper { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:0 20px 80px; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  header { padding:30px 0 24px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); margin-bottom:28px; gap:16px; flex-wrap:wrap; }
+  .logo h1 { font-family:'Syne',sans-serif; font-size:1.9rem; font-weight:800; letter-spacing:-1px; }
+  .logo h1 span { color:var(--accent); }
+  .logo p { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    transition: background 0.8s ease;
-    overflow-x: hidden;
-  }
+  #npbar { display:none; align-items:center; gap:12px; background:linear-gradient(135deg,rgba(232,168,56,0.1),rgba(196,92,46,0.07)); border:1px solid rgba(232,168,56,0.28); border-radius:50px; padding:9px 18px 9px 12px; animation:fadeIn 0.3s; }
+  #npbar.on { display:flex; }
+  @keyframes fadeIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
+  .bars { display:flex; gap:2px; align-items:flex-end; height:18px; }
+  .bar { width:3px; background:var(--accent); border-radius:2px; animation:bounce 0.7s ease-in-out infinite; }
+  .bar:nth-child(2){animation-delay:.12s}.bar:nth-child(3){animation-delay:.24s}.bar:nth-child(4){animation-delay:.36s}
+  @keyframes bounce { 0%,100%{height:5px} 50%{height:16px} }
+  #npname { font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; color:var(--accent); }
+  .stopbtn { width:26px; height:26px; border-radius:50%; border:none; background:rgba(255,255,255,0.08); color:var(--text); cursor:pointer; font-size:0.65rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s; margin-left:4px; }
+  .stopbtn:hover { background:rgba(255,80,80,0.3); }
 
-  /* Background overlay */
-  #bg-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.15;
-    transition: opacity 0.8s, background-image 0.8s;
-    pointer-events: none;
-  }
-  #bg-overlay.active { opacity: 0.25; }
+  .bgpicker { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .bgpicker label { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+  .swatch { width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform 0.18s,border-color 0.18s; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .swatch:hover,.swatch.on { transform:scale(1.18); border-color:var(--accent); }
 
-  .wrapper {
-    position: relative;
-    z-index: 1;
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 24px 80px;
-  }
+  .tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+  .tab { padding:9px 22px; border-radius:50px; cursor:pointer; border:1px solid var(--border); background:var(--card); color:var(--muted); font-family:'DM Sans',sans-serif; font-size:0.87rem; transition:all 0.2s; }
+  .tab:hover { color:var(--text); border-color:rgba(232,168,56,0.3); }
+  .tab.on { background:var(--accent); color:#0d0d0d; border-color:var(--accent); font-weight:600; }
+  .searchbox { margin-left:auto; background:var(--card); border:1px solid var(--border); border-radius:50px; padding:8px 16px; display:flex; align-items:center; gap:8px; transition:border-color 0.2s; }
+  .searchbox:focus-within { border-color:rgba(232,168,56,0.4); }
+  .searchbox input { background:none; border:none; outline:none; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.87rem; width:160px; }
+  .searchbox input::placeholder { color:var(--muted); }
 
-  /* Header */
-  header {
-    padding: 36px 0 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 36px;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
+  #resultcount { font-size:0.72rem; color:var(--muted); padding:2px 0 16px; }
 
-  .logo {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-  }
-  .logo h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -1px;
-    color: var(--text);
-  }
-  .logo span {
-    font-size: 1.3rem;
-    color: var(--accent);
-  }
-  .logo p {
-    font-size: 0.8rem;
-    color: var(--muted);
-    margin-top: 2px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 15px 14px; cursor:pointer; transition:all 0.22s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; gap:10px; position:relative; overflow:hidden; }
+  .card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(232,168,56,0.07),transparent); opacity:0; transition:opacity 0.25s; pointer-events:none; border-radius:14px; }
+  .card:hover { background:var(--card-hover); border-color:rgba(232,168,56,0.22); transform:translateY(-2px); }
+  .card:hover::before { opacity:1; }
+  .card.playing { border-color:var(--accent); box-shadow:var(--glow); background:rgba(232,168,56,0.06); }
+  .card.playing::before { opacity:1; }
+  .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
+  .ico { width:46px; height:46px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; background:rgba(255,255,255,0.05); flex-shrink:0; }
+  .playbtn { width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border); background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.65rem; transition:all 0.2s; flex-shrink:0; }
+  .playbtn:hover { border-color:var(--accent); color:var(--accent); background:rgba(232,168,56,0.1); }
+  .card.playing .playbtn { border-color:var(--accent); background:var(--accent); color:#0d0d0d; animation:pulse 1.8s ease infinite; }
+  .card.loading .playbtn { border-color:var(--accent); color:var(--accent); }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(232,168,56,0.4)} 70%{box-shadow:0 0 0 10px rgba(232,168,56,0)} 100%{box-shadow:0 0 0 0 rgba(232,168,56,0)} }
+  .name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; line-height:1.25; }
+  .gtag { font-size:0.67rem; color:var(--muted); background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:50px; width:fit-content; }
+  .err { position:absolute; bottom:7px; right:9px; font-size:0.58rem; color:#ff6b6b; opacity:0.8; cursor:pointer; }
+  .no-stream-tag { font-size:0.6rem; color:#555; position:absolute; top:8px; right:8px; }
 
-  /* Now Playing bar */
-  #now-playing-bar {
-    display: none;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(135deg, rgba(232,168,56,0.12), rgba(196,92,46,0.08));
-    border: 1px solid rgba(232,168,56,0.3);
-    border-radius: 50px;
-    padding: 10px 20px 10px 14px;
-    animation: slideIn 0.4s ease;
-  }
-  #now-playing-bar.visible { display: flex; }
-  .wave-icon {
-    display: flex;
-    gap: 3px;
-    align-items: flex-end;
-    height: 20px;
-  }
-  .wave-bar {
-    width: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-    animation: wave 0.8s ease-in-out infinite;
-  }
-  .wave-bar:nth-child(2) { animation-delay: 0.15s; }
-  .wave-bar:nth-child(3) { animation-delay: 0.3s; }
-  .wave-bar:nth-child(4) { animation-delay: 0.45s; }
-  @keyframes wave {
-    0%, 100% { height: 6px; }
-    50% { height: 18px; }
-  }
-  #now-playing-name {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--accent);
-  }
-  .stop-btn {
-    margin-left: 8px;
-    background: rgba(255,255,255,0.08);
-    border: none;
-    color: var(--text);
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 0.75rem;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
-  }
-  .stop-btn:hover { background: rgba(255,60,60,0.3); }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-
-  /* Background picker */
-  .bg-picker {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .bg-picker label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    white-space: nowrap;
-  }
-  .bg-swatches {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .bg-swatch {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .bg-swatch:hover { transform: scale(1.15); }
-  .bg-swatch.active { border-color: var(--accent); transform: scale(1.15); }
-
-  /* Filters */
-  .filters {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 32px;
-  }
-  .filter-btn {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 8px 18px;
-    border-radius: 50px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
-    transition: all 0.2s;
-  }
-  .filter-btn:hover {
-    border-color: rgba(232,168,56,0.4);
-    color: var(--text);
-  }
-  .filter-btn.active {
-    background: var(--accent);
-    color: #0d0d0d;
-    border-color: var(--accent);
-    font-weight: 600;
-  }
-
-  /* Grid */
-  .radio-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-  }
-
-  /* Radio card */
-  .radio-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px 18px 16px;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
-  }
-  .radio-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(232,168,56,0.08), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    border-radius: 16px;
-  }
-  .radio-card:hover {
-    background: var(--card-hover);
-    border-color: rgba(232,168,56,0.25);
-    transform: translateY(-3px);
-  }
-  .radio-card:hover::before { opacity: 1; }
-  .radio-card.playing {
-    border-color: var(--accent);
-    box-shadow: var(--playing-glow);
-    background: rgba(232,168,56,0.07);
-  }
-  .radio-card.playing::before { opacity: 1; }
-  .radio-card.hidden { display: none; }
-
-  .card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .station-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    object-fit: contain;
-    background: rgba(255,255,255,0.06);
-    padding: 4px;
-    flex-shrink: 0;
-  }
-  .station-icon-fallback {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(232,168,56,0.2), rgba(196,92,46,0.2));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-  }
-
-  .play-btn {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    font-size: 0.7rem;
-  }
-  .play-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: rgba(232,168,56,0.1);
-    transform: scale(1.1);
-  }
-  .radio-card.playing .play-btn {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: #0d0d0d;
-  }
-
-  .station-name {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--text);
-    line-height: 1.2;
-  }
-  .station-freq {
-    font-size: 0.75rem;
-    color: var(--accent);
-    font-weight: 500;
-    letter-spacing: 0.05em;
-  }
-  .station-genre {
-    font-size: 0.72rem;
-    color: var(--muted);
-    background: rgba(255,255,255,0.05);
-    padding: 3px 9px;
-    border-radius: 50px;
-    width: fit-content;
-  }
-
-  /* Pulsing ring on playing card */
-  @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 rgba(232,168,56,0.4); }
-    70% { box-shadow: 0 0 0 12px rgba(232,168,56,0); }
-    100% { box-shadow: 0 0 0 0 rgba(232,168,56,0); }
-  }
-  .radio-card.playing .play-btn {
-    animation: pulse-ring 1.8s ease infinite;
-  }
-
-  /* Section title */
-  .section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  /* Error badge */
-  .error-badge {
-    position: absolute;
-    bottom: 8px;
-    right: 10px;
-    font-size: 0.6rem;
-    color: #ff6b6b;
-    opacity: 0.7;
-  }
-
-  footer {
-    text-align: center;
-    padding-top: 48px;
-    font-size: 0.75rem;
-    color: #444;
-    border-top: 1px solid var(--border);
-    margin-top: 48px;
-  }
-  footer a { color: #666; text-decoration: none; }
-
-  audio { display: none; }
-
-  @media (max-width: 600px) {
-    .logo h1 { font-size: 1.5rem; }
-    .radio-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-    header { flex-direction: column; align-items: flex-start; }
+  footer { text-align:center; padding-top:40px; font-size:0.72rem; color:#3a3a3a; border-top:1px solid var(--border); margin-top:40px; }
+  footer a { color:#555; text-decoration:none; }
+  audio { display:none; }
+  @media(max-width:600px) {
+    .logo h1{font-size:1.5rem;} .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+    header{flex-direction:column;align-items:flex-start;} .searchbox input{width:110px;}
   }
 </style>
 </head>
 <body>
-
 <div id="bg-overlay"></div>
 <audio id="player" preload="none"></audio>
-
 <div class="wrapper">
-  <header>
-    <div>
-      <div class="logo">
-        <h1>GreekRadio</h1>
-        <span>🎵</span>
-      </div>
-      <p style="font-size:0.75rem;color:var(--muted);margin-top:4px;letter-spacing:0.08em;text-transform:uppercase">Ελληνικά Ραδιόφωνα Online</p>
-    </div>
 
-    <div id="now-playing-bar" aria-live="polite">
-      <div class="wave-icon">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-      </div>
-      <span id="now-playing-name">—</span>
-      <button class="stop-btn" onclick="stopAll()" title="Stop">■</button>
-    </div>
-
-    <div class="bg-picker">
-      <label>Φόντο:</label>
-      <div class="bg-swatches" id="bg-swatches"></div>
-    </div>
-  </header>
-
-  <div class="filters" id="filters">
-    <button class="filter-btn active" data-genre="all">Όλα</button>
-    <button class="filter-btn" data-genre="Mainstream">Mainstream</button>
-    <button class="filter-btn" data-genre="Rock">Rock</button>
-    <button class="filter-btn" data-genre="Λαϊκά">Λαϊκά</button>
-    <button class="filter-btn" data-genre="Ειδήσεις">Ειδήσεις</button>
-    <button class="filter-btn" data-genre="Διεθνής">Διεθνής</button>
-    <button class="filter-btn" data-genre="Έντεχνα">Έντεχνα</button>
-    <button class="filter-btn" data-genre="Παραδοσιακά">Παραδοσιακά</button>
+<header>
+  <div class="logo">
+    <h1>Greek<span>Radio</span> 🎵</h1>
+    <p>Ελληνικά Ραδιόφωνα Online</p>
   </div>
+  <div id="npbar">
+    <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+    <span id="npname">—</span>
+    <button class="stopbtn" onclick="stopAll()">■</button>
+  </div>
+  <div class="bgpicker">
+    <label>Φόντο:</label>
+    <div id="swatches"></div>
+  </div>
+</header>
 
-  <p class="section-title">Σταθμοί</p>
-  <div class="radio-grid" id="radio-grid"></div>
+<div class="tabs" id="tabs">
+  <button class="tab on" data-tab="int">🌍 Διεθνής Μουσική <span id="cnt-int" style="opacity:0.6;font-size:0.8em"></span></button>
+  <button class="tab" data-tab="gr">🇬🇷 Ελληνικά <span id="cnt-gr" style="opacity:0.6;font-size:0.8em"></span></button>
+  <div class="searchbox">
+    <span style="color:var(--muted)">🔍</span>
+    <input id="search" type="text" placeholder="Αναζήτηση…" autocomplete="off">
+  </div>
+</div>
 
-  <footer>
-    <p>Made with ♥ for Greek music lovers &nbsp;·&nbsp; Streams via live24.gr</p>
-  </footer>
+<p id="resultcount"></p>
+<div class="grid" id="grid"></div>
+
+<footer>Made with ♥ &nbsp;·&nbsp; Streams via <a href="https://live24.gr" target="_blank">live24.gr</a> &nbsp;·&nbsp; Stations marked ⚠ will open in live24.gr</footer>
 </div>
 
 <script>
-// ─────────────────────────────────────────────────────────
-// STATIONS DATA
-// Add/remove stations here. Stream URLs from live24.gr.
-// To find a stream URL: open live24.gr/radio/STATION.jsp,
-// right-click → Inspect → Network tab → look for .mp3/.aac stream
-// ─────────────────────────────────────────────────────────
-const stations = [
-  // ── STREAMS VERIFIED FROM COMMUNITY-MAINTAINED LISTS (Dec 2025) ──
-  { name: "En Lefko 87.7",        freq: "87.7",  genre: "Διεθνής",     emoji: "🎶", stream: "https://stream.radiojar.com/enlefko877" },
-  { name: "Μέντα 88.0",           freq: "88.0",  genre: "Mainstream",  emoji: "🌿", stream: "https://stream.radiojar.com/menta.aac" },
-  { name: "Δρόμος 89.8",          freq: "89.8",  genre: "Mainstream",  emoji: "🛣️", stream: "https://n01a-eu.rcs.revma.com/10q3enqxbfhvv" },
-  { name: "Παραπολιτικά 90.1",    freq: "90.1",  genre: "Ειδήσεις",   emoji: "🎙️", stream: "http://netradio.live24.gr/athinaradio" },
-  { name: "Λύρα 91.4",            freq: "91.4",  genre: "Παραδοσιακά", emoji: "🎻", stream: "https://i4.streams.ovh/ic/lyrafm/stream" },
-  { name: "Galaxy 92.0",          freq: "92.0",  genre: "Rock",        emoji: "🎸", stream: "http://galaxy.live24.gr/galaxy9292" },
-  { name: "Best Radio 92.6",      freq: "92.6",  genre: "Διεθνής",    emoji: "⭐", stream: "http://best.live24.gr/best1222" },
-  { name: "Kiss FM 92.9",         freq: "92.9",  genre: "Διεθνής",    emoji: "💋", stream: "http://kissfm.live24.gr/kiss2111" },
-  { name: "bwin ΣΠΟΡ 94.6",       freq: "94.6",  genre: "Ειδήσεις",   emoji: "⚽", stream: "http://sportfm.live24.gr/sportfm7712" },
-  { name: "Ρυθμός 94.9",          freq: "94.9",  genre: "Mainstream",  emoji: "🥁", stream: "https://stream.radiojar.com/g4tyehk5yvduv" },
-  { name: "Red FM 96.3",          freq: "96.3",  genre: "Rock",        emoji: "🔴", stream: "https://stream.radiojar.com/redfm963" },
-  { name: "Pepper 96.6",          freq: "96.6",  genre: "Mainstream",  emoji: "🌶️", stream: "https://stream.radiojar.com/pepper.m4a" },
-  { name: "Rock FM 96.9",         freq: "96.9",  genre: "Rock",        emoji: "🤘", stream: "https://az10.yesstreaming.net:8060/radio.mp3" },
-  { name: "Easy 97.2",            freq: "97.2",  genre: "Διεθνής",    emoji: "😌", stream: "https://stream.radiojar.com/cthtwxk5yvduv" },
-  { name: "Love Radio 97.5",      freq: "97.5",  genre: "Mainstream",  emoji: "❤️", stream: "http://loveradio.live24.gr/loveradio-1000" },
-  { name: "Real FM 97.8",         freq: "97.8",  genre: "Ειδήσεις",   emoji: "🗞️", stream: "http://realfm2.live24.gr:80/realfm" },
-  { name: "Αθήνα 98.4",           freq: "98.4",  genre: "Ειδήσεις",   emoji: "🏛️", stream: "http://athina984.live24.gr/athina984" },
-  { name: "Alpha Talk 98.9",      freq: "98.9",  genre: "Ειδήσεις",   emoji: "💬", stream: "https://stream.radiojar.com/xcdg6yggzfeuv" },
-  { name: "Μελωδία 99.2",         freq: "99.2",  genre: "Έντεχνα",    emoji: "🎼", stream: "https://stream.radiojar.com/8du64725e3quv" },
-  { name: "Σκαϊ 100.3",           freq: "100.3", genre: "Ειδήσεις",   emoji: "📰", stream: "http://netradio.live24.gr/skai1003" },
-  { name: "ΕΡΑ Sport 101.8",      freq: "101.8", genre: "Ειδήσεις",   emoji: "🏟️", stream: "http://radiostreaming.ert.gr/ert-erasport" },
-  { name: "Δίεση 101.3",          freq: "101.3", genre: "Παραδοσιακά", emoji: "🪗", stream: "https://n05a-eu.rcs.revma.com/gkfwrhqxbfhvv" },
-  { name: "Sfera 102.2",          freq: "102.2", genre: "Mainstream",  emoji: "🔵", stream: "http://sfera.live24.gr/sfera4132" },
-  { name: "Athens Voice 102.5",   freq: "102.5", genre: "Διεθνής",    emoji: "🗣️", stream: "http://nitro.live24.gr/nitro4555" },
-  { name: "Στο Κόκκινο 105.5",    freq: "105.5", genre: "Ειδήσεις",   emoji: "🔺", stream: "https://stream.radiojar.com/kokkino-ath.mp3" },
-  { name: "Mad Radio 106.2",      freq: "106.2", genre: "Mainstream",  emoji: "🎤", stream: "http://mediaserver.mad.tv/stream" },
-  { name: "ΕΡΑ Zeppelin 106.7",   freq: "106.7", genre: "Rock",        emoji: "✈️", stream: "http://radiostreaming.ert.gr/ert-zeppelin" },
-  { name: "ΕΡΑ Kosmos 107.0",     freq: "107.0", genre: "Έντεχνα",    emoji: "🌌", stream: "http://radiostreaming.ert.gr/ert-kosmos" },
-  { name: "Radio Gold @net",      freq: "—",     genre: "Rock",        emoji: "🥇", stream: "http://radiogold.live24.gr/radiogold" },
-  { name: "Derti Radio",          freq: "—",     genre: "Λαϊκά",      emoji: "💃", stream: "http://derti.live24.gr/derty1000" },
-  { name: "ΕΡΑ Τρίτο 90.9",       freq: "90.9",  genre: "Έντεχνα",    emoji: "📻", stream: "http://radiostreaming.ert.gr/ert-trito" },
-  { name: "ΕΡΑ Πρώτο 91.6",       freq: "91.6",  genre: "Ειδήσεις",   emoji: "📡", stream: "http://radiostreaming.ert.gr/ert-proto" },
-  { name: "ΕΡΑ Δεύτερο 103.7",    freq: "103.7", genre: "Mainstream",  emoji: "🎵", stream: "http://radiostreaming.ert.gr/ert-deftero" },
-  { name: "Voice of Greece",      freq: "—",     genre: "Διεθνής",    emoji: "🌍", stream: "http://radiostreaming.ert.gr/ert-voiceofgreece" },
-  { name: "Athens Up",            freq: "—",     genre: "Mainstream",  emoji: "⬆️", stream: "https://n02.radiojar.com/9ndpdg3c0s8uv" },
+// ════════════════════════════════════════════════════════
+// STATION DATA
+// stream = direct known URL; sid = live24 station ID
+// If no stream URL, falls back to netradio.live24.gr/generic{sid}
+// ════════════════════════════════════════════════════════
+const S = [
+// ─── 🌍 INTERNATIONAL (gid=24) ───────────────────────
+{name:"En Lefko 87.7",tab:"int",e:"🎶",stream:"https://stream.radiojar.com/enlefko877"},
+{name:"Kiss FM 92.9",tab:"int",e:"💋",stream:"http://kissfm.live24.gr/kiss2111"},
+{name:"Best Radio 92.6",tab:"int",e:"⭐",stream:"http://best.live24.gr/best1222"},
+{name:"Easy 97.2",tab:"int",e:"😌",stream:"https://stream.radiojar.com/cthtwxk5yvduv"},
+{name:"Galaxy 92",tab:"int",e:"🎸",stream:"http://galaxy.live24.gr/galaxy9292"},
+{name:"Red FM 96.3",tab:"int",e:"🔴",stream:"https://stream.radiojar.com/redfm963"},
+{name:"Pepper 96.6",tab:"int",e:"🌶️",stream:"https://stream.radiojar.com/pepper.m4a"},
+{name:"Ρυθμός 94.9",tab:"int",e:"🥁",stream:"https://stream.radiojar.com/g4tyehk5yvduv"},
+{name:"Rock FM 96.9",tab:"int",e:"🤘",stream:"https://az10.yesstreaming.net:8060/radio.mp3"},
+{name:"Love Radio 97.5",tab:"int",e:"❤️",stream:"http://loveradio.live24.gr/loveradio-1000"},
+{name:"Blue Space 107.2",tab:"int",e:"💙",stream:"https://sp1.19cloudsnetwork.gr/8008/stream"},
+{name:"Athens Voice 102.5",tab:"int",e:"🗣️",stream:"http://nitro.live24.gr/nitro4555"},
+{name:"Mad Radio 106.2",tab:"int",e:"🎤",stream:"http://mediaserver.mad.tv/stream"},
+{name:"Sfera 102.2",tab:"int",e:"🔵",stream:"http://sfera.live24.gr/sfera4132"},
+{name:"Athens UP Radio",tab:"int",e:"⬆️",stream:"https://n02.radiojar.com/9ndpdg3c0s8uv"},
+{name:"ΕΡΑ Kosmos Jazz",tab:"int",e:"🎷",stream:"https://radiostreaming.ert.gr/ert-webjazz"},
+{name:"ΕΡΑ Zeppelin",tab:"int",e:"✈️",stream:"http://radiostreaming.ert.gr/ert-zeppelin"},
+{name:"02 Dance Radio",tab:"int",e:"💃",sid:4127},
+{name:"100.6 Kiss FM",tab:"int",e:"🎵",sid:567},
+{name:"111 Radio",tab:"int",e:"📻",sid:2434},
+{name:"1431 AM",tab:"int",e:"📡",sid:2320},
+{name:"24-7 Radio.us",tab:"int",e:"⏰",sid:1848},
+{name:"4Life Radio",tab:"int",e:"💚",sid:3424},
+{name:"80sMania Radio",tab:"int",e:"🕹️",sid:2910},
+{name:"88μισό 88.5",tab:"int",e:"🎵",sid:253},
+{name:"89 Rainbow 89",tab:"int",e:"🌈",sid:254},
+{name:"90s All Time Greatest",tab:"int",e:"💿",sid:3186},
+{name:"90s Heaven Web Radio",tab:"int",e:"🎧",sid:3570},
+{name:"98.6",tab:"int",e:"📻",sid:3916},
+{name:"A 100 FM 107.4",tab:"int",e:"🎵",sid:1700},
+{name:"Action Radio 98.2",tab:"int",e:"⚡",sid:1595},
+{name:"Active Radio",tab:"int",e:"🏃",sid:3425},
+{name:"AK Radio",tab:"int",e:"🎵",sid:1650},
+{name:"Aktina Radio 95.0",tab:"int",e:"📡",sid:821},
+{name:"Albedo 14 Radio",tab:"int",e:"🌙",sid:2630},
+{name:"Alfa Radio 96",tab:"int",e:"Α",sid:1068},
+{name:"All 60s Radio",tab:"int",e:"🎺",sid:3488},
+{name:"All 70s Radio",tab:"int",e:"🪕",sid:3489},
+{name:"All Hits Zone",tab:"int",e:"🎯",sid:3185},
+{name:"All Time 70s 80s",tab:"int",e:"⏳",sid:2741},
+{name:"Allgood Radio",tab:"int",e:"✌️",sid:4105},
+{name:"Andromeda NET Radio",tab:"int",e:"🌌",sid:1343},
+{name:"Antennes Radio 93.6",tab:"int",e:"📡",sid:2534},
+{name:"Anyway Deep Radio",tab:"int",e:"🌊",sid:1942},
+{name:"Anyway Fresh Radio",tab:"int",e:"🌿",sid:3518},
+{name:"Apolis Radio",tab:"int",e:"🌍",sid:4097},
+{name:"Apollon FM 98.1",tab:"int",e:"☀️",sid:1760},
+{name:"Aqua Radio The 80s",tab:"int",e:"💧",sid:2854},
+{name:"Aroto Instrumental",tab:"int",e:"🎻",sid:2861},
+{name:"Art FM 102.7",tab:"int",e:"🎨",sid:2228},
+{name:"Art FM 103.1",tab:"int",e:"🖼️",sid:3443},
+{name:"Athens DJ 95.2",tab:"int",e:"🎧",sid:1322},
+{name:"Athens Free Radio",tab:"int",e:"🗽",sid:3794},
+{name:"Athens Metro Mall Radio",tab:"int",e:"🏪",sid:2559},
+{name:"Athens Party",tab:"int",e:"🎉",sid:2595},
+{name:"Athens Radio Master",tab:"int",e:"🎛️",sid:3573},
+{name:"Athens Radio Trance",tab:"int",e:"🔮",sid:2769},
+{name:"Athikia Disco FM",tab:"int",e:"🕺",sid:4000},
+{name:"Audiophile Baroque",tab:"int",e:"🎼",sid:2831},
+{name:"Audiophile Rock/Blues",tab:"int",e:"🎸",sid:2796},
+{name:"Auto Pilot Radio",tab:"int",e:"✈️",sid:2387},
+{name:"Avanti 97.7",tab:"int",e:"🚀",sid:1489},
+{name:"Avanti Classic",tab:"int",e:"🎻",sid:2943},
+{name:"Avanti FM 107.6",tab:"int",e:"🎵",sid:183},
+{name:"Bach Radio",tab:"int",e:"🎼",sid:2937},
+{name:"Baila Radio",tab:"int",e:"💃",sid:4010},
+{name:"Bangee Radio",tab:"int",e:"🔊",sid:2822},
+{name:"Be Radio",tab:"int",e:"🎵",sid:2642},
+{name:"Beethoven Radio",tab:"int",e:"🎹",sid:2827},
+{name:"Believe Radio",tab:"int",e:"🙏",sid:3362},
+{name:"Best FM 97.3",tab:"int",e:"🏆",sid:863},
+{name:"Best Radio 94.7",tab:"int",e:"⭐",sid:1143},
+{name:"Beton7 Art Radio",tab:"int",e:"🎨",sid:1677},
+{name:"BFBS Cyprus 89.7",tab:"int",e:"🇨🇾",sid:2737},
+{name:"Black Duck Radio",tab:"int",e:"🦆",sid:2410},
+{name:"Bocca Radio",tab:"int",e:"👄",sid:3313},
+{name:"Boem Radio",tab:"int",e:"💥",sid:2220},
+{name:"Boo Radio",tab:"int",e:"👻",sid:2920},
+{name:"Box Radio",tab:"int",e:"📦",sid:3876},
+{name:"Buddha Radio",tab:"int",e:"☯️",sid:3991},
+{name:"Buddy Radio",tab:"int",e:"🤝",sid:4056},
+{name:"Bur Radio",tab:"int",e:"🎵",sid:3079},
+{name:"Cadillac Records Radio",tab:"int",e:"🚗",sid:2877},
+{name:"Camara Radio",tab:"int",e:"📷",sid:3643},
+{name:"Cannibal Radio",tab:"int",e:"🎸",sid:1661},
+{name:"Capital 104.8",tab:"int",e:"🏛️",sid:3245},
+{name:"Capital FM 107",tab:"int",e:"📻",sid:1649},
+{name:"Capital Radio 90.7",tab:"int",e:"🎵",sid:1210},
+{name:"Cavo Paradiso Radio",tab:"int",e:"🏖️",sid:2792},
+{name:"CFM 99.9",tab:"int",e:"📻",sid:3656},
+{name:"Chania Radio 99.6",tab:"int",e:"🌺",sid:3594},
+{name:"Chez Gabriel Radio",tab:"int",e:"🍷",sid:3851},
+{name:"Chillout TreePines",tab:"int",e:"🌲",sid:3439},
+{name:"Chimeres Radio",tab:"int",e:"🦋",sid:2981},
+{name:"Choice FM 104.3",tab:"int",e:"🎯",sid:2714},
+{name:"Cinar FM 91.8",tab:"int",e:"🎵",sid:2501},
+{name:"Cinnamon Radio Deep",tab:"int",e:"🍂",sid:4156},
+{name:"Cinnamon Radio Easy",tab:"int",e:"☕",sid:4157},
+{name:"City Faces Radio",tab:"int",e:"🏙️",sid:2453},
+{name:"City FM 92",tab:"int",e:"🌆",sid:613},
+{name:"City FM 100",tab:"int",e:"🌃",sid:1157},
+{name:"City FM 103.8",tab:"int",e:"🌇",sid:1415},
+{name:"Classic Old Time Radio",tab:"int",e:"📯",sid:4008},
+{name:"Classic-99",tab:"int",e:"🎻",sid:4101},
+{name:"Clearjet Radio",tab:"int",e:"✈️",sid:3820},
+{name:"Click Radio",tab:"int",e:"🖱️",sid:3634},
+{name:"Clubaki Web Radio",tab:"int",e:"🎉",sid:3547},
+{name:"Clubradiofm",tab:"int",e:"🎊",sid:4200},
+{name:"Cocktail Web Radio",tab:"int",e:"🍸",sid:3824},
+{name:"Coffee Web Radio",tab:"int",e:"☕",sid:2785},
+{name:"Coni-OnAir Radio",tab:"int",e:"📻",sid:1696},
+{name:"Contact Radio",tab:"int",e:"📞",sid:3608},
+{name:"Cool FM 90.7",tab:"int",e:"❄️",sid:694},
+{name:"Cool FM 106.8",tab:"int",e:"🆒",sid:1225},
+{name:"Cool FM.eu",tab:"int",e:"😎",sid:41},
+{name:"CoolFM.eu Soft",tab:"int",e:"🌸",sid:2057},
+{name:"Cosmos 93.2",tab:"int",e:"🌍",sid:951},
+{name:"Cosmos 97.1",tab:"int",e:"🪐",sid:900},
+{name:"Crystal Radio Athens",tab:"int",e:"💎",sid:3867},
+{name:"Cult Radio 99.8",tab:"int",e:"🖤",sid:2882},
+{name:"Cut-Radio 95.2",tab:"int",e:"✂️",sid:3152},
+{name:"Cyprus Funk Station",tab:"int",e:"🎷",sid:2904},
+{name:"D Radio",tab:"int",e:"🎵",sid:1727},
+{name:"D-code 96.2",tab:"int",e:"🔢",sid:1251},
+{name:"Dance waves",tab:"int",e:"🌊",sid:1673},
+{name:"DeeJay Corfu 97.5",tab:"int",e:"🏝️",sid:536},
+{name:"DeeJay Radio Κύπρου 93.5",tab:"int",e:"🇨🇾",sid:2707},
+{name:"DeeJay Βόλος 104.5",tab:"int",e:"🎵",sid:2544},
+{name:"Deep Motion FM",tab:"int",e:"🌊",sid:1362},
+{name:"Deep Web Radio",tab:"int",e:"🌐",sid:3791},
+{name:"Deepin Radio",tab:"int",e:"🔁",sid:2965},
+{name:"DGradio One",tab:"int",e:"1️⃣",sid:3302},
+{name:"Dice Radio",tab:"int",e:"🎲",sid:2644},
+{name:"Disco 80s Radio",tab:"int",e:"🕺",sid:1593},
+{name:"Disco Cafe",tab:"int",e:"☕",sid:3639},
+{name:"Disco FM",tab:"int",e:"🪩",sid:3038},
+{name:"Disco Net Radio Athens",tab:"int",e:"💿",sid:3524},
+{name:"Discomania",tab:"int",e:"🕺",sid:1410},
+{name:"Diva FM 91.6",tab:"int",e:"💅",sid:996},
+{name:"Dj Power Music",tab:"int",e:"💪",sid:4027},
+{name:"Dj Yanni Radio",tab:"int",e:"🎧",sid:2212},
+{name:"Dj Λαμία 91.2",tab:"int",e:"🎛️",sid:2883},
+{name:"Dolce Radio",tab:"int",e:"🍬",sid:1856},
+{name:"Dream 96.9",tab:"int",e:"💭",sid:90},
+{name:"Dream Radio 88.1",tab:"int",e:"🌛",sid:3336},
+{name:"DreamCity WebRadio",tab:"int",e:"🌆",sid:1978},
+{name:"Dromos FM Κύπρου",tab:"int",e:"🛣️",sid:1674},
+{name:"DRS FM 95.3",tab:"int",e:"📻",sid:1426},
+{name:"Easy 93.2",tab:"int",e:"😌",sid:1861},
+{name:"Easy 105.3",tab:"int",e:"☮️",sid:238},
+{name:"Echoes Radio",tab:"int",e:"🔔",sid:2598},
+{name:"Eclectic Radio",tab:"int",e:"🎨",sid:2240},
+{name:"EcoBeat Gr",tab:"int",e:"🌱",sid:4036},
+{name:"Edit Radio",tab:"int",e:"✏️",sid:2990},
+{name:"EF-EM Radio 99",tab:"int",e:"📻",sid:2736},
+{name:"Elegant Radio",tab:"int",e:"🌹",sid:3866},
+{name:"eMusic Site",tab:"int",e:"🎵",sid:4204},
+{name:"Energy 94.2",tab:"int",e:"⚡",sid:581},
+{name:"ENERGY 93.4",tab:"int",e:"🔋",sid:1436},
+{name:"Energy 101.5",tab:"int",e:"💡",sid:3431},
+{name:"Energy FM 88.9",tab:"int",e:"⚡",sid:2756},
+{name:"Enfo Radio",tab:"int",e:"ℹ️",sid:3262},
+{name:"Envy Radio",tab:"int",e:"💚",sid:3236},
+{name:"Escapula Radio",tab:"int",e:"🏃",sid:3238},
+{name:"Essential Mix Radio",tab:"int",e:"🎚️",sid:3625},
+{name:"Eternal Radio",tab:"int",e:"♾️",sid:3157},
+{name:"Eurovision Song Contest Radio",tab:"int",e:"🇪🇺",sid:3224},
+{name:"EXIT radio",tab:"int",e:"🚪",sid:3520},
+{name:"EyeOnYou Radio",tab:"int",e:"👁️",sid:2959},
+{name:"Fame Radio",tab:"int",e:"⭐",sid:2556},
+{name:"Feelings Radio",tab:"int",e:"💕",sid:2998},
+{name:"Figaro Radio",tab:"int",e:"🎭",sid:3659},
+{name:"Fire radio",tab:"int",e:"🔥",sid:2480},
+{name:"Flashback Radio",tab:"int",e:"⏮️",sid:2994},
+{name:"Fly 104",tab:"int",e:"🦅",sid:299},
+{name:"Fly FM 88.1",tab:"int",e:"🦋",sid:2398},
+{name:"Fly FM 89.7",tab:"int",e:"🕊️",sid:839},
+{name:"FM Life 105.3",tab:"int",e:"🌿",sid:407},
+{name:"Focus FM 103.6",tab:"int",e:"🔍",sid:2001},
+{name:"Folegandros Radio",tab:"int",e:"🏝️",sid:3409},
+{name:"Forever 96.3",tab:"int",e:"🕰️",sid:1052},
+{name:"Freestyle Radio 97.2",tab:"int",e:"🤸",sid:3276},
+{name:"Fresh 92.9",tab:"int",e:"🌊",sid:1000},
+{name:"Fresh 105",tab:"int",e:"🌿",sid:3390},
+{name:"Fresh web Radio",tab:"int",e:"💧",sid:2784},
+{name:"Frisky radio",tab:"int",e:"😋",sid:2477},
+{name:"G Radio",tab:"int",e:"🅶",sid:1750},
+{name:"Galaxy 106.1",tab:"int",e:"🌌",sid:781},
+{name:"Geranymo Groovy",tab:"int",e:"🎷",sid:3572},
+{name:"Ghost Radio",tab:"int",e:"👻",sid:2885},
+{name:"Ginge Radio",tab:"int",e:"🎵",sid:1886},
+{name:"GLOBAL MUSIC RADIO",tab:"int",e:"🌐",sid:4205},
+{name:"Gods Cafe Radio",tab:"int",e:"☕",sid:3028},
+{name:"Gold Radio",tab:"int",e:"🥇",sid:3180},
+{name:"GRD Terra Radio",tab:"int",e:"🌍",sid:3754},
+{name:"Greek New Age Radio",tab:"int",e:"🧘",sid:1994},
+{name:"Greek Otaku Radio",tab:"int",e:"🎌",sid:2803},
+{name:"Greek Web Radio",tab:"int",e:"🌐",sid:2616},
+{name:"Greekradio web Channel",tab:"int",e:"📻",sid:4196},
+{name:"Groove Radio",tab:"int",e:"🎷",sid:1713},
+
+// ─── 🇬🇷 GREEK (gid=25) ─────────────────────────────
+{name:"Δρόμος 89.8",tab:"gr",e:"🛣️",stream:"https://n01a-eu.rcs.revma.com/10q3enqxbfhvv"},
+{name:"Derti Radio",tab:"gr",e:"💃",stream:"http://derti.live24.gr/derty1000"},
+{name:"Μελωδία 99.2",tab:"gr",e:"🎼",stream:"https://stream.radiojar.com/8du64725e3quv"},
+{name:"Μέντα 88.0",tab:"gr",e:"🌿",stream:"https://stream.radiojar.com/menta.aac"},
+{name:"Δίεση 101.3",tab:"gr",e:"🪗",stream:"https://n05a-eu.rcs.revma.com/gkfwrhqxbfhvv"},
+{name:"Λύρα 91.4",tab:"gr",e:"🎻",stream:"https://i4.streams.ovh/ic/lyrafm/stream"},
+{name:"Radio Gold @net",tab:"gr",e:"🥇",stream:"http://radiogold.live24.gr/radiogold"},
+{name:"Στο Κόκκινο 105.5",tab:"gr",e:"🔺",stream:"https://stream.radiojar.com/kokkino-ath.mp3"},
+{name:"ΕΡΑ Τα Λαϊκά",tab:"gr",e:"🪗",stream:"https://radiostreaming.ert.gr/ert-talaika"},
+{name:"ΕΡΑ Τρίτο 90.9",tab:"gr",e:"📻",stream:"http://radiostreaming.ert.gr/ert-trito"},
+{name:"Skai 100.3",tab:"gr",e:"📰",stream:"http://netradio.live24.gr/skai1003"},
+{name:"Flash 96.1",tab:"gr",e:"⚡",stream:"https://netradio.live24.gr/flash961"},
+{name:"Fun Radio 104",tab:"gr",e:"😄",stream:"https://ath10400fm.live24.gr/ath10400fm"},
+{name:"Heart Athens 93.9",tab:"gr",e:"❤️",stream:"https://netradio.live24.gr/heart939"},
+{name:"Rebel 105.2",tab:"gr",e:"🏴",stream:"https://netradio.live24.gr/rebel1052"},
+{name:"Parapolitika 90.1",tab:"gr",e:"🎙️",stream:"http://netradio.live24.gr/athinaradio"},
+{name:"Music 89.2",tab:"gr",e:"🎵",stream:"https://netradio.live24.gr/music892"},
+{name:"Laikos 89.4",tab:"gr",e:"🎶",stream:"https://netradio.live24.gr/laikos894"},
+{name:"Era Sport 101.8",tab:"gr",e:"🏟️",stream:"http://radiostreaming.ert.gr/ert-erasport"},
+{name:"Kanali 1 Πειραιάς",tab:"gr",e:"📡",stream:"https://netradio.live24.gr/kanali1peiraia"},
+{name:"Ellada Sport 94.3",tab:"gr",e:"⚽",stream:"https://stream.ellada943.gr:10198/radio.mp3"},
+{name:"Zougla Radio",tab:"gr",e:"🌴",stream:"https://netradio.live24.gr/zouglaradio"},
+{name:"ANT1 Radio 94.0",tab:"gr",e:"📡",sid:1652},
+{name:"1ο Ερασιτεχνικό Γαργαλιάνων",tab:"gr",e:"📻",sid:3440},
+{name:"2DAY 104.5",tab:"gr",e:"📻",sid:1569},
+{name:"2MM Web Radio",tab:"gr",e:"🎵",sid:2674},
+{name:"926 FM 92.6",tab:"gr",e:"📻",sid:15},
+{name:"Action Radio",tab:"gr",e:"⚡",sid:3660},
+{name:"Adelin 107.3",tab:"gr",e:"📻",sid:2565},
+{name:"aiwaves",tab:"gr",e:"🌊",sid:2072},
+{name:"Alpha FM 104.7",tab:"gr",e:"Α",sid:1506},
+{name:"Angel 102.8",tab:"gr",e:"👼",sid:139},
+{name:"Apollon FM 98.1",tab:"gr",e:"☀️",sid:1760},
+{name:"Apps Radio 96.6",tab:"gr",e:"📱",sid:2789},
+{name:"Aria FM 107.4",tab:"gr",e:"🎵",sid:605},
+{name:"Arion Στιγμές",tab:"gr",e:"⏳",sid:2592},
+{name:"ArtFM Radio",tab:"gr",e:"🎨",sid:2927},
+{name:"Astra FM 97.3",tab:"gr",e:"⭐",sid:164},
+{name:"Astra FM 99.2",tab:"gr",e:"🌟",sid:939},
+{name:"Avena 97.7",tab:"gr",e:"🌾",sid:2478},
+{name:"Baby Radio",tab:"gr",e:"👶",sid:4066},
+{name:"Barack Radio",tab:"gr",e:"📻",sid:4011},
+{name:"Best Radio 103.9",tab:"gr",e:"⭐",sid:849},
+{name:"Ble.FM 92.5",tab:"gr",e:"💙",sid:2458},
+{name:"Blue Greece Radio",tab:"gr",e:"🇬🇷",sid:2732},
+{name:"Brake FM 100.8",tab:"gr",e:"🛑",sid:829},
+{name:"Bravo FM 89.6",tab:"gr",e:"👏",sid:551},
+{name:"B-Side Radio",tab:"gr",e:"💿",sid:4124},
+{name:"BueStar FM 105.1",tab:"gr",e:"⭐",sid:1906},
+{name:"Campos 97.8",tab:"gr",e:"🌾",sid:166},
+{name:"Chicago Greek Radio",tab:"gr",e:"🇺🇸",sid:2830},
+{name:"Cocktail FM 89.0",tab:"gr",e:"🍸",sid:3426},
+{name:"Cosmos Radio 93.0",tab:"gr",e:"🪐",sid:1943},
+{name:"Creta Planet Radio",tab:"gr",e:"🌍",sid:2671},
+{name:"Cretaone 102.3",tab:"gr",e:"🏝️",sid:4192},
+{name:"Derti 105.7",tab:"gr",e:"💃",sid:1766},
+{name:"DG Radio",tab:"gr",e:"🎵",sid:3021},
+{name:"DGradio One",tab:"gr",e:"1️⃣",sid:3302},
+{name:"DJ Γρηγόρης 306",tab:"gr",e:"🎧",sid:2996},
+{name:"Dream 96.9",tab:"gr",e:"💭",sid:90},
+{name:"Dream FM 90.7",tab:"gr",e:"🌛",sid:2178},
+{name:"Echo FM 97.4",tab:"gr",e:"🔔",sid:1988},
+{name:"Echo FM 103.8",tab:"gr",e:"📣",sid:1079},
+{name:"EN Radio",tab:"gr",e:"📻",sid:2576},
+{name:"Evros FM 100",tab:"gr",e:"🌊",sid:1066},
+{name:"Fiesta FM 101.7",tab:"gr",e:"🎉",sid:1044},
+{name:"FM 100 Patras",tab:"gr",e:"📻",sid:1143},
+{name:"For You Radio",tab:"gr",e:"💝",sid:3217},
+{name:"Galaxias 103",tab:"gr",e:"🌌",sid:1025},
+{name:"Galaxy 106.1",tab:"gr",e:"🌌",sid:781},
+{name:"Gamma Radio 100",tab:"gr",e:"γ",sid:1050},
+{name:"Gold FM 100.3",tab:"gr",e:"💛",sid:2340},
+{name:"Grecia Radio",tab:"gr",e:"🇬🇷",sid:3048},
+{name:"Green Radio 88.8",tab:"gr",e:"🌿",sid:3029},
+{name:"Gyalisma Radio",tab:"gr",e:"🌅",sid:3197},
+{name:"Horizont FM 94.6",tab:"gr",e:"🌅",sid:2382},
+{name:"I FM 103.4",tab:"gr",e:"📻",sid:2036},
+{name:"Idea FM 95.5",tab:"gr",e:"💡",sid:2105},
+{name:"Ikaros FM 97.5",tab:"gr",e:"🦅",sid:1039},
+{name:"Ikaria Radio",tab:"gr",e:"🏝️",sid:3767},
+{name:"In FM 100.7",tab:"gr",e:"📻",sid:1395},
+{name:"Iris Radio 101.9",tab:"gr",e:"🌸",sid:1081},
+{name:"Island FM 103.8",tab:"gr",e:"🏝️",sid:2084},
+{name:"Jukebox Radio",tab:"gr",e:"🎵",sid:3218},
+{name:"K FM 100",tab:"gr",e:"📻",sid:1165},
+{name:"Kardami FM 101.5",tab:"gr",e:"🖤",sid:1038},
+{name:"Koukouvagia Radio",tab:"gr",e:"🦉",sid:3350},
+{name:"Lambda FM 100.9",tab:"gr",e:"λ",sid:1097},
+{name:"Lido Radio",tab:"gr",e:"🌊",sid:3407},
+{name:"Love Island Radio",tab:"gr",e:"❤️",sid:3655},
+{name:"Mikrofono Radio",tab:"gr",e:"🎤",sid:3196},
+{name:"Mix FM 101.8",tab:"gr",e:"🎵",sid:1072},
+{name:"MixedGreek Radio",tab:"gr",e:"🇬🇷",sid:3558},
+{name:"Navarino Radio",tab:"gr",e:"⚓",sid:3506},
+{name:"Omorfos Kosmos",tab:"gr",e:"🌍",sid:3513},
+{name:"Oniro Radio",tab:"gr",e:"💭",sid:3044},
+{name:"Optiko Radio",tab:"gr",e:"👁️",sid:3396},
+{name:"Orfeas Radio 105.5",tab:"gr",e:"🎵",sid:1100},
+{name:"Petit Paris Radio",tab:"gr",e:"🗼",sid:3462},
+{name:"Pigi FM 99.6",tab:"gr",e:"⛲",sid:2395},
+{name:"Pontios Radio",tab:"gr",e:"🎵",sid:3095},
+{name:"Prima FM 92.5",tab:"gr",e:"1️⃣",sid:1078},
+{name:"Psifi Radio",tab:"gr",e:"💻",sid:3090},
+{name:"Pulse Radio 104.3",tab:"gr",e:"💓",sid:2035},
+{name:"Radio Diavlos",tab:"gr",e:"📻",sid:3498},
+{name:"Radio Ritmo",tab:"gr",e:"🥁",sid:3456},
+{name:"Refresh Radio",tab:"gr",e:"🔄",sid:3414},
+{name:"Rizes Radio",tab:"gr",e:"🌿",sid:3145},
+{name:"Rodopi FM 101.7",tab:"gr",e:"🌺",sid:1012},
+{name:"Solar Radio",tab:"gr",e:"☀️",sid:3421},
+{name:"Souvlaki Radio",tab:"gr",e:"🍢",sid:3505},
+{name:"Stylos FM",tab:"gr",e:"✏️",sid:2384},
+{name:"Summer Radio",tab:"gr",e:"🏖️",sid:3454},
+{name:"Syn FM 97.7",tab:"gr",e:"📻",sid:1017},
+{name:"Takis Radio",tab:"gr",e:"🎵",sid:3540},
+{name:"Taxideftis Radio",tab:"gr",e:"🧳",sid:3507},
+{name:"Thetis Radio",tab:"gr",e:"🌊",sid:3104},
+{name:"Typos FM 96.3",tab:"gr",e:"📰",sid:1023},
+{name:"Unity Radio",tab:"gr",e:"🤝",sid:3378},
+{name:"Vigla FM 100.8",tab:"gr",e:"⚓",sid:1008},
+{name:"Web Radio Ellas",tab:"gr",e:"🇬🇷",sid:3124},
 ];
 
-// ─────────────────────────────────────────────────────────
-// BACKGROUND OPTIONS
-// Add your own image URLs or use these gradients
-// ─────────────────────────────────────────────────────────
-const backgrounds = [
-  { label: "Χωρίς",        type: "none",  color: "#222" },
-  { label: "Ελλάδα Ηλιοβ.",type: "image", url: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1600&q=80", color: "#c05000" },
-  { label: "Αθήνα Νύχτα",  type: "image", url: "https://images.unsplash.com/photo-1555993539-1732b0258235?w=1600&q=80", color: "#1a3a6b" },
-  { label: "Θάλασσα Αιγαίο",type:"image", url: "https://images.unsplash.com/photo-1504512485720-7d83a16ee930?w=1600&q=80", color: "#006080" },
-  { label: "Σαντορίνη",    type: "image", url: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1600&q=80", color: "#2b4daa" },
-  { label: "Βουνά Ελλάδας", type:"image", url: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&q=80", color: "#2d5a27" },
-  { label: "Κόκκινο Σκοτάδι",type:"gradient",gradient:"linear-gradient(135deg,#1a0005,#3d0010)", color:"#3d0010" },
-  { label: "Μπλε Νύχτα",   type: "gradient", gradient: "linear-gradient(135deg,#000510,#001a3d)", color: "#001a3d" },
+// ════════════════════════════════════════════════════════
+const BACKGROUNDS = [
+  {type:"none",color:"#333"},
+  {type:"img",url:"https://images.unsplash.com/photo-1555993539-1732b0258235?w=1600&q=80",color:"#1a3a6b"},
+  {type:"img",url:"https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1600&q=80",color:"#c05000"},
+  {type:"img",url:"https://images.unsplash.com/photo-1504512485720-7d83a16ee930?w=1600&q=80",color:"#006080"},
+  {type:"img",url:"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1600&q=80",color:"#2b4daa"},
+  {type:"img",url:"https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&q=80",color:"#2d5a27"},
+  {type:"grad",grad:"linear-gradient(135deg,#1a0005,#3d0010)"},
+  {type:"grad",grad:"linear-gradient(135deg,#000510,#001a3d)"},
 ];
 
-// ─────────────────────────────────────────────────────────
-// STATE
-let currentCard = null;
 const player = document.getElementById('player');
-const nowPlayingBar = document.getElementById('now-playing-bar');
-const nowPlayingName = document.getElementById('now-playing-name');
-const bgOverlay = document.getElementById('bg-overlay');
+const npbar  = document.getElementById('npbar');
+const npname = document.getElementById('npname');
+const bgEl   = document.getElementById('bg-overlay');
+let currentCard = null;
+let activeTab   = 'int';
+let query       = '';
 
-// ─────────────────────────────────────────────────────────
-// BUILD BACKGROUND SWATCHES
-const swatchContainer = document.getElementById('bg-swatches');
-backgrounds.forEach((bg, i) => {
+// Build swatches
+BACKGROUNDS.forEach((bg,i) => {
   const s = document.createElement('div');
-  s.className = 'bg-swatch' + (i === 0 ? ' active' : '');
-  s.title = bg.label;
-  if (bg.type === 'none') {
-    s.style.background = '#333';
-    s.innerHTML = '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem">✕</span>';
-  } else if (bg.type === 'image') {
-    s.style.background = `url(${bg.url}) center/cover, ${bg.color}`;
-  } else {
-    s.style.background = bg.gradient;
-  }
-  s.addEventListener('click', () => {
-    document.querySelectorAll('.bg-swatch').forEach(x => x.classList.remove('active'));
-    s.classList.add('active');
-    applyBackground(bg);
-  });
-  swatchContainer.appendChild(s);
+  s.className = 'swatch' + (i===0?' on':'');
+  if (bg.type==='none') { s.style.background='#333'; s.innerHTML='<span style="color:#888;font-size:13px">✕</span>'; }
+  else if (bg.type==='img') s.style.background=`url(${bg.url}) center/cover,${bg.color}`;
+  else s.style.background=bg.grad;
+  s.addEventListener('click',()=>{ document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on')); s.classList.add('on'); applyBg(bg); });
+  document.getElementById('swatches').appendChild(s);
 });
 
-function applyBackground(bg) {
-  if (bg.type === 'none') {
-    bgOverlay.style.backgroundImage = 'none';
-    bgOverlay.classList.remove('active');
-  } else if (bg.type === 'image') {
-    bgOverlay.style.backgroundImage = `url(${bg.url})`;
-    bgOverlay.classList.add('active');
-  } else {
-    bgOverlay.style.backgroundImage = bg.gradient;
-    bgOverlay.classList.add('active');
-  }
+function applyBg(bg) {
+  if (bg.type==='none'){ bgEl.style.backgroundImage='none'; bgEl.classList.remove('on'); }
+  else if (bg.type==='img'){ bgEl.style.backgroundImage=`url(${bg.url})`; bgEl.classList.add('on'); }
+  else { bgEl.style.backgroundImage=bg.grad; bgEl.classList.add('on'); }
 }
 
-// ─────────────────────────────────────────────────────────
-// BUILD STATION CARDS
-const grid = document.getElementById('radio-grid');
-stations.forEach((s, idx) => {
-  const card = document.createElement('div');
-  card.className = 'radio-card';
-  card.dataset.genre = s.genre;
-  card.dataset.idx = idx;
-  card.innerHTML = `
-    <div class="card-top">
-      <div class="station-icon-fallback">${s.emoji}</div>
-      <button class="play-btn" aria-label="Play ${s.name}">▶</button>
-    </div>
-    <div>
-      <div class="station-name">${s.name}</div>
-      ${s.freq !== '—' ? `<div class="station-freq">${s.freq} MHz</div>` : ''}
-    </div>
-    <div class="station-genre">${s.genre}</div>
-  `;
-
-  const btn = card.querySelector('.play-btn');
-  card.addEventListener('click', () => toggleStation(card, s, btn));
-  grid.appendChild(card);
+// Tabs
+document.getElementById('tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  activeTab=t.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  renderGrid();
 });
 
-// ─────────────────────────────────────────────────────────
-// PLAY / STOP LOGIC
-function toggleStation(card, station, btn) {
-  const isPlaying = card.classList.contains('playing');
+// Search
+document.getElementById('search').addEventListener('input',e=>{ query=e.target.value.toLowerCase().trim(); renderGrid(); });
 
+function getStream(s) {
+  if (s.stream) return s.stream;
+  if (s.sid) return `https://netradio.live24.gr/generic${s.sid}`;
+  return null;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML='';
+  const intCount = S.filter(s=>s.tab==='int').length;
+  const grCount  = S.filter(s=>s.tab==='gr').length;
+  document.getElementById('cnt-int').textContent=`(${intCount})`;
+  document.getElementById('cnt-gr').textContent=`(${grCount})`;
+
+  const list = query
+    ? S.filter(s=>s.name.toLowerCase().includes(query))
+    : S.filter(s=>s.tab===activeTab);
+
+  document.getElementById('resultcount').textContent =
+    query ? `${list.length} αποτελέσματα για "${query}"` : `${list.length} σταθμοί`;
+
+  list.forEach(s=>{
+    const card = document.createElement('div');
+    card.className='card';
+    card.dataset.name=s.name;
+    const hasStream = !!(s.stream || s.sid);
+    card.innerHTML=`
+      <div class="card-top">
+        <div class="ico">${s.e}</div>
+        <button class="playbtn" aria-label="Play ${s.name}"><span>▶</span></button>
+      </div>
+      <div class="name">${s.name}</div>
+      <div class="gtag">${s.tab==='int'?'🌍 Διεθνής':'🇬🇷 Ελληνικά'}</div>
+    `;
+    card.addEventListener('click',()=>playCard(card,s));
+    grid.appendChild(card);
+  });
+}
+
+function playCard(card, s) {
+  const wasPlaying = card.classList.contains('playing');
   stopAll();
+  if (wasPlaying) return;
 
-  if (!isPlaying) {
-    card.classList.add('playing');
-    btn.textContent = '■';
-    currentCard = card;
+  const url = getStream(s);
+  if (!url) { if(s.sid) window.open(`https://live24.gr/radio/generic.jsp?sid=${s.sid}`,'_blank'); return; }
 
-    player.src = station.stream;
-    player.load();
-    player.play().catch(err => {
-      // Stream might have HTTPS redirect – try http fallback
-      const httpUrl = station.stream.replace('https://', 'http://');
-      if (httpUrl !== station.stream) {
-        player.src = httpUrl;
+  card.classList.add('loading');
+  currentCard = card;
+  player.src = url;
+  player.load();
+
+  player.play()
+    .then(()=>onSuccess(card,s))
+    .catch(()=>{
+      // try http fallback
+      if (url.startsWith('https://')) {
+        player.src=url.replace('https://','http://');
         player.load();
-        player.play().catch(() => showError(card));
-      } else {
-        showError(card);
-      }
+        player.play().then(()=>onSuccess(card,s)).catch(()=>onFail(card,s));
+      } else onFail(card,s);
     });
+}
 
-    nowPlayingName.textContent = station.name;
-    nowPlayingBar.classList.add('visible');
-  }
+function onSuccess(card,s) {
+  card.classList.remove('loading');
+  card.classList.add('playing');
+  const sp = card.querySelector('.playbtn span'); if(sp) sp.textContent='■';
+  npname.textContent=s.name;
+  npbar.classList.add('on');
+}
+
+function onFail(card,s) {
+  card.classList.remove('loading');
+  currentCard=null;
+  const err=document.createElement('span');
+  err.className='err';
+  err.textContent='⚠ Άνοιγμα live24';
+  err.title='Άνοιγμα στο live24.gr';
+  err.addEventListener('click',e=>{ e.stopPropagation(); if(s.sid) window.open(`https://live24.gr/radio/generic.jsp?sid=${s.sid}`,'_blank'); });
+  card.appendChild(err);
+  setTimeout(()=>err.remove(),8000);
 }
 
 function stopAll() {
-  player.pause();
-  player.src = '';
-  document.querySelectorAll('.radio-card.playing').forEach(c => {
-    c.classList.remove('playing');
-    c.querySelector('.play-btn').textContent = '▶';
+  player.pause(); player.src='';
+  document.querySelectorAll('.card.playing,.card.loading').forEach(c=>{
+    c.classList.remove('playing','loading');
+    const sp=c.querySelector('.playbtn span'); if(sp) sp.textContent='▶';
   });
-  nowPlayingBar.classList.remove('visible');
-  currentCard = null;
+  npbar.classList.remove('on');
+  currentCard=null;
 }
 
-function showError(card) {
-  let badge = card.querySelector('.error-badge');
-  if (!badge) {
-    badge = document.createElement('span');
-    badge.className = 'error-badge';
-    badge.textContent = '⚠ No stream';
-    card.appendChild(badge);
-  }
-  card.classList.remove('playing');
-  card.querySelector('.play-btn').textContent = '▶';
-  nowPlayingBar.classList.remove('visible');
-  setTimeout(() => badge.remove(), 4000);
-}
+window.addEventListener('keydown',e=>{ if(e.code==='Escape') stopAll(); });
 
-// ─────────────────────────────────────────────────────────
-// FILTERS
-document.getElementById('filters').addEventListener('click', e => {
-  const btn = e.target.closest('.filter-btn');
-  if (!btn) return;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const genre = btn.dataset.genre;
-  document.querySelectorAll('.radio-card').forEach(card => {
-    if (genre === 'all' || card.dataset.genre === genre) {
-      card.classList.remove('hidden');
-    } else {
-      card.classList.add('hidden');
-    }
-  });
-});
-
-// Keyboard support
-window.addEventListener('keydown', e => {
-  if (e.code === 'Space' && document.activeElement === document.body) {
-    e.preventDefault();
-    if (currentCard) stopAll();
-  }
-  if (e.code === 'Escape') stopAll();
-});
+renderGrid();
 </script>
 </body>
 </html>
