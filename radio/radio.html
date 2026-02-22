@@ -1,602 +1,404 @@
-<!DOCTYPE html>
-<html lang="el">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Greek Radio Live 🎵</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --accent: #e8a838;
-    --bg: #0d0d0d;
-    --card: rgba(255,255,255,0.04);
-    --card-hover: rgba(255,255,255,0.08);
-    --border: rgba(255,255,255,0.07);
-    --text: #f0ece3;
-    --muted: #777;
-    --glow: 0 0 28px rgba(232,168,56,0.35);
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
-  #bg-overlay { position:fixed; inset:0; z-index:0; background-size:cover; background-position:center; opacity:0; transition:opacity 0.8s; pointer-events:none; }
-  #bg-overlay.on { opacity:0.2; }
-  .wrapper { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:0 20px 80px; }
+"""
+Greek Radio Stream URL Extractor
+=================================
+This script visits each live24.gr station page and extracts the real
+stream URL from the hidden JavaScript config (the `streamsrc` field).
 
-  header { padding:30px 0 24px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); margin-bottom:28px; gap:16px; flex-wrap:wrap; }
-  .logo h1 { font-family:'Syne',sans-serif; font-size:1.9rem; font-weight:800; letter-spacing:-1px; }
-  .logo h1 span { color:var(--accent); }
-  .logo p { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
+HOW TO RUN:
+  1. Make sure Python 3 is installed
+  2. Install requests:  pip install requests
+  3. Run:  python extract_streams.py
+  4. Results saved to:  streams_found.json  and  streams_found.txt
 
-  #npbar { display:none; align-items:center; gap:12px; background:linear-gradient(135deg,rgba(232,168,56,0.1),rgba(196,92,46,0.07)); border:1px solid rgba(232,168,56,0.28); border-radius:50px; padding:9px 18px 9px 12px; animation:fadeIn 0.3s; }
-  #npbar.on { display:flex; }
-  @keyframes fadeIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:none} }
-  .bars { display:flex; gap:2px; align-items:flex-end; height:18px; }
-  .bar { width:3px; background:var(--accent); border-radius:2px; animation:bounce 0.7s ease-in-out infinite; }
-  .bar:nth-child(2){animation-delay:.12s}.bar:nth-child(3){animation-delay:.24s}.bar:nth-child(4){animation-delay:.36s}
-  @keyframes bounce { 0%,100%{height:5px} 50%{height:16px} }
-  #npname { font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; color:var(--accent); }
-  .stopbtn { width:26px; height:26px; border-radius:50%; border:none; background:rgba(255,255,255,0.08); color:var(--text); cursor:pointer; font-size:0.65rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s; margin-left:4px; }
-  .stopbtn:hover { background:rgba(255,80,80,0.3); }
+The script is polite — it waits 0.8 seconds between requests.
+"""
 
-  .bgpicker { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .bgpicker label { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
-  .swatch { width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform 0.18s,border-color 0.18s; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-  .swatch:hover,.swatch.on { transform:scale(1.18); border-color:var(--accent); }
+import requests, re, json, time, sys
 
-  .tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
-  .tab { padding:9px 22px; border-radius:50px; cursor:pointer; border:1px solid var(--border); background:var(--card); color:var(--muted); font-family:'DM Sans',sans-serif; font-size:0.87rem; transition:all 0.2s; }
-  .tab:hover { color:var(--text); border-color:rgba(232,168,56,0.3); }
-  .tab.on { background:var(--accent); color:#0d0d0d; border-color:var(--accent); font-weight:600; }
-  .searchbox { margin-left:auto; background:var(--card); border:1px solid var(--border); border-radius:50px; padding:8px 16px; display:flex; align-items:center; gap:8px; transition:border-color 0.2s; }
-  .searchbox:focus-within { border-color:rgba(232,168,56,0.4); }
-  .searchbox input { background:none; border:none; outline:none; color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.87rem; width:160px; }
-  .searchbox input::placeholder { color:var(--muted); }
-
-  #resultcount { font-size:0.72rem; color:var(--muted); padding:2px 0 16px; }
-
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:14px; }
-  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 15px 14px; cursor:pointer; transition:all 0.22s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; gap:10px; position:relative; overflow:hidden; }
-  .card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(232,168,56,0.07),transparent); opacity:0; transition:opacity 0.25s; pointer-events:none; border-radius:14px; }
-  .card:hover { background:var(--card-hover); border-color:rgba(232,168,56,0.22); transform:translateY(-2px); }
-  .card:hover::before { opacity:1; }
-  .card.playing { border-color:var(--accent); box-shadow:var(--glow); background:rgba(232,168,56,0.06); }
-  .card.playing::before { opacity:1; }
-  .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
-  .ico { width:46px; height:46px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; background:rgba(255,255,255,0.05); flex-shrink:0; }
-  .playbtn { width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border); background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.65rem; transition:all 0.2s; flex-shrink:0; }
-  .playbtn:hover { border-color:var(--accent); color:var(--accent); background:rgba(232,168,56,0.1); }
-  .card.playing .playbtn { border-color:var(--accent); background:var(--accent); color:#0d0d0d; animation:pulse 1.8s ease infinite; }
-  .card.loading .playbtn { border-color:var(--accent); color:var(--accent); }
-  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(232,168,56,0.4)} 70%{box-shadow:0 0 0 10px rgba(232,168,56,0)} 100%{box-shadow:0 0 0 0 rgba(232,168,56,0)} }
-  .name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; line-height:1.25; }
-  .gtag { font-size:0.67rem; color:var(--muted); background:rgba(255,255,255,0.04); padding:2px 8px; border-radius:50px; width:fit-content; }
-  .err { position:absolute; bottom:7px; right:9px; font-size:0.58rem; color:#ff6b6b; opacity:0.8; cursor:pointer; }
-  .no-stream-tag { font-size:0.6rem; color:#555; position:absolute; top:8px; right:8px; }
-
-  footer { text-align:center; padding-top:40px; font-size:0.72rem; color:#3a3a3a; border-top:1px solid var(--border); margin-top:40px; }
-  footer a { color:#555; text-decoration:none; }
-  audio { display:none; }
-  @media(max-width:600px) {
-    .logo h1{font-size:1.5rem;} .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
-    header{flex-direction:column;align-items:flex-start;} .searchbox input{width:110px;}
-  }
-</style>
-</head>
-<body>
-<div id="bg-overlay"></div>
-<audio id="player" preload="none"></audio>
-<div class="wrapper">
-
-<header>
-  <div class="logo">
-    <h1>Greek<span>Radio</span> 🎵</h1>
-    <p>Ελληνικά Ραδιόφωνα Online</p>
-  </div>
-  <div id="npbar">
-    <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-    <span id="npname">—</span>
-    <button class="stopbtn" onclick="stopAll()">■</button>
-  </div>
-  <div class="bgpicker">
-    <label>Φόντο:</label>
-    <div id="swatches"></div>
-  </div>
-</header>
-
-<div class="tabs" id="tabs">
-  <button class="tab on" data-tab="int">🌍 Διεθνής Μουσική <span id="cnt-int" style="opacity:0.6;font-size:0.8em"></span></button>
-  <button class="tab" data-tab="gr">🇬🇷 Ελληνικά <span id="cnt-gr" style="opacity:0.6;font-size:0.8em"></span></button>
-  <div class="searchbox">
-    <span style="color:var(--muted)">🔍</span>
-    <input id="search" type="text" placeholder="Αναζήτηση…" autocomplete="off">
-  </div>
-</div>
-
-<p id="resultcount"></p>
-<div class="grid" id="grid"></div>
-
-<footer>Made with ♥ &nbsp;·&nbsp; Streams via <a href="https://live24.gr" target="_blank">live24.gr</a> &nbsp;·&nbsp; Stations marked ⚠ will open in live24.gr</footer>
-</div>
-
-<script>
-// ════════════════════════════════════════════════════════
-// STATION DATA
-// stream = direct known URL; sid = live24 station ID
-// If no stream URL, falls back to netradio.live24.gr/generic{sid}
-// ════════════════════════════════════════════════════════
-const S = [
-// ─── 🌍 INTERNATIONAL (gid=24) ───────────────────────
-{name:"En Lefko 87.7",tab:"int",e:"🎶",stream:"https://stream.radiojar.com/enlefko877"},
-{name:"Kiss FM 92.9",tab:"int",e:"💋",stream:"http://kissfm.live24.gr/kiss2111"},
-{name:"Best Radio 92.6",tab:"int",e:"⭐",stream:"http://best.live24.gr/best1222"},
-{name:"Easy 97.2",tab:"int",e:"😌",stream:"https://stream.radiojar.com/cthtwxk5yvduv"},
-{name:"Galaxy 92",tab:"int",e:"🎸",stream:"http://galaxy.live24.gr/galaxy9292"},
-{name:"Red FM 96.3",tab:"int",e:"🔴",stream:"https://stream.radiojar.com/redfm963"},
-{name:"Pepper 96.6",tab:"int",e:"🌶️",stream:"https://stream.radiojar.com/pepper.m4a"},
-{name:"Ρυθμός 94.9",tab:"int",e:"🥁",stream:"https://stream.radiojar.com/g4tyehk5yvduv"},
-{name:"Rock FM 96.9",tab:"int",e:"🤘",stream:"https://az10.yesstreaming.net:8060/radio.mp3"},
-{name:"Love Radio 97.5",tab:"int",e:"❤️",stream:"http://loveradio.live24.gr/loveradio-1000"},
-{name:"Blue Space 107.2",tab:"int",e:"💙",stream:"https://sp1.19cloudsnetwork.gr/8008/stream"},
-{name:"Athens Voice 102.5",tab:"int",e:"🗣️",stream:"http://nitro.live24.gr/nitro4555"},
-{name:"Mad Radio 106.2",tab:"int",e:"🎤",stream:"http://mediaserver.mad.tv/stream"},
-{name:"Sfera 102.2",tab:"int",e:"🔵",stream:"http://sfera.live24.gr/sfera4132"},
-{name:"Athens UP Radio",tab:"int",e:"⬆️",stream:"https://n02.radiojar.com/9ndpdg3c0s8uv"},
-{name:"ΕΡΑ Kosmos Jazz",tab:"int",e:"🎷",stream:"https://radiostreaming.ert.gr/ert-webjazz"},
-{name:"ΕΡΑ Zeppelin",tab:"int",e:"✈️",stream:"http://radiostreaming.ert.gr/ert-zeppelin"},
-{name:"02 Dance Radio",tab:"int",e:"💃",sid:4127},
-{name:"100.6 Kiss FM",tab:"int",e:"🎵",sid:567},
-{name:"111 Radio",tab:"int",e:"📻",sid:2434},
-{name:"1431 AM",tab:"int",e:"📡",sid:2320},
-{name:"24-7 Radio.us",tab:"int",e:"⏰",sid:1848},
-{name:"4Life Radio",tab:"int",e:"💚",sid:3424},
-{name:"80sMania Radio",tab:"int",e:"🕹️",sid:2910},
-{name:"88μισό 88.5",tab:"int",e:"🎵",sid:253},
-{name:"89 Rainbow 89",tab:"int",e:"🌈",sid:254},
-{name:"90s All Time Greatest",tab:"int",e:"💿",sid:3186},
-{name:"90s Heaven Web Radio",tab:"int",e:"🎧",sid:3570},
-{name:"98.6",tab:"int",e:"📻",sid:3916},
-{name:"A 100 FM 107.4",tab:"int",e:"🎵",sid:1700},
-{name:"Action Radio 98.2",tab:"int",e:"⚡",sid:1595},
-{name:"Active Radio",tab:"int",e:"🏃",sid:3425},
-{name:"AK Radio",tab:"int",e:"🎵",sid:1650},
-{name:"Aktina Radio 95.0",tab:"int",e:"📡",sid:821},
-{name:"Albedo 14 Radio",tab:"int",e:"🌙",sid:2630},
-{name:"Alfa Radio 96",tab:"int",e:"Α",sid:1068},
-{name:"All 60s Radio",tab:"int",e:"🎺",sid:3488},
-{name:"All 70s Radio",tab:"int",e:"🪕",sid:3489},
-{name:"All Hits Zone",tab:"int",e:"🎯",sid:3185},
-{name:"All Time 70s 80s",tab:"int",e:"⏳",sid:2741},
-{name:"Allgood Radio",tab:"int",e:"✌️",sid:4105},
-{name:"Andromeda NET Radio",tab:"int",e:"🌌",sid:1343},
-{name:"Antennes Radio 93.6",tab:"int",e:"📡",sid:2534},
-{name:"Anyway Deep Radio",tab:"int",e:"🌊",sid:1942},
-{name:"Anyway Fresh Radio",tab:"int",e:"🌿",sid:3518},
-{name:"Apolis Radio",tab:"int",e:"🌍",sid:4097},
-{name:"Apollon FM 98.1",tab:"int",e:"☀️",sid:1760},
-{name:"Aqua Radio The 80s",tab:"int",e:"💧",sid:2854},
-{name:"Aroto Instrumental",tab:"int",e:"🎻",sid:2861},
-{name:"Art FM 102.7",tab:"int",e:"🎨",sid:2228},
-{name:"Art FM 103.1",tab:"int",e:"🖼️",sid:3443},
-{name:"Athens DJ 95.2",tab:"int",e:"🎧",sid:1322},
-{name:"Athens Free Radio",tab:"int",e:"🗽",sid:3794},
-{name:"Athens Metro Mall Radio",tab:"int",e:"🏪",sid:2559},
-{name:"Athens Party",tab:"int",e:"🎉",sid:2595},
-{name:"Athens Radio Master",tab:"int",e:"🎛️",sid:3573},
-{name:"Athens Radio Trance",tab:"int",e:"🔮",sid:2769},
-{name:"Athikia Disco FM",tab:"int",e:"🕺",sid:4000},
-{name:"Audiophile Baroque",tab:"int",e:"🎼",sid:2831},
-{name:"Audiophile Rock/Blues",tab:"int",e:"🎸",sid:2796},
-{name:"Auto Pilot Radio",tab:"int",e:"✈️",sid:2387},
-{name:"Avanti 97.7",tab:"int",e:"🚀",sid:1489},
-{name:"Avanti Classic",tab:"int",e:"🎻",sid:2943},
-{name:"Avanti FM 107.6",tab:"int",e:"🎵",sid:183},
-{name:"Bach Radio",tab:"int",e:"🎼",sid:2937},
-{name:"Baila Radio",tab:"int",e:"💃",sid:4010},
-{name:"Bangee Radio",tab:"int",e:"🔊",sid:2822},
-{name:"Be Radio",tab:"int",e:"🎵",sid:2642},
-{name:"Beethoven Radio",tab:"int",e:"🎹",sid:2827},
-{name:"Believe Radio",tab:"int",e:"🙏",sid:3362},
-{name:"Best FM 97.3",tab:"int",e:"🏆",sid:863},
-{name:"Best Radio 94.7",tab:"int",e:"⭐",sid:1143},
-{name:"Beton7 Art Radio",tab:"int",e:"🎨",sid:1677},
-{name:"BFBS Cyprus 89.7",tab:"int",e:"🇨🇾",sid:2737},
-{name:"Black Duck Radio",tab:"int",e:"🦆",sid:2410},
-{name:"Bocca Radio",tab:"int",e:"👄",sid:3313},
-{name:"Boem Radio",tab:"int",e:"💥",sid:2220},
-{name:"Boo Radio",tab:"int",e:"👻",sid:2920},
-{name:"Box Radio",tab:"int",e:"📦",sid:3876},
-{name:"Buddha Radio",tab:"int",e:"☯️",sid:3991},
-{name:"Buddy Radio",tab:"int",e:"🤝",sid:4056},
-{name:"Bur Radio",tab:"int",e:"🎵",sid:3079},
-{name:"Cadillac Records Radio",tab:"int",e:"🚗",sid:2877},
-{name:"Camara Radio",tab:"int",e:"📷",sid:3643},
-{name:"Cannibal Radio",tab:"int",e:"🎸",sid:1661},
-{name:"Capital 104.8",tab:"int",e:"🏛️",sid:3245},
-{name:"Capital FM 107",tab:"int",e:"📻",sid:1649},
-{name:"Capital Radio 90.7",tab:"int",e:"🎵",sid:1210},
-{name:"Cavo Paradiso Radio",tab:"int",e:"🏖️",sid:2792},
-{name:"CFM 99.9",tab:"int",e:"📻",sid:3656},
-{name:"Chania Radio 99.6",tab:"int",e:"🌺",sid:3594},
-{name:"Chez Gabriel Radio",tab:"int",e:"🍷",sid:3851},
-{name:"Chillout TreePines",tab:"int",e:"🌲",sid:3439},
-{name:"Chimeres Radio",tab:"int",e:"🦋",sid:2981},
-{name:"Choice FM 104.3",tab:"int",e:"🎯",sid:2714},
-{name:"Cinar FM 91.8",tab:"int",e:"🎵",sid:2501},
-{name:"Cinnamon Radio Deep",tab:"int",e:"🍂",sid:4156},
-{name:"Cinnamon Radio Easy",tab:"int",e:"☕",sid:4157},
-{name:"City Faces Radio",tab:"int",e:"🏙️",sid:2453},
-{name:"City FM 92",tab:"int",e:"🌆",sid:613},
-{name:"City FM 100",tab:"int",e:"🌃",sid:1157},
-{name:"City FM 103.8",tab:"int",e:"🌇",sid:1415},
-{name:"Classic Old Time Radio",tab:"int",e:"📯",sid:4008},
-{name:"Classic-99",tab:"int",e:"🎻",sid:4101},
-{name:"Clearjet Radio",tab:"int",e:"✈️",sid:3820},
-{name:"Click Radio",tab:"int",e:"🖱️",sid:3634},
-{name:"Clubaki Web Radio",tab:"int",e:"🎉",sid:3547},
-{name:"Clubradiofm",tab:"int",e:"🎊",sid:4200},
-{name:"Cocktail Web Radio",tab:"int",e:"🍸",sid:3824},
-{name:"Coffee Web Radio",tab:"int",e:"☕",sid:2785},
-{name:"Coni-OnAir Radio",tab:"int",e:"📻",sid:1696},
-{name:"Contact Radio",tab:"int",e:"📞",sid:3608},
-{name:"Cool FM 90.7",tab:"int",e:"❄️",sid:694},
-{name:"Cool FM 106.8",tab:"int",e:"🆒",sid:1225},
-{name:"Cool FM.eu",tab:"int",e:"😎",sid:41},
-{name:"CoolFM.eu Soft",tab:"int",e:"🌸",sid:2057},
-{name:"Cosmos 93.2",tab:"int",e:"🌍",sid:951},
-{name:"Cosmos 97.1",tab:"int",e:"🪐",sid:900},
-{name:"Crystal Radio Athens",tab:"int",e:"💎",sid:3867},
-{name:"Cult Radio 99.8",tab:"int",e:"🖤",sid:2882},
-{name:"Cut-Radio 95.2",tab:"int",e:"✂️",sid:3152},
-{name:"Cyprus Funk Station",tab:"int",e:"🎷",sid:2904},
-{name:"D Radio",tab:"int",e:"🎵",sid:1727},
-{name:"D-code 96.2",tab:"int",e:"🔢",sid:1251},
-{name:"Dance waves",tab:"int",e:"🌊",sid:1673},
-{name:"DeeJay Corfu 97.5",tab:"int",e:"🏝️",sid:536},
-{name:"DeeJay Radio Κύπρου 93.5",tab:"int",e:"🇨🇾",sid:2707},
-{name:"DeeJay Βόλος 104.5",tab:"int",e:"🎵",sid:2544},
-{name:"Deep Motion FM",tab:"int",e:"🌊",sid:1362},
-{name:"Deep Web Radio",tab:"int",e:"🌐",sid:3791},
-{name:"Deepin Radio",tab:"int",e:"🔁",sid:2965},
-{name:"DGradio One",tab:"int",e:"1️⃣",sid:3302},
-{name:"Dice Radio",tab:"int",e:"🎲",sid:2644},
-{name:"Disco 80s Radio",tab:"int",e:"🕺",sid:1593},
-{name:"Disco Cafe",tab:"int",e:"☕",sid:3639},
-{name:"Disco FM",tab:"int",e:"🪩",sid:3038},
-{name:"Disco Net Radio Athens",tab:"int",e:"💿",sid:3524},
-{name:"Discomania",tab:"int",e:"🕺",sid:1410},
-{name:"Diva FM 91.6",tab:"int",e:"💅",sid:996},
-{name:"Dj Power Music",tab:"int",e:"💪",sid:4027},
-{name:"Dj Yanni Radio",tab:"int",e:"🎧",sid:2212},
-{name:"Dj Λαμία 91.2",tab:"int",e:"🎛️",sid:2883},
-{name:"Dolce Radio",tab:"int",e:"🍬",sid:1856},
-{name:"Dream 96.9",tab:"int",e:"💭",sid:90},
-{name:"Dream Radio 88.1",tab:"int",e:"🌛",sid:3336},
-{name:"DreamCity WebRadio",tab:"int",e:"🌆",sid:1978},
-{name:"Dromos FM Κύπρου",tab:"int",e:"🛣️",sid:1674},
-{name:"DRS FM 95.3",tab:"int",e:"📻",sid:1426},
-{name:"Easy 93.2",tab:"int",e:"😌",sid:1861},
-{name:"Easy 105.3",tab:"int",e:"☮️",sid:238},
-{name:"Echoes Radio",tab:"int",e:"🔔",sid:2598},
-{name:"Eclectic Radio",tab:"int",e:"🎨",sid:2240},
-{name:"EcoBeat Gr",tab:"int",e:"🌱",sid:4036},
-{name:"Edit Radio",tab:"int",e:"✏️",sid:2990},
-{name:"EF-EM Radio 99",tab:"int",e:"📻",sid:2736},
-{name:"Elegant Radio",tab:"int",e:"🌹",sid:3866},
-{name:"eMusic Site",tab:"int",e:"🎵",sid:4204},
-{name:"Energy 94.2",tab:"int",e:"⚡",sid:581},
-{name:"ENERGY 93.4",tab:"int",e:"🔋",sid:1436},
-{name:"Energy 101.5",tab:"int",e:"💡",sid:3431},
-{name:"Energy FM 88.9",tab:"int",e:"⚡",sid:2756},
-{name:"Enfo Radio",tab:"int",e:"ℹ️",sid:3262},
-{name:"Envy Radio",tab:"int",e:"💚",sid:3236},
-{name:"Escapula Radio",tab:"int",e:"🏃",sid:3238},
-{name:"Essential Mix Radio",tab:"int",e:"🎚️",sid:3625},
-{name:"Eternal Radio",tab:"int",e:"♾️",sid:3157},
-{name:"Eurovision Song Contest Radio",tab:"int",e:"🇪🇺",sid:3224},
-{name:"EXIT radio",tab:"int",e:"🚪",sid:3520},
-{name:"EyeOnYou Radio",tab:"int",e:"👁️",sid:2959},
-{name:"Fame Radio",tab:"int",e:"⭐",sid:2556},
-{name:"Feelings Radio",tab:"int",e:"💕",sid:2998},
-{name:"Figaro Radio",tab:"int",e:"🎭",sid:3659},
-{name:"Fire radio",tab:"int",e:"🔥",sid:2480},
-{name:"Flashback Radio",tab:"int",e:"⏮️",sid:2994},
-{name:"Fly 104",tab:"int",e:"🦅",sid:299},
-{name:"Fly FM 88.1",tab:"int",e:"🦋",sid:2398},
-{name:"Fly FM 89.7",tab:"int",e:"🕊️",sid:839},
-{name:"FM Life 105.3",tab:"int",e:"🌿",sid:407},
-{name:"Focus FM 103.6",tab:"int",e:"🔍",sid:2001},
-{name:"Folegandros Radio",tab:"int",e:"🏝️",sid:3409},
-{name:"Forever 96.3",tab:"int",e:"🕰️",sid:1052},
-{name:"Freestyle Radio 97.2",tab:"int",e:"🤸",sid:3276},
-{name:"Fresh 92.9",tab:"int",e:"🌊",sid:1000},
-{name:"Fresh 105",tab:"int",e:"🌿",sid:3390},
-{name:"Fresh web Radio",tab:"int",e:"💧",sid:2784},
-{name:"Frisky radio",tab:"int",e:"😋",sid:2477},
-{name:"G Radio",tab:"int",e:"🅶",sid:1750},
-{name:"Galaxy 106.1",tab:"int",e:"🌌",sid:781},
-{name:"Geranymo Groovy",tab:"int",e:"🎷",sid:3572},
-{name:"Ghost Radio",tab:"int",e:"👻",sid:2885},
-{name:"Ginge Radio",tab:"int",e:"🎵",sid:1886},
-{name:"GLOBAL MUSIC RADIO",tab:"int",e:"🌐",sid:4205},
-{name:"Gods Cafe Radio",tab:"int",e:"☕",sid:3028},
-{name:"Gold Radio",tab:"int",e:"🥇",sid:3180},
-{name:"GRD Terra Radio",tab:"int",e:"🌍",sid:3754},
-{name:"Greek New Age Radio",tab:"int",e:"🧘",sid:1994},
-{name:"Greek Otaku Radio",tab:"int",e:"🎌",sid:2803},
-{name:"Greek Web Radio",tab:"int",e:"🌐",sid:2616},
-{name:"Greekradio web Channel",tab:"int",e:"📻",sid:4196},
-{name:"Groove Radio",tab:"int",e:"🎷",sid:1713},
-
-// ─── 🇬🇷 GREEK (gid=25) ─────────────────────────────
-{name:"Δρόμος 89.8",tab:"gr",e:"🛣️",stream:"https://n01a-eu.rcs.revma.com/10q3enqxbfhvv"},
-{name:"Derti Radio",tab:"gr",e:"💃",stream:"http://derti.live24.gr/derty1000"},
-{name:"Μελωδία 99.2",tab:"gr",e:"🎼",stream:"https://stream.radiojar.com/8du64725e3quv"},
-{name:"Μέντα 88.0",tab:"gr",e:"🌿",stream:"https://stream.radiojar.com/menta.aac"},
-{name:"Δίεση 101.3",tab:"gr",e:"🪗",stream:"https://n05a-eu.rcs.revma.com/gkfwrhqxbfhvv"},
-{name:"Λύρα 91.4",tab:"gr",e:"🎻",stream:"https://i4.streams.ovh/ic/lyrafm/stream"},
-{name:"Radio Gold @net",tab:"gr",e:"🥇",stream:"http://radiogold.live24.gr/radiogold"},
-{name:"Στο Κόκκινο 105.5",tab:"gr",e:"🔺",stream:"https://stream.radiojar.com/kokkino-ath.mp3"},
-{name:"ΕΡΑ Τα Λαϊκά",tab:"gr",e:"🪗",stream:"https://radiostreaming.ert.gr/ert-talaika"},
-{name:"ΕΡΑ Τρίτο 90.9",tab:"gr",e:"📻",stream:"http://radiostreaming.ert.gr/ert-trito"},
-{name:"Skai 100.3",tab:"gr",e:"📰",stream:"http://netradio.live24.gr/skai1003"},
-{name:"Flash 96.1",tab:"gr",e:"⚡",stream:"https://netradio.live24.gr/flash961"},
-{name:"Fun Radio 104",tab:"gr",e:"😄",stream:"https://ath10400fm.live24.gr/ath10400fm"},
-{name:"Heart Athens 93.9",tab:"gr",e:"❤️",stream:"https://netradio.live24.gr/heart939"},
-{name:"Rebel 105.2",tab:"gr",e:"🏴",stream:"https://netradio.live24.gr/rebel1052"},
-{name:"Parapolitika 90.1",tab:"gr",e:"🎙️",stream:"http://netradio.live24.gr/athinaradio"},
-{name:"Music 89.2",tab:"gr",e:"🎵",stream:"https://netradio.live24.gr/music892"},
-{name:"Laikos 89.4",tab:"gr",e:"🎶",stream:"https://netradio.live24.gr/laikos894"},
-{name:"Era Sport 101.8",tab:"gr",e:"🏟️",stream:"http://radiostreaming.ert.gr/ert-erasport"},
-{name:"Kanali 1 Πειραιάς",tab:"gr",e:"📡",stream:"https://netradio.live24.gr/kanali1peiraia"},
-{name:"Ellada Sport 94.3",tab:"gr",e:"⚽",stream:"https://stream.ellada943.gr:10198/radio.mp3"},
-{name:"Zougla Radio",tab:"gr",e:"🌴",stream:"https://netradio.live24.gr/zouglaradio"},
-{name:"ANT1 Radio 94.0",tab:"gr",e:"📡",sid:1652},
-{name:"1ο Ερασιτεχνικό Γαργαλιάνων",tab:"gr",e:"📻",sid:3440},
-{name:"2DAY 104.5",tab:"gr",e:"📻",sid:1569},
-{name:"2MM Web Radio",tab:"gr",e:"🎵",sid:2674},
-{name:"926 FM 92.6",tab:"gr",e:"📻",sid:15},
-{name:"Action Radio",tab:"gr",e:"⚡",sid:3660},
-{name:"Adelin 107.3",tab:"gr",e:"📻",sid:2565},
-{name:"aiwaves",tab:"gr",e:"🌊",sid:2072},
-{name:"Alpha FM 104.7",tab:"gr",e:"Α",sid:1506},
-{name:"Angel 102.8",tab:"gr",e:"👼",sid:139},
-{name:"Apollon FM 98.1",tab:"gr",e:"☀️",sid:1760},
-{name:"Apps Radio 96.6",tab:"gr",e:"📱",sid:2789},
-{name:"Aria FM 107.4",tab:"gr",e:"🎵",sid:605},
-{name:"Arion Στιγμές",tab:"gr",e:"⏳",sid:2592},
-{name:"ArtFM Radio",tab:"gr",e:"🎨",sid:2927},
-{name:"Astra FM 97.3",tab:"gr",e:"⭐",sid:164},
-{name:"Astra FM 99.2",tab:"gr",e:"🌟",sid:939},
-{name:"Avena 97.7",tab:"gr",e:"🌾",sid:2478},
-{name:"Baby Radio",tab:"gr",e:"👶",sid:4066},
-{name:"Barack Radio",tab:"gr",e:"📻",sid:4011},
-{name:"Best Radio 103.9",tab:"gr",e:"⭐",sid:849},
-{name:"Ble.FM 92.5",tab:"gr",e:"💙",sid:2458},
-{name:"Blue Greece Radio",tab:"gr",e:"🇬🇷",sid:2732},
-{name:"Brake FM 100.8",tab:"gr",e:"🛑",sid:829},
-{name:"Bravo FM 89.6",tab:"gr",e:"👏",sid:551},
-{name:"B-Side Radio",tab:"gr",e:"💿",sid:4124},
-{name:"BueStar FM 105.1",tab:"gr",e:"⭐",sid:1906},
-{name:"Campos 97.8",tab:"gr",e:"🌾",sid:166},
-{name:"Chicago Greek Radio",tab:"gr",e:"🇺🇸",sid:2830},
-{name:"Cocktail FM 89.0",tab:"gr",e:"🍸",sid:3426},
-{name:"Cosmos Radio 93.0",tab:"gr",e:"🪐",sid:1943},
-{name:"Creta Planet Radio",tab:"gr",e:"🌍",sid:2671},
-{name:"Cretaone 102.3",tab:"gr",e:"🏝️",sid:4192},
-{name:"Derti 105.7",tab:"gr",e:"💃",sid:1766},
-{name:"DG Radio",tab:"gr",e:"🎵",sid:3021},
-{name:"DGradio One",tab:"gr",e:"1️⃣",sid:3302},
-{name:"DJ Γρηγόρης 306",tab:"gr",e:"🎧",sid:2996},
-{name:"Dream 96.9",tab:"gr",e:"💭",sid:90},
-{name:"Dream FM 90.7",tab:"gr",e:"🌛",sid:2178},
-{name:"Echo FM 97.4",tab:"gr",e:"🔔",sid:1988},
-{name:"Echo FM 103.8",tab:"gr",e:"📣",sid:1079},
-{name:"EN Radio",tab:"gr",e:"📻",sid:2576},
-{name:"Evros FM 100",tab:"gr",e:"🌊",sid:1066},
-{name:"Fiesta FM 101.7",tab:"gr",e:"🎉",sid:1044},
-{name:"FM 100 Patras",tab:"gr",e:"📻",sid:1143},
-{name:"For You Radio",tab:"gr",e:"💝",sid:3217},
-{name:"Galaxias 103",tab:"gr",e:"🌌",sid:1025},
-{name:"Galaxy 106.1",tab:"gr",e:"🌌",sid:781},
-{name:"Gamma Radio 100",tab:"gr",e:"γ",sid:1050},
-{name:"Gold FM 100.3",tab:"gr",e:"💛",sid:2340},
-{name:"Grecia Radio",tab:"gr",e:"🇬🇷",sid:3048},
-{name:"Green Radio 88.8",tab:"gr",e:"🌿",sid:3029},
-{name:"Gyalisma Radio",tab:"gr",e:"🌅",sid:3197},
-{name:"Horizont FM 94.6",tab:"gr",e:"🌅",sid:2382},
-{name:"I FM 103.4",tab:"gr",e:"📻",sid:2036},
-{name:"Idea FM 95.5",tab:"gr",e:"💡",sid:2105},
-{name:"Ikaros FM 97.5",tab:"gr",e:"🦅",sid:1039},
-{name:"Ikaria Radio",tab:"gr",e:"🏝️",sid:3767},
-{name:"In FM 100.7",tab:"gr",e:"📻",sid:1395},
-{name:"Iris Radio 101.9",tab:"gr",e:"🌸",sid:1081},
-{name:"Island FM 103.8",tab:"gr",e:"🏝️",sid:2084},
-{name:"Jukebox Radio",tab:"gr",e:"🎵",sid:3218},
-{name:"K FM 100",tab:"gr",e:"📻",sid:1165},
-{name:"Kardami FM 101.5",tab:"gr",e:"🖤",sid:1038},
-{name:"Koukouvagia Radio",tab:"gr",e:"🦉",sid:3350},
-{name:"Lambda FM 100.9",tab:"gr",e:"λ",sid:1097},
-{name:"Lido Radio",tab:"gr",e:"🌊",sid:3407},
-{name:"Love Island Radio",tab:"gr",e:"❤️",sid:3655},
-{name:"Mikrofono Radio",tab:"gr",e:"🎤",sid:3196},
-{name:"Mix FM 101.8",tab:"gr",e:"🎵",sid:1072},
-{name:"MixedGreek Radio",tab:"gr",e:"🇬🇷",sid:3558},
-{name:"Navarino Radio",tab:"gr",e:"⚓",sid:3506},
-{name:"Omorfos Kosmos",tab:"gr",e:"🌍",sid:3513},
-{name:"Oniro Radio",tab:"gr",e:"💭",sid:3044},
-{name:"Optiko Radio",tab:"gr",e:"👁️",sid:3396},
-{name:"Orfeas Radio 105.5",tab:"gr",e:"🎵",sid:1100},
-{name:"Petit Paris Radio",tab:"gr",e:"🗼",sid:3462},
-{name:"Pigi FM 99.6",tab:"gr",e:"⛲",sid:2395},
-{name:"Pontios Radio",tab:"gr",e:"🎵",sid:3095},
-{name:"Prima FM 92.5",tab:"gr",e:"1️⃣",sid:1078},
-{name:"Psifi Radio",tab:"gr",e:"💻",sid:3090},
-{name:"Pulse Radio 104.3",tab:"gr",e:"💓",sid:2035},
-{name:"Radio Diavlos",tab:"gr",e:"📻",sid:3498},
-{name:"Radio Ritmo",tab:"gr",e:"🥁",sid:3456},
-{name:"Refresh Radio",tab:"gr",e:"🔄",sid:3414},
-{name:"Rizes Radio",tab:"gr",e:"🌿",sid:3145},
-{name:"Rodopi FM 101.7",tab:"gr",e:"🌺",sid:1012},
-{name:"Solar Radio",tab:"gr",e:"☀️",sid:3421},
-{name:"Souvlaki Radio",tab:"gr",e:"🍢",sid:3505},
-{name:"Stylos FM",tab:"gr",e:"✏️",sid:2384},
-{name:"Summer Radio",tab:"gr",e:"🏖️",sid:3454},
-{name:"Syn FM 97.7",tab:"gr",e:"📻",sid:1017},
-{name:"Takis Radio",tab:"gr",e:"🎵",sid:3540},
-{name:"Taxideftis Radio",tab:"gr",e:"🧳",sid:3507},
-{name:"Thetis Radio",tab:"gr",e:"🌊",sid:3104},
-{name:"Typos FM 96.3",tab:"gr",e:"📰",sid:1023},
-{name:"Unity Radio",tab:"gr",e:"🤝",sid:3378},
-{name:"Vigla FM 100.8",tab:"gr",e:"⚓",sid:1008},
-{name:"Web Radio Ellas",tab:"gr",e:"🇬🇷",sid:3124},
-];
-
-// ════════════════════════════════════════════════════════
-const BACKGROUNDS = [
-  {type:"none",color:"#333"},
-  {type:"img",url:"https://images.unsplash.com/photo-1555993539-1732b0258235?w=1600&q=80",color:"#1a3a6b"},
-  {type:"img",url:"https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1600&q=80",color:"#c05000"},
-  {type:"img",url:"https://images.unsplash.com/photo-1504512485720-7d83a16ee930?w=1600&q=80",color:"#006080"},
-  {type:"img",url:"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1600&q=80",color:"#2b4daa"},
-  {type:"img",url:"https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&q=80",color:"#2d5a27"},
-  {type:"grad",grad:"linear-gradient(135deg,#1a0005,#3d0010)"},
-  {type:"grad",grad:"linear-gradient(135deg,#000510,#001a3d)"},
-];
-
-const player = document.getElementById('player');
-const npbar  = document.getElementById('npbar');
-const npname = document.getElementById('npname');
-const bgEl   = document.getElementById('bg-overlay');
-let currentCard = null;
-let activeTab   = 'int';
-let query       = '';
-
-// Build swatches
-BACKGROUNDS.forEach((bg,i) => {
-  const s = document.createElement('div');
-  s.className = 'swatch' + (i===0?' on':'');
-  if (bg.type==='none') { s.style.background='#333'; s.innerHTML='<span style="color:#888;font-size:13px">✕</span>'; }
-  else if (bg.type==='img') s.style.background=`url(${bg.url}) center/cover,${bg.color}`;
-  else s.style.background=bg.grad;
-  s.addEventListener('click',()=>{ document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on')); s.classList.add('on'); applyBg(bg); });
-  document.getElementById('swatches').appendChild(s);
-});
-
-function applyBg(bg) {
-  if (bg.type==='none'){ bgEl.style.backgroundImage='none'; bgEl.classList.remove('on'); }
-  else if (bg.type==='img'){ bgEl.style.backgroundImage=`url(${bg.url})`; bgEl.classList.add('on'); }
-  else { bgEl.style.backgroundImage=bg.grad; bgEl.classList.add('on'); }
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                  'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept-Language': 'el-GR,el;q=0.9,en;q=0.8',
+    'Referer': 'https://live24.gr/',
 }
 
-// Tabs
-document.getElementById('tabs').addEventListener('click',e=>{
-  const t=e.target.closest('.tab'); if(!t) return;
-  activeTab=t.dataset.tab;
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  t.classList.add('on');
-  renderGrid();
-});
+# ── All SID-based stations from gid=24 (International) and gid=25 (Greek) ──
+STATIONS = [
+    # International (gid=24)
+    {"name": "02 Dance Radio",           "sid": 4127, "tab": "int"},
+    {"name": "100.6 Kiss FM",            "sid": 567,  "tab": "int"},
+    {"name": "111 Radio",                "sid": 2434, "tab": "int"},
+    {"name": "1431 AM",                  "sid": 2320, "tab": "int"},
+    {"name": "24-7 Radio.us",            "sid": 1848, "tab": "int"},
+    {"name": "4Life Radio",              "sid": 3424, "tab": "int"},
+    {"name": "80sMania Radio",           "sid": 2910, "tab": "int"},
+    {"name": "88μισό 88.5",              "sid": 253,  "tab": "int"},
+    {"name": "89 Rainbow 89",            "sid": 254,  "tab": "int"},
+    {"name": "90s All Time Greatest",    "sid": 3186, "tab": "int"},
+    {"name": "90s Heaven Web Radio",     "sid": 3570, "tab": "int"},
+    {"name": "98.6",                     "sid": 3916, "tab": "int"},
+    {"name": "A 100 FM 107.4",           "sid": 1700, "tab": "int"},
+    {"name": "Action Radio 98.2",        "sid": 1595, "tab": "int"},
+    {"name": "Active Radio",             "sid": 3425, "tab": "int"},
+    {"name": "AK Radio",                 "sid": 1650, "tab": "int"},
+    {"name": "Aktina Radio 95.0",        "sid": 821,  "tab": "int"},
+    {"name": "Albedo 14 Radio",          "sid": 2630, "tab": "int"},
+    {"name": "Alfa Radio 96",            "sid": 1068, "tab": "int"},
+    {"name": "All 60s Radio",            "sid": 3488, "tab": "int"},
+    {"name": "All 70s Radio",            "sid": 3489, "tab": "int"},
+    {"name": "All Hits Zone",            "sid": 3185, "tab": "int"},
+    {"name": "All Time 70s 80s",         "sid": 2741, "tab": "int"},
+    {"name": "Allgood Radio",            "sid": 4105, "tab": "int"},
+    {"name": "Andromeda NET Radio",      "sid": 1343, "tab": "int"},
+    {"name": "Antennes Radio 93.6",      "sid": 2534, "tab": "int"},
+    {"name": "Anyway Deep Radio",        "sid": 1942, "tab": "int"},
+    {"name": "Anyway Fresh Radio",       "sid": 3518, "tab": "int"},
+    {"name": "Apolis Radio",             "sid": 4097, "tab": "int"},
+    {"name": "Apollon FM 98.1",          "sid": 1760, "tab": "int"},
+    {"name": "Aqua Radio The 80s",       "sid": 2854, "tab": "int"},
+    {"name": "Aroto Instrumental",       "sid": 2861, "tab": "int"},
+    {"name": "Art FM 102.7",             "sid": 2228, "tab": "int"},
+    {"name": "Art FM 103.1",             "sid": 3443, "tab": "int"},
+    {"name": "Athens DJ 95.2",           "sid": 1322, "tab": "int"},
+    {"name": "Athens Free Radio",        "sid": 3794, "tab": "int"},
+    {"name": "Athens Metro Mall Radio",  "sid": 2559, "tab": "int"},
+    {"name": "Athens Party",             "sid": 2595, "tab": "int"},
+    {"name": "Athens Radio Master",      "sid": 3573, "tab": "int"},
+    {"name": "Athens Radio Trance",      "sid": 2769, "tab": "int"},
+    {"name": "Athikia Disco FM",         "sid": 4000, "tab": "int"},
+    {"name": "Audiophile Baroque",       "sid": 2831, "tab": "int"},
+    {"name": "Audiophile Rock/Blues",    "sid": 2796, "tab": "int"},
+    {"name": "Auto Pilot Radio",         "sid": 2387, "tab": "int"},
+    {"name": "Avanti 97.7",              "sid": 1489, "tab": "int"},
+    {"name": "Avanti Classic",           "sid": 2943, "tab": "int"},
+    {"name": "Avanti FM 107.6",          "sid": 183,  "tab": "int"},
+    {"name": "Bach Radio",               "sid": 2937, "tab": "int"},
+    {"name": "Baila Radio",              "sid": 4010, "tab": "int"},
+    {"name": "Bangee Radio",             "sid": 2822, "tab": "int"},
+    {"name": "Be Radio",                 "sid": 2642, "tab": "int"},
+    {"name": "Beethoven Radio",          "sid": 2827, "tab": "int"},
+    {"name": "Believe Radio",            "sid": 3362, "tab": "int"},
+    {"name": "Best FM 97.3",             "sid": 863,  "tab": "int"},
+    {"name": "Best Radio 94.7",          "sid": 1143, "tab": "int"},
+    {"name": "Beton7 Art Radio",         "sid": 1677, "tab": "int"},
+    {"name": "BFBS Cyprus 89.7",         "sid": 2737, "tab": "int"},
+    {"name": "Black Duck Radio",         "sid": 2410, "tab": "int"},
+    {"name": "Bocca Radio",              "sid": 3313, "tab": "int"},
+    {"name": "Boem Radio",               "sid": 2220, "tab": "int"},
+    {"name": "Boo Radio",                "sid": 2920, "tab": "int"},
+    {"name": "Box Radio",                "sid": 3876, "tab": "int"},
+    {"name": "Buddha Radio",             "sid": 3991, "tab": "int"},
+    {"name": "Buddy Radio",              "sid": 4056, "tab": "int"},
+    {"name": "Bur Radio",                "sid": 3079, "tab": "int"},
+    {"name": "Cadillac Records Radio",   "sid": 2877, "tab": "int"},
+    {"name": "Camara Radio",             "sid": 3643, "tab": "int"},
+    {"name": "Cannibal Radio",           "sid": 1661, "tab": "int"},
+    {"name": "Capital 104.8",            "sid": 3245, "tab": "int"},
+    {"name": "Capital FM 107",           "sid": 1649, "tab": "int"},
+    {"name": "Capital Radio 90.7",       "sid": 1210, "tab": "int"},
+    {"name": "Cavo Paradiso Radio",      "sid": 2792, "tab": "int"},
+    {"name": "CFM 99.9",                 "sid": 3656, "tab": "int"},
+    {"name": "Chania Radio 99.6",        "sid": 3594, "tab": "int"},
+    {"name": "Chez Gabriel Radio",       "sid": 3851, "tab": "int"},
+    {"name": "Chillout TreePines",       "sid": 3439, "tab": "int"},
+    {"name": "Chimeres Radio",           "sid": 2981, "tab": "int"},
+    {"name": "Choice FM 104.3",          "sid": 2714, "tab": "int"},
+    {"name": "Cinar FM 91.8",            "sid": 2501, "tab": "int"},
+    {"name": "Cinnamon Radio Deep",      "sid": 4156, "tab": "int"},
+    {"name": "Cinnamon Radio Easy",      "sid": 4157, "tab": "int"},
+    {"name": "City Faces Radio",         "sid": 2453, "tab": "int"},
+    {"name": "City FM 92",               "sid": 613,  "tab": "int"},
+    {"name": "City FM 100",              "sid": 1157, "tab": "int"},
+    {"name": "City FM 103.8",            "sid": 1415, "tab": "int"},
+    {"name": "Classic Old Time Radio",   "sid": 4008, "tab": "int"},
+    {"name": "Classic-99",               "sid": 4101, "tab": "int"},
+    {"name": "Clearjet Radio",           "sid": 3820, "tab": "int"},
+    {"name": "Click Radio",              "sid": 3634, "tab": "int"},
+    {"name": "Clubaki Web Radio",        "sid": 3547, "tab": "int"},
+    {"name": "Clubradiofm",              "sid": 4200, "tab": "int"},
+    {"name": "Cocktail Web Radio",       "sid": 3824, "tab": "int"},
+    {"name": "Coffee Web Radio",         "sid": 2785, "tab": "int"},
+    {"name": "Coni-OnAir Radio",         "sid": 1696, "tab": "int"},
+    {"name": "Contact Radio",            "sid": 3608, "tab": "int"},
+    {"name": "Cool FM 90.7",             "sid": 694,  "tab": "int"},
+    {"name": "Cool FM 106.8",            "sid": 1225, "tab": "int"},
+    {"name": "Cool FM.eu",               "sid": 41,   "tab": "int"},
+    {"name": "CoolFM.eu Soft",           "sid": 2057, "tab": "int"},
+    {"name": "Cosmos 93.2",              "sid": 951,  "tab": "int"},
+    {"name": "Cosmos 97.1",              "sid": 900,  "tab": "int"},
+    {"name": "Crystal Radio Athens",     "sid": 3867, "tab": "int"},
+    {"name": "Cult Radio 99.8",          "sid": 2882, "tab": "int"},
+    {"name": "Cut-Radio 95.2",           "sid": 3152, "tab": "int"},
+    {"name": "Cyprus Funk Station",      "sid": 2904, "tab": "int"},
+    {"name": "D Radio",                  "sid": 1727, "tab": "int"},
+    {"name": "D-code 96.2",              "sid": 1251, "tab": "int"},
+    {"name": "Dance waves",              "sid": 1673, "tab": "int"},
+    {"name": "DeeJay Corfu 97.5",        "sid": 536,  "tab": "int"},
+    {"name": "DeeJay Radio Κύπρου 93.5", "sid": 2707, "tab": "int"},
+    {"name": "DeeJay Βόλος 104.5",       "sid": 2544, "tab": "int"},
+    {"name": "Deep Motion FM",           "sid": 1362, "tab": "int"},
+    {"name": "Deep Web Radio",           "sid": 3791, "tab": "int"},
+    {"name": "Deepin Radio",             "sid": 2965, "tab": "int"},
+    {"name": "DGradio One",              "sid": 3302, "tab": "int"},
+    {"name": "Dice Radio",               "sid": 2644, "tab": "int"},
+    {"name": "Disco 80s Radio",          "sid": 1593, "tab": "int"},
+    {"name": "Disco Cafe",               "sid": 3639, "tab": "int"},
+    {"name": "Disco FM",                 "sid": 3038, "tab": "int"},
+    {"name": "Disco Net Radio Athens",   "sid": 3524, "tab": "int"},
+    {"name": "Discomania",               "sid": 1410, "tab": "int"},
+    {"name": "Diva FM 91.6",             "sid": 996,  "tab": "int"},
+    {"name": "Dj Power Music",           "sid": 4027, "tab": "int"},
+    {"name": "Dj Yanni Radio",           "sid": 2212, "tab": "int"},
+    {"name": "Dj Λαμία 91.2",            "sid": 2883, "tab": "int"},
+    {"name": "Dolce Radio",              "sid": 1856, "tab": "int"},
+    {"name": "Dream 96.9",               "sid": 90,   "tab": "int"},
+    {"name": "Dream Radio 88.1",         "sid": 3336, "tab": "int"},
+    {"name": "DreamCity WebRadio",       "sid": 1978, "tab": "int"},
+    {"name": "Dromos FM Κύπρου",         "sid": 1674, "tab": "int"},
+    {"name": "DRS FM 95.3",              "sid": 1426, "tab": "int"},
+    {"name": "Easy 93.2",                "sid": 1861, "tab": "int"},
+    {"name": "Easy 105.3",               "sid": 238,  "tab": "int"},
+    {"name": "Echoes Radio",             "sid": 2598, "tab": "int"},
+    {"name": "Eclectic Radio",           "sid": 2240, "tab": "int"},
+    {"name": "EcoBeat Gr",               "sid": 4036, "tab": "int"},
+    {"name": "Edit Radio",               "sid": 2990, "tab": "int"},
+    {"name": "EF-EM Radio 99",           "sid": 2736, "tab": "int"},
+    {"name": "Elegant Radio",            "sid": 3866, "tab": "int"},
+    {"name": "eMusic Site",              "sid": 4204, "tab": "int"},
+    {"name": "Energy 94.2",              "sid": 581,  "tab": "int"},
+    {"name": "ENERGY 93.4",              "sid": 1436, "tab": "int"},
+    {"name": "Energy 101.5",             "sid": 3431, "tab": "int"},
+    {"name": "Energy FM 88.9",           "sid": 2756, "tab": "int"},
+    {"name": "Enfo Radio",               "sid": 3262, "tab": "int"},
+    {"name": "Envy Radio",               "sid": 3236, "tab": "int"},
+    {"name": "Escapula Radio",           "sid": 3238, "tab": "int"},
+    {"name": "Essential Mix Radio",      "sid": 3625, "tab": "int"},
+    {"name": "Eternal Radio",            "sid": 3157, "tab": "int"},
+    {"name": "Eurovision Song Contest",  "sid": 3224, "tab": "int"},
+    {"name": "EXIT radio",               "sid": 3520, "tab": "int"},
+    {"name": "EyeOnYou Radio",           "sid": 2959, "tab": "int"},
+    {"name": "Fame Radio",               "sid": 2556, "tab": "int"},
+    {"name": "Feelings Radio",           "sid": 2998, "tab": "int"},
+    {"name": "Figaro Radio",             "sid": 3659, "tab": "int"},
+    {"name": "Fire radio",               "sid": 2480, "tab": "int"},
+    {"name": "Flashback Radio",          "sid": 2994, "tab": "int"},
+    {"name": "Fly 104",                  "sid": 299,  "tab": "int"},
+    {"name": "Fly FM 88.1",              "sid": 2398, "tab": "int"},
+    {"name": "Fly FM 89.7",              "sid": 839,  "tab": "int"},
+    {"name": "FM Life 105.3",            "sid": 407,  "tab": "int"},
+    {"name": "Focus FM 103.6",           "sid": 2001, "tab": "int"},
+    {"name": "Folegandros Radio",        "sid": 3409, "tab": "int"},
+    {"name": "Forever 96.3",             "sid": 1052, "tab": "int"},
+    {"name": "Freestyle Radio 97.2",     "sid": 3276, "tab": "int"},
+    {"name": "Fresh 92.9",               "sid": 1000, "tab": "int"},
+    {"name": "Fresh 105",                "sid": 3390, "tab": "int"},
+    {"name": "Fresh web Radio",          "sid": 2784, "tab": "int"},
+    {"name": "Frisky radio",             "sid": 2477, "tab": "int"},
+    {"name": "G Radio",                  "sid": 1750, "tab": "int"},
+    {"name": "Galaxy 106.1",             "sid": 781,  "tab": "int"},
+    {"name": "Geranymo Groovy",          "sid": 3572, "tab": "int"},
+    {"name": "Ghost Radio",              "sid": 2885, "tab": "int"},
+    {"name": "Ginge Radio",              "sid": 1886, "tab": "int"},
+    {"name": "GLOBAL MUSIC RADIO",       "sid": 4205, "tab": "int"},
+    {"name": "Gods Cafe Radio",          "sid": 3028, "tab": "int"},
+    {"name": "Gold Radio",               "sid": 3180, "tab": "int"},
+    {"name": "GRD Terra Radio",          "sid": 3754, "tab": "int"},
+    {"name": "Greek New Age Radio",      "sid": 1994, "tab": "int"},
+    {"name": "Greek Otaku Radio",        "sid": 2803, "tab": "int"},
+    {"name": "Greek Web Radio",          "sid": 2616, "tab": "int"},
+    {"name": "Greekradio web Channel",   "sid": 4196, "tab": "int"},
+    {"name": "Groove Radio",             "sid": 1713, "tab": "int"},
+    # Greek (gid=25)
+    {"name": "ANT1 Radio 94.0",          "sid": 1652, "tab": "gr"},
+    {"name": "1ο Ερασιτεχνικό",          "sid": 3440, "tab": "gr"},
+    {"name": "2DAY 104.5",               "sid": 1569, "tab": "gr"},
+    {"name": "2MM Web Radio",            "sid": 2674, "tab": "gr"},
+    {"name": "926 FM 92.6",              "sid": 15,   "tab": "gr"},
+    {"name": "Action Radio",             "sid": 3660, "tab": "gr"},
+    {"name": "Adelin 107.3",             "sid": 2565, "tab": "gr"},
+    {"name": "aiwaves",                  "sid": 2072, "tab": "gr"},
+    {"name": "Alpha FM 104.7",           "sid": 1506, "tab": "gr"},
+    {"name": "Angel 102.8",              "sid": 139,  "tab": "gr"},
+    {"name": "Apollon FM 98.1",          "sid": 1760, "tab": "gr"},
+    {"name": "Apps Radio 96.6",          "sid": 2789, "tab": "gr"},
+    {"name": "Aria FM 107.4",            "sid": 605,  "tab": "gr"},
+    {"name": "Arion Στιγμές",            "sid": 2592, "tab": "gr"},
+    {"name": "ArtFM Radio",              "sid": 2927, "tab": "gr"},
+    {"name": "Astra FM 97.3",            "sid": 164,  "tab": "gr"},
+    {"name": "Astra FM 99.2",            "sid": 939,  "tab": "gr"},
+    {"name": "Avena 97.7",               "sid": 2478, "tab": "gr"},
+    {"name": "Baby Radio",               "sid": 4066, "tab": "gr"},
+    {"name": "Barack Radio",             "sid": 4011, "tab": "gr"},
+    {"name": "Best Radio 103.9",         "sid": 849,  "tab": "gr"},
+    {"name": "Ble.FM 92.5",              "sid": 2458, "tab": "gr"},
+    {"name": "Blue Greece Radio",        "sid": 2732, "tab": "gr"},
+    {"name": "Brake FM 100.8",           "sid": 829,  "tab": "gr"},
+    {"name": "Bravo FM 89.6",            "sid": 551,  "tab": "gr"},
+    {"name": "B-Side Radio",             "sid": 4124, "tab": "gr"},
+    {"name": "BueStar FM 105.1",         "sid": 1906, "tab": "gr"},
+    {"name": "Campos 97.8",              "sid": 166,  "tab": "gr"},
+    {"name": "Chicago Greek Radio",      "sid": 2830, "tab": "gr"},
+    {"name": "Cocktail FM 89.0",         "sid": 3426, "tab": "gr"},
+    {"name": "Cosmos Radio 93.0",        "sid": 1943, "tab": "gr"},
+    {"name": "Creta Planet Radio",       "sid": 2671, "tab": "gr"},
+    {"name": "Cretaone 102.3",           "sid": 4192, "tab": "gr"},
+    {"name": "Derti 105.7",              "sid": 1766, "tab": "gr"},
+    {"name": "DG Radio",                 "sid": 3021, "tab": "gr"},
+    {"name": "DGradio One",              "sid": 3302, "tab": "gr"},
+    {"name": "DJ Γρηγόρης 306",          "sid": 2996, "tab": "gr"},
+    {"name": "Dream 96.9",               "sid": 90,   "tab": "gr"},
+    {"name": "Dream FM 90.7",            "sid": 2178, "tab": "gr"},
+    {"name": "Echo FM 97.4",             "sid": 1988, "tab": "gr"},
+    {"name": "Echo FM 103.8",            "sid": 1079, "tab": "gr"},
+    {"name": "EN Radio",                 "sid": 2576, "tab": "gr"},
+    {"name": "Evros FM 100",             "sid": 1066, "tab": "gr"},
+    {"name": "Fiesta FM 101.7",          "sid": 1044, "tab": "gr"},
+    {"name": "FM 100 Patras",            "sid": 1143, "tab": "gr"},
+    {"name": "For You Radio",            "sid": 3217, "tab": "gr"},
+    {"name": "Galaxias 103",             "sid": 1025, "tab": "gr"},
+    {"name": "Galaxy 106.1",             "sid": 781,  "tab": "gr"},
+    {"name": "Gamma Radio 100",          "sid": 1050, "tab": "gr"},
+    {"name": "Gold FM 100.3",            "sid": 2340, "tab": "gr"},
+    {"name": "Grecia Radio",             "sid": 3048, "tab": "gr"},
+    {"name": "Green Radio 88.8",         "sid": 3029, "tab": "gr"},
+    {"name": "Gyalisma Radio",           "sid": 3197, "tab": "gr"},
+    {"name": "Horizont FM 94.6",         "sid": 2382, "tab": "gr"},
+    {"name": "I FM 103.4",               "sid": 2036, "tab": "gr"},
+    {"name": "Idea FM 95.5",             "sid": 2105, "tab": "gr"},
+    {"name": "Ikaros FM 97.5",           "sid": 1039, "tab": "gr"},
+    {"name": "Ikaria Radio",             "sid": 3767, "tab": "gr"},
+    {"name": "In FM 100.7",              "sid": 1395, "tab": "gr"},
+    {"name": "Iris Radio 101.9",         "sid": 1081, "tab": "gr"},
+    {"name": "Island FM 103.8",          "sid": 2084, "tab": "gr"},
+    {"name": "Jukebox Radio",            "sid": 3218, "tab": "gr"},
+    {"name": "K FM 100",                 "sid": 1165, "tab": "gr"},
+    {"name": "Kardami FM 101.5",         "sid": 1038, "tab": "gr"},
+    {"name": "Koukouvagia Radio",        "sid": 3350, "tab": "gr"},
+    {"name": "Lambda FM 100.9",          "sid": 1097, "tab": "gr"},
+    {"name": "Lido Radio",               "sid": 3407, "tab": "gr"},
+    {"name": "Love Island Radio",        "sid": 3655, "tab": "gr"},
+    {"name": "Mikrofono Radio",          "sid": 3196, "tab": "gr"},
+    {"name": "Mix FM 101.8",             "sid": 1072, "tab": "gr"},
+    {"name": "MixedGreek Radio",         "sid": 3558, "tab": "gr"},
+    {"name": "Navarino Radio",           "sid": 3506, "tab": "gr"},
+    {"name": "Omorfos Kosmos",           "sid": 3513, "tab": "gr"},
+    {"name": "Oniro Radio",              "sid": 3044, "tab": "gr"},
+    {"name": "Optiko Radio",             "sid": 3396, "tab": "gr"},
+    {"name": "Orfeas Radio 105.5",       "sid": 1100, "tab": "gr"},
+    {"name": "Petit Paris Radio",        "sid": 3462, "tab": "gr"},
+    {"name": "Pigi FM 99.6",             "sid": 2395, "tab": "gr"},
+    {"name": "Pontios Radio",            "sid": 3095, "tab": "gr"},
+    {"name": "Prima FM 92.5",            "sid": 1078, "tab": "gr"},
+    {"name": "Psifi Radio",              "sid": 3090, "tab": "gr"},
+    {"name": "Pulse Radio 104.3",        "sid": 2035, "tab": "gr"},
+    {"name": "Radio Diavlos",            "sid": 3498, "tab": "gr"},
+    {"name": "Radio Ritmo",              "sid": 3456, "tab": "gr"},
+    {"name": "Refresh Radio",            "sid": 3414, "tab": "gr"},
+    {"name": "Rizes Radio",              "sid": 3145, "tab": "gr"},
+    {"name": "Rodopi FM 101.7",          "sid": 1012, "tab": "gr"},
+    {"name": "Solar Radio",              "sid": 3421, "tab": "gr"},
+    {"name": "Souvlaki Radio",           "sid": 3505, "tab": "gr"},
+    {"name": "Stylos FM",                "sid": 2384, "tab": "gr"},
+    {"name": "Summer Radio",             "sid": 3454, "tab": "gr"},
+    {"name": "Syn FM 97.7",              "sid": 1017, "tab": "gr"},
+    {"name": "Takis Radio",              "sid": 3540, "tab": "gr"},
+    {"name": "Taxideftis Radio",         "sid": 3507, "tab": "gr"},
+    {"name": "Thetis Radio",             "sid": 3104, "tab": "gr"},
+    {"name": "Typos FM 96.3",            "sid": 1023, "tab": "gr"},
+    {"name": "Unity Radio",              "sid": 3378, "tab": "gr"},
+    {"name": "Vigla FM 100.8",           "sid": 1008, "tab": "gr"},
+    {"name": "Web Radio Ellas",          "sid": 3124, "tab": "gr"},
+]
 
-// Search
-document.getElementById('search').addEventListener('input',e=>{ query=e.target.value.toLowerCase().trim(); renderGrid(); });
 
-function getStream(s) {
-  if (s.stream) return s.stream;
-  if (s.sid) return `https://netradio.live24.gr/generic${s.sid}`;
-  return null;
-}
+def get_stream(sid):
+    """Fetch live24.gr station page and extract the stream URL from JS config."""
+    url = f"https://live24.gr/radio/generic.jsp?sid={sid}"
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        html = r.text
 
-function renderGrid() {
-  const grid = document.getElementById('grid');
-  grid.innerHTML='';
-  const intCount = S.filter(s=>s.tab==='int').length;
-  const grCount  = S.filter(s=>s.tab==='gr').length;
-  document.getElementById('cnt-int').textContent=`(${intCount})`;
-  document.getElementById('cnt-gr').textContent=`(${grCount})`;
+        # Primary pattern: streamsrc: 'URL'
+        m = re.search(r"streamsrc\s*:\s*'([^']+)'", html)
+        if m:
+            return m.group(1).strip()
 
-  const list = query
-    ? S.filter(s=>s.name.toLowerCase().includes(query))
-    : S.filter(s=>s.tab===activeTab);
+        # Fallback: stream: 'URL'
+        m = re.search(r"[,\s]stream\s*:\s*'([^']+)'", html)
+        if m:
+            return m.group(1).strip()
 
-  document.getElementById('resultcount').textContent =
-    query ? `${list.length} αποτελέσματα για "${query}"` : `${list.length} σταθμοί`;
+        # Fallback 2: mobileStream (sometimes the only one present)
+        m = re.search(r"mobileStream\s*:\s*'([^'-][^']+)'", html)
+        if m and m.group(1) not in ('-1', ''):
+            return m.group(1).strip()
 
-  list.forEach(s=>{
-    const card = document.createElement('div');
-    card.className='card';
-    card.dataset.name=s.name;
-    const hasStream = !!(s.stream || s.sid);
-    card.innerHTML=`
-      <div class="card-top">
-        <div class="ico">${s.e}</div>
-        <button class="playbtn" aria-label="Play ${s.name}"><span>▶</span></button>
-      </div>
-      <div class="name">${s.name}</div>
-      <div class="gtag">${s.tab==='int'?'🌍 Διεθνής':'🇬🇷 Ελληνικά'}</div>
-    `;
-    card.addEventListener('click',()=>playCard(card,s));
-    grid.appendChild(card);
-  });
-}
+        return None
 
-function playCard(card, s) {
-  const wasPlaying = card.classList.contains('playing');
-  stopAll();
-  if (wasPlaying) return;
+    except requests.exceptions.Timeout:
+        return "TIMEOUT"
+    except Exception as e:
+        return f"ERROR: {e}"
 
-  const url = getStream(s);
-  if (!url) { if(s.sid) window.open(`https://live24.gr/radio/generic.jsp?sid=${s.sid}`,'_blank'); return; }
 
-  card.classList.add('loading');
-  currentCard = card;
-  player.src = url;
-  player.load();
+def main():
+    results = []
+    total = len(STATIONS)
 
-  player.play()
-    .then(()=>onSuccess(card,s))
-    .catch(()=>{
-      // try http fallback
-      if (url.startsWith('https://')) {
-        player.src=url.replace('https://','http://');
-        player.load();
-        player.play().then(()=>onSuccess(card,s)).catch(()=>onFail(card,s));
-      } else onFail(card,s);
-    });
-}
+    print(f"Extracting streams for {total} stations...")
+    print("=" * 60)
 
-function onSuccess(card,s) {
-  card.classList.remove('loading');
-  card.classList.add('playing');
-  const sp = card.querySelector('.playbtn span'); if(sp) sp.textContent='■';
-  npname.textContent=s.name;
-  npbar.classList.add('on');
-}
+    for i, station in enumerate(STATIONS, 1):
+        sid  = station["sid"]
+        name = station["name"]
+        tab  = station["tab"]
 
-function onFail(card,s) {
-  card.classList.remove('loading');
-  currentCard=null;
-  const err=document.createElement('span');
-  err.className='err';
-  err.textContent='⚠ Άνοιγμα live24';
-  err.title='Άνοιγμα στο live24.gr';
-  err.addEventListener('click',e=>{ e.stopPropagation(); if(s.sid) window.open(`https://live24.gr/radio/generic.jsp?sid=${s.sid}`,'_blank'); });
-  card.appendChild(err);
-  setTimeout(()=>err.remove(),8000);
-}
+        print(f"[{i:3}/{total}] {name} (sid={sid}) ... ", end="", flush=True)
 
-function stopAll() {
-  player.pause(); player.src='';
-  document.querySelectorAll('.card.playing,.card.loading').forEach(c=>{
-    c.classList.remove('playing','loading');
-    const sp=c.querySelector('.playbtn span'); if(sp) sp.textContent='▶';
-  });
-  npbar.classList.remove('on');
-  currentCard=null;
-}
+        stream = get_stream(sid)
 
-window.addEventListener('keydown',e=>{ if(e.code==='Escape') stopAll(); });
+        status = "✓" if stream and not stream.startswith(("ERROR", "TIMEOUT", "None")) else "✗"
+        print(f"{status} {stream or 'NOT FOUND'}")
 
-renderGrid();
-</script>
-</body>
-</html>
+        results.append({
+            "name":   name,
+            "sid":    sid,
+            "tab":    tab,
+            "stream": stream,
+            "ok":     bool(stream and not stream.startswith(("ERROR", "TIMEOUT")))
+        })
+
+        time.sleep(0.8)  # polite delay
+
+    # ── Save JSON ──
+    with open("streams_found.json", "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
+    print("\n✓ Saved: streams_found.json")
+
+    # ── Save readable TXT ──
+    found     = [r for r in results if r["ok"]]
+    not_found = [r for r in results if not r["ok"]]
+
+    with open("streams_found.txt", "w", encoding="utf-8") as f:
+        f.write(f"FOUND ({len(found)}/{total})\n{'='*60}\n")
+        for r in found:
+            f.write(f'{r["name"]:40} {r["stream"]}\n')
+        f.write(f"\nNOT FOUND / ERROR ({len(not_found)})\n{'='*60}\n")
+        for r in not_found:
+            f.write(f'{r["name"]:40} sid={r["sid"]}\n')
+
+    print(f"✓ Saved: streams_found.txt")
+    print(f"\nSummary: {len(found)} streams found, {len(not_found)} not found")
+
+    # ── Print JS snippet ready to paste into index.html ──
+    print("\n" + "="*60)
+    print("COPY-PASTE READY JS (for index.html):")
+    print("="*60)
+    for r in found:
+        js_name = r['name'].replace("'", "\\'")
+        print(f'  // {js_name}  (sid:{r["sid"]})')
+        print(f'  stream: "{r["stream"]}",')
+
+
+if __name__ == "__main__":
+    main()
