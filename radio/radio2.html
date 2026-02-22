@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Greek Radio Live 🎵</title>
+<title>Radio Player 2026 🎵</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --accent:#e8a838; --bg:#0d0d0d;
     --card:rgba(255,255,255,0.06); --card-h:rgba(255,255,255,0.12);
-    --border:rgba(255,255,255,0.1); --text:#f0ece3; --muted:#aaa;
+    --border:rgba(255,255,255,0.08); --text:#f0ece3; --muted:#aaa;
     --glow:0 0 25px rgba(232,168,56,0.3);
   }
 
@@ -20,87 +20,102 @@
     background-color: var(--bg);
     /* ΦΟΝΤΟ - Background Image */
     background-image: linear-gradient(rgba(13,13,13,0.85), rgba(13,13,13,0.85)), 
-                      url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1600&q=80');
+                      url('https://images.unsplash.com/photo-1514525253361-b83a859b73c0?auto=format&fit=crop&w=1600&q=80');
     background-attachment: fixed;
     background-size: cover;
     color: var(--text);
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   header { padding:50px 20px; text-align:center; }
-  h1 { font-family:'Syne', sans-serif; font-size:2.5rem; color:var(--accent); text-transform:uppercase; letter-spacing:2px; }
+  h1 { font-family:'Syne', sans-serif; font-size:2.8rem; color:var(--accent); text-transform:uppercase; letter-spacing:2px; margin-bottom: 20px;}
 
-  .container { max-width:1300px; margin:0 auto; padding:0 20px 120px; }
+  .search-container { max-width:600px; margin:0 auto 40px; }
+  input { width:100%; padding:15px 25px; border-radius:30px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:#fff; font-size:1rem; outline:none; backdrop-filter: blur(5px); transition: 0.3s;}
+  input:focus { border-color:var(--accent); box-shadow: var(--glow); }
+
+  .container { max-width:1400px; margin:0 auto; padding:0 30px 150px; }
   
-  /* Category Styling */
+  /* Category Headers */
+  .category-section { margin-bottom: 60px; }
   .category-title { 
-    font-family:'Syne', sans-serif;
-    font-size: 1.6rem; 
-    margin: 40px 0 20px; 
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--accent);
-    display: inline-block;
-    color: #fff;
+    font-family:'Syne', sans-serif; font-size: 1.8rem; margin-bottom: 25px; 
+    padding-bottom: 10px; border-bottom: 2px solid var(--accent);
+    display: flex; align-items: center; gap: 15px; color: #fff;
   }
 
   .grid { 
     display:grid; 
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-    gap:20px; 
+    gap:15px; 
   }
 
   .card { 
-    background: var(--card); 
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border); 
-    border-radius: 20px; 
-    padding: 25px 15px; 
-    cursor: pointer; 
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-    text-align: center;
+    background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--border); 
+    border-radius: 15px; padding: 25px 15px; cursor: pointer; 
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-align: center;
   }
   .card:hover { background: var(--card-h); transform: translateY(-5px); border-color: var(--accent); }
   .card.playing { border-color: var(--accent); box-shadow: var(--glow); background: rgba(232,168,56,0.15); }
 
-  .ico { font-size:2.5rem; margin-bottom:12px; display:block; }
-  .name { font-weight:700; font-size:1rem; min-height: 2.4em; display: flex; align-items: center; justify-content: center; }
+  .ico { font-size:2.5rem; margin-bottom:12px; display:block; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+  .name { font-weight:700; font-size:0.95rem; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
 
-  /* Notification Player Bar */
+  /* Player Bar */
   #np-bar { 
-    position:fixed; bottom:-100px; left:0; width:100%; 
-    background: rgba(20,20,20,0.9); backdrop-filter: blur(20px); 
-    border-top:1px solid var(--border); padding:20px; 
-    transition: 0.4s ease-in-out; z-index:1000; 
+    position:fixed; bottom:-120px; left:0; width:100%; 
+    background: rgba(10,10,10,0.92); backdrop-filter: blur(25px); 
+    border-top:1px solid var(--border); padding:20px 40px; 
+    transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:1000; 
     display:flex; align-items:center; justify-content:space-between; 
   }
   #np-bar.on { bottom:0; }
-  .np-name { font-weight:800; color:var(--accent); font-size:1.1rem; }
-  .btn-stop { background:var(--accent); border:none; color:#000; font-weight:800; padding:10px 25px; border-radius:30px; cursor:pointer; }
+  .np-info { display:flex; align-items:center; gap:20px; }
+  .np-name { font-weight:800; color:var(--accent); font-size:1.2rem; }
+  
+  .btn-stop { 
+    background:var(--accent); border:none; color:#000; font-weight:800; 
+    padding:12px 30px; border-radius:30px; cursor:pointer; 
+    transition: 0.2s; box-shadow: 0 4px 15px rgba(232,168,56,0.3);
+  }
+  .btn-stop:hover { transform: scale(1.05); }
 
-  /* Hidden loader */
-  #loader { width:20px; height:20px; border:3px solid #333; border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; display:none; margin-right:15px; }
+  #loader { width:22px; height:22px; border:3px solid #333; border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; display:none; }
   @keyframes spin { to { transform:rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    h1 { font-size: 1.8rem; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Radio Streaming 2026</h1>
+  <h1>Live Radio 2026</h1>
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="Αναζήτηση σταθμού..." autocomplete="off">
+  </div>
 </header>
 
 <div class="container">
-  <h2 class="category-title">🇬🇷 Ελληνικά</h2>
-  <div id="grid-gr" class="grid"></div>
+  <div id="sec-gr" class="category-section" style="display: none;">
+    <h2 class="category-title"><span>🇬🇷</span> Ελληνικά</h2>
+    <div id="grid-gr" class="grid"></div>
+  </div>
 
-  <h2 class="category-title">🌍 Διεθνής μουσική</h2>
-  <div id="grid-int" class="grid"></div>
+  <div id="sec-int" class="category-section" style="display: none;">
+    <h2 class="category-title"><span>🌍</span> Διεθνής μουσική</h2>
+    <div id="grid-int" class="grid"></div>
+  </div>
 </div>
 
 <div id="np-bar">
-  <div style="display:flex; align-items:center;">
+  <div class="np-info">
     <div id="loader"></div>
     <div>
-      <small style="color:var(--muted); text-transform:uppercase;">Playing:</small>
+      <small style="color:var(--muted); text-transform:uppercase; font-weight: bold; letter-spacing: 1px;">Τώρα ακούτε:</small>
       <div id="np-name" class="np-name">-</div>
     </div>
   </div>
@@ -119,36 +134,46 @@ let curCard = null;
 
 async function init() {
   try {
-    // Replace with your exact filename on GitHub
-    const res = await fetch('streams_found (copy 1).json');
+    // Points to your streams.json
+    const res = await fetch('streams.json');
     allData = await res.json();
-    
-    // Separate and Render
-    const greek = allData.filter(s => s.tab === 'gr' && s.ok);
-    const international = allData.filter(s => s.tab === 'int' && s.ok);
-    
-    renderGrid(greek, 'grid-gr');
-    renderGrid(international, 'grid-int');
+    renderAll(allData);
   } catch (e) {
-    console.error("Error loading JSON:", e);
+    console.error("JSON Error:", e);
   }
 }
 
-function renderGrid(list, elementId) {
-  const grid = document.getElementById(elementId);
-  list.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    const icon = s.tab === 'int' ? '📻' : '🎵';
-    
-    card.innerHTML = `
-      <span class="ico">${icon}</span>
-      <div class="name">${s.name}</div>
-    `;
-    
-    card.addEventListener('click', () => playStation(card, s));
-    grid.appendChild(card);
-  });
+function renderAll(data) {
+  const greek = data.filter(s => s.tab === 'gr' && s.ok);
+  const international = data.filter(s => s.tab === 'int' && s.ok);
+
+  renderGrid(greek, 'grid-gr', 'sec-gr');
+  renderGrid(international, 'grid-int', 'sec-int');
+}
+
+function renderGrid(list, gridId, sectionId) {
+  const grid = document.getElementById(gridId);
+  const section = document.getElementById(sectionId);
+  grid.innerHTML = '';
+  
+  if (list.length > 0) {
+    section.style.display = 'block';
+    list.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const icon = s.tab === 'gr' ? '🎵' : '🌍';
+      
+      card.innerHTML = `
+        <span class="ico">${icon}</span>
+        <div class="name">${s.name}</div>
+      `;
+      
+      card.addEventListener('click', () => playStation(card, s));
+      grid.appendChild(card);
+    });
+  } else {
+    section.style.display = 'none';
+  }
 }
 
 async function playStation(card, s) {
@@ -164,26 +189,41 @@ async function playStation(card, s) {
   npbar.classList.add('on');
   loader.style.display = 'block';
 
-  // Primary -> Fallback logic
+  // --- FALLBACK SAFETY LOGIC ---
   try {
+    console.log("Trying Primary:", s.stream);
     await attemptStream(s.stream);
-  } catch (e) {
+  } catch (err1) {
+    console.warn("Primary failed. Trying Fallback...");
     if (s.fallback && s.fallback !== "-1") {
       try {
         await attemptStream(s.fallback);
-      } catch (e2) {
-        handleError();
+      } catch (err2) {
+        attemptHttpFallback(s.stream);
       }
     } else {
-      handleError();
+      attemptHttpFallback(s.stream);
     }
   }
 }
 
 async function attemptStream(url) {
+  if (!url) throw new Error("No URL");
   player.src = url;
   player.load();
-  return player.play().then(() => loader.style.display = 'none');
+  return player.play().then(() => {
+    loader.style.display = 'none';
+  });
+}
+
+function attemptHttpFallback(url) {
+  if (url && url.startsWith('https://')) {
+    const insecure = url.replace('https://', 'http://');
+    console.log("Trying HTTP fallback:", insecure);
+    attemptStream(insecure).catch(() => handleError());
+  } else {
+    handleError();
+  }
 }
 
 function stopAll() {
@@ -196,9 +236,16 @@ function stopAll() {
 
 function handleError() {
   loader.style.display = 'none';
-  npname.textContent = "Offline / Error";
-  setTimeout(stopAll, 3000);
+  npname.textContent = "Σφάλμα Σύνδεσης / Offline";
+  setTimeout(stopAll, 4000);
 }
+
+// Search Filter
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  const filtered = allData.filter(s => s.name.toLowerCase().includes(q));
+  renderAll(filtered);
+});
 
 init();
 </script>
