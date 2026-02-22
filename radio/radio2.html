@@ -1,253 +1,228 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Radio Player 2026 🎵</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --accent:#e8a838; --bg:#0d0d0d;
-    --card:rgba(255,255,255,0.06); --card-h:rgba(255,255,255,0.12);
-    --border:rgba(255,255,255,0.08); --text:#f0ece3; --muted:#aaa;
-    --glow:0 0 25px rgba(232,168,56,0.3);
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greek Radio Retro Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Syne:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --panel: #1e1e1e;
+            --accent: #e8a838;
+            --display-bg: #1a2a1a;
+            --display-text: #50ff50;
+            --text: #f0ece3;
+        }
 
-  * { margin:0; padding:0; box-sizing:border-box; }
-  
-  body { 
-    font-family:'DM Sans', sans-serif; 
-    background-color: var(--bg);
-    /* ΦΟΝΤΟ - Background Image */
-    background-image: linear-gradient(rgba(13,13,13,0.85), rgba(13,13,13,0.85)), 
-                      url('https://images.unsplash.com/photo-1514525253361-b83a859b73c0?auto=format&fit=crop&w=1600&q=80');
-    background-attachment: fixed;
-    background-size: cover;
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+        body {
+            font-family: "Syne", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-  header { padding:50px 20px; text-align:center; }
-  h1 { font-family:'Syne', sans-serif; font-size:2.8rem; color:var(--accent); text-transform:uppercase; letter-spacing:2px; margin-bottom: 20px;}
+        /* --- Retro Car Radio Dashboard --- */
+        .radio-dashboard {
+            background: var(--panel);
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            border-radius: 15px;
+            border: 4px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
 
-  .search-container { max-width:600px; margin:0 auto 40px; }
-  input { width:100%; padding:15px 25px; border-radius:30px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:#fff; font-size:1rem; outline:none; backdrop-filter: blur(5px); transition: 0.3s;}
-  input:focus { border-color:var(--accent); box-shadow: var(--glow); }
+        .display-screen {
+            background: var(--display-bg);
+            border: 3px solid #000;
+            padding: 15px;
+            border-radius: 5px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-family: "Orbitron", sans-serif;
+            color: var(--display-text);
+            text-shadow: 0 0 10px rgba(80, 255, 80, 0.5);
+            margin-bottom: 15px;
+        }
 
-  .container { max-width:1400px; margin:0 auto; padding:0 30px 150px; }
-  
-  /* Category Headers */
-  .category-section { margin-bottom: 60px; }
-  .category-title { 
-    font-family:'Syne', sans-serif; font-size: 1.8rem; margin-bottom: 25px; 
-    padding-bottom: 10px; border-bottom: 2px solid var(--accent);
-    display: flex; align-items: center; gap: 15px; color: #fff;
-  }
+        .display-cat { font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; opacity: 0.8; }
+        .display-name { font-size: 1.4rem; font-weight: bold; }
 
-  .grid { 
-    display:grid; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-    gap:15px; 
-  }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
 
-  .card { 
-    background: var(--card); backdrop-filter: blur(12px); border: 1px solid var(--border); 
-    border-radius: 15px; padding: 25px 15px; cursor: pointer; 
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-align: center;
-  }
-  .card:hover { background: var(--card-h); transform: translateY(-5px); border-color: var(--accent); }
-  .card.playing { border-color: var(--accent); box-shadow: var(--glow); background: rgba(232,168,56,0.15); }
+        .btn {
+            background: #333;
+            border: 2px solid #444;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
 
-  .ico { font-size:2.5rem; margin-bottom:12px; display:block; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
-  .name { font-weight:700; font-size:0.95rem; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
+        .btn:hover { background: #444; color: var(--accent); }
+        .btn:active { transform: translateY(2px); }
 
-  /* Player Bar */
-  #np-bar { 
-    position:fixed; bottom:-120px; left:0; width:100%; 
-    background: rgba(10,10,10,0.92); backdrop-filter: blur(25px); 
-    border-top:1px solid var(--border); padding:20px 40px; 
-    transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index:1000; 
-    display:flex; align-items:center; justify-content:space-between; 
-  }
-  #np-bar.on { bottom:0; }
-  .np-info { display:flex; align-items:center; gap:20px; }
-  .np-name { font-weight:800; color:var(--accent); font-size:1.2rem; }
-  
-  .btn-stop { 
-    background:var(--accent); border:none; color:#000; font-weight:800; 
-    padding:12px 30px; border-radius:30px; cursor:pointer; 
-    transition: 0.2s; box-shadow: 0 4px 15px rgba(232,168,56,0.3);
-  }
-  .btn-stop:hover { transform: scale(1.05); }
+        /* --- Grid --- */
+        #categories-container {
+            width: 100%;
+            max-width: 1200px;
+        }
 
-  #loader { width:22px; height:22px; border:3px solid #333; border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; display:none; }
-  @keyframes spin { to { transform:rotate(360deg); } }
+        .cat-section { margin-bottom: 40px; }
+        .cat-title { 
+            color: var(--accent); 
+            border-bottom: 2px solid var(--accent); 
+            padding-bottom: 5px; 
+            margin-bottom: 15px;
+        }
 
-  @media (max-width: 600px) {
-    .grid { grid-template-columns: repeat(2, 1fr); }
-    h1 { font-size: 1.8rem; }
-  }
-</style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .card:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+        .card.active { border-color: var(--accent); background: rgba(232, 168, 56, 0.1); }
+    </style>
 </head>
 <body>
 
-<header>
-  <h1>Live Radio 2026</h1>
-  <div class="search-container">
-    <input type="text" id="searchInput" placeholder="Αναζήτηση σταθμού..." autocomplete="off">
-  </div>
-</header>
-
-<div class="container">
-  <div id="sec-gr" class="category-section" style="display: none;">
-    <h2 class="category-title"><span>🇬🇷</span> Ελληνικά</h2>
-    <div id="grid-gr" class="grid"></div>
-  </div>
-
-  <div id="sec-int" class="category-section" style="display: none;">
-    <h2 class="category-title"><span>🌍</span> Διεθνής μουσική</h2>
-    <div id="grid-int" class="grid"></div>
-  </div>
-</div>
-
-<div id="np-bar">
-  <div class="np-info">
-    <div id="loader"></div>
-    <div>
-      <small style="color:var(--muted); text-transform:uppercase; font-weight: bold; letter-spacing: 1px;">Τώρα ακούτε:</small>
-      <div id="np-name" class="np-name">-</div>
+    <div class="radio-dashboard">
+        <div class="display-screen">
+            <div id="disp-cat" class="display-cat">SELECT A STATION</div>
+            <div id="disp-name" class="display-name">OFF AIR</div>
+        </div>
+        <div class="controls">
+            <button class="btn" onclick="seek(-1)">|<< PREV</button>
+            <button class="btn" id="play-pause" onclick="togglePlay()">STOP</button>
+            <button class="btn" onclick="seek(1)">NEXT >>|</button>
+        </div>
     </div>
-  </div>
-  <button class="btn-stop" onclick="stopAll()">STOP</button>
-</div>
 
-<audio id="player"></audio>
+    <div id="categories-container"></div>
 
-<script>
-let allData = [];
-const player = document.getElementById('player');
-const npbar = document.getElementById('np-bar');
-const npname = document.getElementById('np-name');
-const loader = document.getElementById('loader');
-let curCard = null;
+    <audio id="player"></audio>
 
-async function init() {
-  try {
-    // Points to your streams.json
-    const res = await fetch('streams.json');
-    allData = await res.json();
-    renderAll(allData);
-  } catch (e) {
-    console.error("JSON Error:", e);
-  }
-}
+    <script>
+        let stations = [];
+        let currentIdx = -1;
+        const player = document.getElementById("player");
+        const dispCat = document.getElementById("disp-cat");
+        const dispName = document.getElementById("disp-name");
 
-function renderAll(data) {
-  const greek = data.filter(s => s.tab === 'gr' && s.ok);
-  const international = data.filter(s => s.tab === 'int' && s.ok);
+        // Load JSON data
+        fetch("greek_stations.json")
+            .then(res => res.json())
+            .then(data => {
+                stations = data;
+                renderStations(data);
+            });
 
-  renderGrid(greek, 'grid-gr', 'sec-gr');
-  renderGrid(international, 'grid-int', 'sec-int');
-}
+        function renderStations(data) {
+            const container = document.getElementById("categories-container");
+            const cats = [...new Set(data.map(s => s.category))];
 
-function renderGrid(list, gridId, sectionId) {
-  const grid = document.getElementById(gridId);
-  const section = document.getElementById(sectionId);
-  grid.innerHTML = '';
-  
-  if (list.length > 0) {
-    section.style.display = 'block';
-    list.forEach(s => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const icon = s.tab === 'gr' ? '🎵' : '🌍';
-      
-      card.innerHTML = `
-        <span class="ico">${icon}</span>
-        <div class="name">${s.name}</div>
-      `;
-      
-      card.addEventListener('click', () => playStation(card, s));
-      grid.appendChild(card);
-    });
-  } else {
-    section.style.display = 'none';
-  }
-}
+            cats.forEach(cat => {
+                const section = document.createElement("div");
+                section.className = "cat-section";
+                section.innerHTML = `<h2 class="cat-title">${cat}</h2>`;
+                
+                const grid = document.createElement("div");
+                grid.className = "grid";
 
-async function playStation(card, s) {
-  if (card.classList.contains('playing')) {
-    stopAll();
-    return;
-  }
+                data.filter(s => s.category === cat).forEach(s => {
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    card.id = "station-" + data.indexOf(s);
+                    card.innerHTML = `<div>${s.name}</div>`;
+                    card.onclick = () => playStation(data.indexOf(s));
+                    grid.appendChild(card);
+                });
 
-  stopAll();
-  curCard = card;
-  card.classList.add('playing');
-  npname.textContent = s.name;
-  npbar.classList.add('on');
-  loader.style.display = 'block';
+                section.appendChild(grid);
+                container.appendChild(section);
+            });
+        }
 
-  // --- FALLBACK SAFETY LOGIC ---
-  try {
-    console.log("Trying Primary:", s.stream);
-    await attemptStream(s.stream);
-  } catch (err1) {
-    console.warn("Primary failed. Trying Fallback...");
-    if (s.fallback && s.fallback !== "-1") {
-      try {
-        await attemptStream(s.fallback);
-      } catch (err2) {
-        attemptHttpFallback(s.stream);
-      }
-    } else {
-      attemptHttpFallback(s.stream);
-    }
-  }
-}
+        function playStation(index) {
+            if(index < 0 || index >= stations.length) return;
+            
+            // Remove active class from previous
+            if(currentIdx !== -1) document.getElementById("station-"+currentIdx)?.classList.remove("active");
+            
+            currentIdx = index;
+            const s = stations[index];
+            
+            dispCat.innerText = s.category;
+            dispName.innerText = s.name;
+            document.getElementById("station-"+index)?.classList.add("active");
 
-async function attemptStream(url) {
-  if (!url) throw new Error("No URL");
-  player.src = url;
-  player.load();
-  return player.play().then(() => {
-    loader.style.display = 'none';
-  });
-}
+            player.src = s.streamer;
+            player.play().catch(e => {
+                dispName.innerText = "STREAM ERROR";
+            });
+            document.getElementById("play-pause").innerText = "STOP";
+        }
 
-function attemptHttpFallback(url) {
-  if (url && url.startsWith('https://')) {
-    const insecure = url.replace('https://', 'http://');
-    console.log("Trying HTTP fallback:", insecure);
-    attemptStream(insecure).catch(() => handleError());
-  } else {
-    handleError();
-  }
-}
+        function togglePlay() {
+            if (player.paused) {
+                player.play();
+                document.getElementById("play-pause").innerText = "STOP";
+            } else {
+                player.pause();
+                document.getElementById("play-pause").innerText = "PLAY";
+            }
+        }
 
-function stopAll() {
-  player.pause();
-  player.src = "";
-  if (curCard) curCard.classList.remove('playing');
-  npbar.classList.remove('on');
-  loader.style.display = 'none';
-}
+        function seek(dir) {
+            if (currentIdx === -1) {
+                playStation(0);
+                return;
+            }
 
-function handleError() {
-  loader.style.display = 'none';
-  npname.textContent = "Σφάλμα Σύνδεσης / Offline";
-  setTimeout(stopAll, 4000);
-}
+            const currentCat = stations[currentIdx].category;
+            const sameCatStations = stations.filter(s => s.category === currentCat);
+            const inCatIdx = sameCatStations.findIndex(s => s === stations[currentIdx]);
+            
+            let nextInCat = inCatIdx + dir;
+            
+            // Loop within category
+            if (nextInCat < 0) nextInCat = sameCatStations.length - 1;
+            if (nextInCat >= sameCatStations.length) nextInCat = 0;
 
-// Search Filter
-document.getElementById('searchInput').addEventListener('input', (e) => {
-  const q = e.target.value.toLowerCase();
-  const filtered = allData.filter(s => s.name.toLowerCase().includes(q));
-  renderAll(filtered);
-});
-
-init();
-</script>
+            const nextGlobalStation = sameCatStations[nextInCat];
+            playStation(stations.indexOf(nextGlobalStation));
+        }
+    </script>
 </body>
 </html>
