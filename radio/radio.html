@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Greek Radio Live 🎵</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #e8a838;
+    --accent2: #c45c2e;
+    --bg: #0d0d0d;
+    --card: rgba(255,255,255,0.04);
+    --card-hover: rgba(255,255,255,0.09);
+    --border: rgba(255,255,255,0.08);
+    --text: #f0ece3;
+    --muted: #888;
+    --playing-glow: 0 0 30px rgba(232,168,56,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.8s ease;
+    overflow-x: hidden;
+  }
+
+  /* Background overlay */
+  #bg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.15;
+    transition: opacity 0.8s, background-image 0.8s;
+    pointer-events: none;
+  }
+  #bg-overlay.active { opacity: 0.25; }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* Header */
+  header {
+    padding: 36px 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .logo h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+  .logo span {
+    font-size: 1.3rem;
+    color: var(--accent);
+  }
+  .logo p {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Now Playing bar */
+  #now-playing-bar {
+    display: none;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, rgba(232,168,56,0.12), rgba(196,92,46,0.08));
+    border: 1px solid rgba(232,168,56,0.3);
+    border-radius: 50px;
+    padding: 10px 20px 10px 14px;
+    animation: slideIn 0.4s ease;
+  }
+  #now-playing-bar.visible { display: flex; }
+  .wave-icon {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 20px;
+  }
+  .wave-bar {
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: wave 0.8s ease-in-out infinite;
+  }
+  .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+  .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+  @keyframes wave {
+    0%, 100% { height: 6px; }
+    50% { height: 18px; }
+  }
+  #now-playing-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+  .stop-btn {
+    margin-left: 8px;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--text);
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.75rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .stop-btn:hover { background: rgba(255,60,60,0.3); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Background picker */
+  .bg-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .bg-picker label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .bg-swatches {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .bg-swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .bg-swatch:hover { transform: scale(1.15); }
+  .bg-swatch.active { border-color: var(--accent); transform: scale(1.15); }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  .filter-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover {
+    border-color: rgba(232,168,56,0.4);
+    color: var(--text);
+  }
+  .filter-btn.active {
+    background: var(--accent);
+    color: #0d0d0d;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Grid */
+  .radio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  /* Radio card */
+  .radio-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 18px 16px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .radio-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(232,168,56,0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    border-radius: 16px;
+  }
+  .radio-card:hover {
+    background: var(--card-hover);
+    border-color: rgba(232,168,56,0.25);
+    transform: translateY(-3px);
+  }
+  .radio-card:hover::before { opacity: 1; }
+  .radio-card.playing {
+    border-color: var(--accent);
+    box-shadow: var(--playing-glow);
+    background: rgba(232,168,56,0.07);
+  }
+  .radio-card.playing::before { opacity: 1; }
+  .radio-card.hidden { display: none; }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .station-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: rgba(255,255,255,0.06);
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .station-icon-fallback {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(232,168,56,0.2), rgba(196,92,46,0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .play-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+  }
+  .play-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,168,56,0.1);
+    transform: scale(1.1);
+  }
+  .radio-card.playing .play-btn {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #0d0d0d;
+  }
+
+  .station-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .station-freq {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .station-genre {
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    padding: 3px 9px;
+    border-radius: 50px;
+    width: fit-content;
+  }
+
+  /* Pulsing ring on playing card */
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(232,168,56,0.4); }
+    70% { box-shadow: 0 0 0 12px rgba(232,168,56,0); }
+    100% { box-shadow: 0 0 0 0 rgba(232,168,56,0); }
+  }
+  .radio-card.playing .play-btn {
+    animation: pulse-ring 1.8s ease infinite;
+  }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* Error badge */
+  .error-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    font-size: 0.6rem;
+    color: #ff6b6b;
+    opacity: 0.7;
+  }
+
+  footer {
+    text-align: center;
+    padding-top: 48px;
+    font-size: 0.75rem;
+    color: #444;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+  footer a { color: #666; text-decoration: none; }
+
+  audio { display: none; }
+
+  @media (max-width: 600px) {
+    .logo h1 { font-size: 1.5rem; }
+    .radio-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bg-overlay"></div>
+<audio id="player" preload="none"></audio>
+
+<div class="wrapper">
+  <header>
+    <div>
+      <div class="logo">
+        <h1>GreekRadio</h1>
+        <span>🎵</span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:4px;letter-spacing:0.08em;text-transform:uppercase">Ελληνικά Ραδιόφωνα Online</p>
+    </div>
+
+    <div id="now-playing-bar" aria-live="polite">
+      <div class="wave-icon">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
+      <span id="now-playing-name">—</span>
+      <button class="stop-btn" onclick="stopAll()" title="Stop">■</button>
+    </div>
+
+    <div class="bg-picker">
+      <label>Φόντο:</label>
+      <div class="bg-swatches" id="bg-swatches"></div>
+    </div>
+  </header>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-genre="all">Όλα</button>
+    <button class="filter-btn" data-genre="Mainstream">Mainstream</button>
+    <button class="filter-btn" data-genre="Rock">Rock</button>
+    <button class="filter-btn" data-genre="Λαϊκά">Λαϊκά</button>
+    <button class="filter-btn" data-genre="Ειδήσεις">Ειδήσεις</button>
+    <button class="filter-btn" data-genre="Διεθνής">Διεθνής</button>
+    <button class="filter-btn" data-genre="Έντεχνα">Έντεχνα</button>
+    <button class="filter-btn" data-genre="Παραδοσιακά">Παραδοσιακά</button>
+  </div>
+
+  <p class="section-title">Σταθμοί</p>
+  <div class="radio-grid" id="radio-grid"></div>
+
+  <footer>
+    <p>Made with ♥ for Greek music lovers &nbsp;·&nbsp; Streams via live24.gr</p>
+  </footer>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// STATIONS DATA
+// Add/remove stations here. Stream URLs from live24.gr.
+// To find a stream URL: open live24.gr/radio/STATION.jsp,
+// right-click → Inspect → Network tab → look for .mp3/.aac stream
+// ─────────────────────────────────────────────────────────
+const stations = [
+  // MAINSTREAM
+  { name: "En Lefko 87.7",   freq: "87.7",  genre: "Διεθνής",    emoji: "🎶", stream: "https://enleuko.live24.gr/enleuko877" },
+  { name: "Galaxy 92",       freq: "92.0",  genre: "Rock",        emoji: "🎸", stream: "https://galaxy.live24.gr/galaxy92" },
+  { name: "Derti Radio",     freq: "—",     genre: "Λαϊκά",      emoji: "🎼", stream: "https://derti.live24.gr/derti" },
+  { name: "Dromos FM",       freq: "89.8",  genre: "Mainstream",  emoji: "🛣️", stream: "https://dromos898.live24.gr/dromos898" },
+  { name: "Pepper 96.6",     freq: "96.6",  genre: "Mainstream",  emoji: "🌶️", stream: "https://pepper.live24.gr/pepper966" },
+  { name: "Easy 97.2",       freq: "97.2",  genre: "Διεθνής",    emoji: "😌", stream: "https://easy972.live24.gr/easy972" },
+  { name: "Rythmos 94.9",    freq: "94.9",  genre: "Mainstream",  emoji: "🥁", stream: "https://rythmos.live24.gr/rythmos949" },
+  { name: "Best Radio 92.6", freq: "92.6",  genre: "Διεθνής",    emoji: "⭐", stream: "https://bestradio.live24.gr/bestradio926" },
+  { name: "Rock FM 96.9",    freq: "96.9",  genre: "Rock",        emoji: "🤘", stream: "https://rockfm.live24.gr/rockfm969" },
+  { name: "Kiss FM 92.9",    freq: "92.9",  genre: "Διεθνής",    emoji: "💋", stream: "https://kissfm.live24.gr/kissfm929" },
+  { name: "Melodia 99.2",    freq: "99.2",  genre: "Έντεχνα",    emoji: "🎻", stream: "https://stream.radiojar.com/melodia992" },
+  { name: "Skai 100.3",      freq: "100.3", genre: "Ειδήσεις",   emoji: "📰", stream: "https://skai.live24.gr/skai1003" },
+  { name: "Athina 984",      freq: "98.4",  genre: "Ειδήσεις",   emoji: "🏛️", stream: "https://athina984.live24.gr/athina984" },
+  { name: "Vima FM 99.5",    freq: "99.5",  genre: "Ειδήσεις",   emoji: "📡", stream: "https://vimafm.live24.gr/vimafm995" },
+  { name: "Real FM 97.8",    freq: "97.8",  genre: "Ειδήσεις",   emoji: "🗞️", stream: "https://realfm.live24.gr/realfm978" },
+  { name: "ERA Sport 102.2", freq: "102.2", genre: "Ειδήσεις",   emoji: "⚽", stream: "https://erasport.live24.gr/erasport1022" },
+  { name: "Mad Radio 106.2", freq: "106.2", genre: "Mainstream",  emoji: "🎤", stream: "https://madradio.live24.gr/madradio1062" },
+  { name: "Laikos 89.4",     freq: "89.4",  genre: "Λαϊκά",      emoji: "🪗", stream: "https://laikos894.live24.gr/laikos894" },
+  { name: "Diesi 101.3",     freq: "101.3", genre: "Παραδοσιακά", emoji: "🎵", stream: "https://diesi.live24.gr/diesi1013" },
+  { name: "Ert Open 106.7",  freq: "106.7", genre: "Ειδήσεις",   emoji: "📻", stream: "https://ertopen.live24.gr/ertopen1067" },
+  { name: "Parapolitika 90.1",freq:"90.1",  genre: "Ειδήσεις",   emoji: "🎙️", stream: "https://parapolitika.live24.gr/parapolitika901" },
+  { name: "Zougla Radio",    freq: "—",     genre: "Ειδήσεις",   emoji: "🌴", stream: "https://zouglaradio.live24.gr/zouglaradio" },
+  { name: "Diplo Kanali",    freq: "—",     genre: "Λαϊκά",      emoji: "🎻", stream: "https://diplokanali.live24.gr/diplokanali" },
+  { name: "Heart 93.9",      freq: "93.9",  genre: "Mainstream",  emoji: "❤️", stream: "https://netradio.live24.gr/heart939" },
+];
+
+// ─────────────────────────────────────────────────────────
+// BACKGROUND OPTIONS
+// Add your own image URLs or use these gradients
+// ─────────────────────────────────────────────────────────
+const backgrounds = [
+  { label: "Χωρίς",        type: "none",  color: "#222" },
+  { label: "Ελλάδα Ηλιοβ.",type: "image", url: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1600&q=80", color: "#c05000" },
+  { label: "Αθήνα Νύχτα",  type: "image", url: "https://images.unsplash.com/photo-1555993539-1732b0258235?w=1600&q=80", color: "#1a3a6b" },
+  { label: "Θάλασσα Αιγαίο",type:"image", url: "https://images.unsplash.com/photo-1504512485720-7d83a16ee930?w=1600&q=80", color: "#006080" },
+  { label: "Σαντορίνη",    type: "image", url: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1600&q=80", color: "#2b4daa" },
+  { label: "Βουνά Ελλάδας", type:"image", url: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&q=80", color: "#2d5a27" },
+  { label: "Κόκκινο Σκοτάδι",type:"gradient",gradient:"linear-gradient(135deg,#1a0005,#3d0010)", color:"#3d0010" },
+  { label: "Μπλε Νύχτα",   type: "gradient", gradient: "linear-gradient(135deg,#000510,#001a3d)", color: "#001a3d" },
+];
+
+// ─────────────────────────────────────────────────────────
+// STATE
+let currentCard = null;
+const player = document.getElementById('player');
+const nowPlayingBar = document.getElementById('now-playing-bar');
+const nowPlayingName = document.getElementById('now-playing-name');
+const bgOverlay = document.getElementById('bg-overlay');
+
+// ─────────────────────────────────────────────────────────
+// BUILD BACKGROUND SWATCHES
+const swatchContainer = document.getElementById('bg-swatches');
+backgrounds.forEach((bg, i) => {
+  const s = document.createElement('div');
+  s.className = 'bg-swatch' + (i === 0 ? ' active' : '');
+  s.title = bg.label;
+  if (bg.type === 'none') {
+    s.style.background = '#333';
+    s.innerHTML = '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem">✕</span>';
+  } else if (bg.type === 'image') {
+    s.style.background = `url(${bg.url}) center/cover, ${bg.color}`;
+  } else {
+    s.style.background = bg.gradient;
+  }
+  s.addEventListener('click', () => {
+    document.querySelectorAll('.bg-swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    applyBackground(bg);
+  });
+  swatchContainer.appendChild(s);
+});
+
+function applyBackground(bg) {
+  if (bg.type === 'none') {
+    bgOverlay.style.backgroundImage = 'none';
+    bgOverlay.classList.remove('active');
+  } else if (bg.type === 'image') {
+    bgOverlay.style.backgroundImage = `url(${bg.url})`;
+    bgOverlay.classList.add('active');
+  } else {
+    bgOverlay.style.backgroundImage = bg.gradient;
+    bgOverlay.classList.add('active');
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// BUILD STATION CARDS
+const grid = document.getElementById('radio-grid');
+stations.forEach((s, idx) => {
+  const card = document.createElement('div');
+  card.className = 'radio-card';
+  card.dataset.genre = s.genre;
+  card.dataset.idx = idx;
+  card.innerHTML = `
+    <div class="card-top">
+      <div class="station-icon-fallback">${s.emoji}</div>
+      <button class="play-btn" aria-label="Play ${s.name}">▶</button>
+    </div>
+    <div>
+      <div class="station-name">${s.name}</div>
+      ${s.freq !== '—' ? `<div class="station-freq">${s.freq} MHz</div>` : ''}
+    </div>
+    <div class="station-genre">${s.genre}</div>
+  `;
+
+  const btn = card.querySelector('.play-btn');
+  card.addEventListener('click', () => toggleStation(card, s, btn));
+  grid.appendChild(card);
+});
+
+// ─────────────────────────────────────────────────────────
+// PLAY / STOP LOGIC
+function toggleStation(card, station, btn) {
+  const isPlaying = card.classList.contains('playing');
+
+  stopAll();
+
+  if (!isPlaying) {
+    card.classList.add('playing');
+    btn.textContent = '■';
+    currentCard = card;
+
+    player.src = station.stream;
+    player.load();
+    player.play().catch(err => {
+      // Stream might have HTTPS redirect – try http fallback
+      const httpUrl = station.stream.replace('https://', 'http://');
+      if (httpUrl !== station.stream) {
+        player.src = httpUrl;
+        player.load();
+        player.play().catch(() => showError(card));
+      } else {
+        showError(card);
+      }
+    });
+
+    nowPlayingName.textContent = station.name;
+    nowPlayingBar.classList.add('visible');
+  }
+}
+
+function stopAll() {
+  player.pause();
+  player.src = '';
+  document.querySelectorAll('.radio-card.playing').forEach(c => {
+    c.classList.remove('playing');
+    c.querySelector('.play-btn').textContent = '▶';
+  });
+  nowPlayingBar.classList.remove('visible');
+  currentCard = null;
+}
+
+function showError(card) {
+  let badge = card.querySelector('.error-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'error-badge';
+    badge.textContent = '⚠ No stream';
+    card.appendChild(badge);
+  }
+  card.classList.remove('playing');
+  card.querySelector('.play-btn').textContent = '▶';
+  nowPlayingBar.classList.remove('visible');
+  setTimeout(() => badge.remove(), 4000);
+}
+
+// ─────────────────────────────────────────────────────────
+// FILTERS
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const genre = btn.dataset.genre;
+  document.querySelectorAll('.radio-card').forEach(card => {
+    if (genre === 'all' || card.dataset.genre === genre) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+});
+
+// Keyboard support
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && document.activeElement === document.body) {
+    e.preventDefault();
+    if (currentCard) stopAll();
+  }
+  if (e.code === 'Escape') stopAll();
+});
+</script>
+</body>
+</html>
