@@ -7,110 +7,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Syne:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #121212;
-            --panel: #1e1e1e;
-            --accent: #e8a838;
-            --display-bg: #1a2a1a;
-            --display-text: #50ff50;
-            --text: #f0ece3;
+            --bg: #121212; --panel: #1e1e1e; --accent: #e8a838;
+            --display-bg: #1a2a1a; --display-text: #50ff50; --text: #f0ece3;
         }
-
-        body {
-            font-family: "Syne", sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* --- Retro Car Radio Dashboard --- */
-        .radio-dashboard {
-            background: var(--panel);
-            width: 100%;
-            max-width: 800px;
-            padding: 20px;
-            border-radius: 15px;
-            border: 4px solid #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 30px;
-            position: sticky;
-            top: 10px;
-            z-index: 100;
-        }
-
-        .display-screen {
-            background: var(--display-bg);
-            border: 3px solid #000;
-            padding: 15px;
-            border-radius: 5px;
-            height: 100px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-family: "Orbitron", sans-serif;
-            color: var(--display-text);
-            text-shadow: 0 0 10px rgba(80, 255, 80, 0.5);
-            margin-bottom: 15px;
-        }
-
+        body { font-family: "Syne", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .radio-dashboard { background: var(--panel); width: 100%; max-width: 800px; padding: 20px; border-radius: 15px; border: 4px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 30px; position: sticky; top: 10px; z-index: 100; }
+        .display-screen { background: var(--display-bg); border: 3px solid #000; padding: 15px; border-radius: 5px; height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-family: "Orbitron", sans-serif; color: var(--display-text); text-shadow: 0 0 10px rgba(80, 255, 80, 0.5); margin-bottom: 15px; }
         .display-cat { font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; opacity: 0.8; }
         .display-name { font-size: 1.4rem; font-weight: bold; }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .btn {
-            background: #333;
-            border: 2px solid #444;
-            color: white;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
+        .controls { display: flex; justify-content: center; gap: 20px; }
+        .btn { background: #333; border: 2px solid #444; color: white; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.2s; }
         .btn:hover { background: #444; color: var(--accent); }
         .btn:active { transform: translateY(2px); }
-
-        /* --- Grid --- */
-        #categories-container {
-            width: 100%;
-            max-width: 1200px;
-        }
-
+        #categories-container { width: 100%; max-width: 1200px; }
         .cat-section { margin-bottom: 40px; }
-        .cat-title { 
-            color: var(--accent); 
-            border-bottom: 2px solid var(--accent); 
-            padding-bottom: 5px; 
-            margin-bottom: 15px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
+        .cat-title { color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 5px; margin-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
         .card:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
         .card.active { border-color: var(--accent); background: rgba(232, 168, 56, 0.1); }
     </style>
@@ -130,36 +43,31 @@
     </div>
 
     <div id="categories-container"></div>
-
     <audio id="player"></audio>
 
+    <script src="stations_data.js"></script>
+
     <script>
-        let stations = [];
+        // radioData comes from stations_data.js
+        const stations = typeof radioData !== "undefined" ? radioData : [];
         let currentIdx = -1;
         const player = document.getElementById("player");
         const dispCat = document.getElementById("disp-cat");
         const dispName = document.getElementById("disp-name");
 
-        // Load JSON data
-        fetch("greek_stations.json")
-            .then(res => res.json())
-            .then(data => {
-                stations = data;
-                renderStations(data);
-            });
-
         function renderStations(data) {
             const container = document.getElementById("categories-container");
+            if (data.length === 0) {
+                container.innerHTML = "<h2 style=\"color:red\">Error: Could not find stations_data.js</h2>";
+                return;
+            }
             const cats = [...new Set(data.map(s => s.category))];
-
             cats.forEach(cat => {
                 const section = document.createElement("div");
                 section.className = "cat-section";
                 section.innerHTML = `<h2 class="cat-title">${cat}</h2>`;
-                
                 const grid = document.createElement("div");
                 grid.className = "grid";
-
                 data.filter(s => s.category === cat).forEach(s => {
                     const card = document.createElement("div");
                     card.className = "card";
@@ -168,7 +76,6 @@
                     card.onclick = () => playStation(data.indexOf(s));
                     grid.appendChild(card);
                 });
-
                 section.appendChild(grid);
                 container.appendChild(section);
             });
@@ -176,53 +83,36 @@
 
         function playStation(index) {
             if(index < 0 || index >= stations.length) return;
-            
-            // Remove active class from previous
             if(currentIdx !== -1) document.getElementById("station-"+currentIdx)?.classList.remove("active");
-            
             currentIdx = index;
             const s = stations[index];
-            
             dispCat.innerText = s.category;
             dispName.innerText = s.name;
             document.getElementById("station-"+index)?.classList.add("active");
-
             player.src = s.streamer;
-            player.play().catch(e => {
-                dispName.innerText = "STREAM ERROR";
-            });
+            player.play().catch(e => { dispName.innerText = "STREAM ERROR"; });
             document.getElementById("play-pause").innerText = "STOP";
         }
 
         function togglePlay() {
-            if (player.paused) {
-                player.play();
-                document.getElementById("play-pause").innerText = "STOP";
-            } else {
-                player.pause();
-                document.getElementById("play-pause").innerText = "PLAY";
-            }
+            if (player.paused) { player.play(); document.getElementById("play-pause").innerText = "STOP"; }
+            else { player.pause(); document.getElementById("play-pause").innerText = "PLAY"; }
         }
 
         function seek(dir) {
-            if (currentIdx === -1) {
-                playStation(0);
-                return;
-            }
-
+            if (currentIdx === -1) { playStation(0); return; }
             const currentCat = stations[currentIdx].category;
             const sameCatStations = stations.filter(s => s.category === currentCat);
             const inCatIdx = sameCatStations.findIndex(s => s === stations[currentIdx]);
-            
             let nextInCat = inCatIdx + dir;
-            
-            // Loop within category
             if (nextInCat < 0) nextInCat = sameCatStations.length - 1;
             if (nextInCat >= sameCatStations.length) nextInCat = 0;
-
             const nextGlobalStation = sameCatStations[nextInCat];
             playStation(stations.indexOf(nextGlobalStation));
         }
+
+        // Initialize
+        renderStations(stations);
     </script>
 </body>
 </html>
