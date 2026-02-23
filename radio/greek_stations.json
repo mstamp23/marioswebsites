@@ -6531,13 +6531,7 @@
         "category": "Αθήνα",
         "live": true
     },
-    {
-        "sid": 3821,
-        "name": "Kontra Radio .",
-        "streamer": "https://netradio.live24.gr/kontratv?",
-        "category": "Αθήνα",
-        "live": false
-    },
+    
     {
         "sid": 3832,
         "name": "107.7 RadioIn",
