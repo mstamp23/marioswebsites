@@ -1,561 +1,264 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Greek Radio Live 🎵</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --accent:#e8a838; --bg:#0d0d0d;
-    --card:rgba(255,255,255,0.04); --card-h:rgba(255,255,255,0.08);
-    --border:rgba(255,255,255,0.07); --text:#f0ece3; --muted:#777;
-    --glow:0 0 28px rgba(232,168,56,0.35);
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
-  #bg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;transition:opacity .8s;pointer-events:none;}
-  #bg.on{opacity:.2;}
-  .wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 20px 80px;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Purple Pro</title>
+    <style>
+        :root {
+            --bg: #050505; --surface: #0f0f0f;
+            --accent: #a371ff; --accent-dim: #4c3080;
+            --text: #d0d0d0; --border: #1e1e1e;
+            --fav: #ffcc00;
+        }
+        * { box-sizing: border-box; outline: none; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg); color: var(--text);
+            margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+        header {
+            display: flex; align-items: center; padding: 0 12px;
+            background: #000; border-bottom: 1px solid var(--border);
+            height: 48px; gap: 10px; z-index: 10;
+        }
+        .search-box {
+            flex: 1; background: #111; border: 1px solid var(--border);
+            color: var(--accent); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem;
+        }
+        .controls { display: flex; align-items: center; gap: 5px; }
+        .nav-btn {
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--accent); cursor: pointer; border-radius: 4px; padding: 4px 8px;
+            font-weight: bold; font-size: 0.7rem;
+        }
+        .mini-player {
+            display: flex; align-items: center; gap: 8px;
+            background: #0a0a0a; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--accent-dim);
+        }
+        #now-playing-text {
+            font-size: 0.7rem; color: var(--accent); width: 110px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold;
+        }
+        .play-toggle {
+            background: var(--accent); border: none; color: black;
+            font-weight: 900; padding: 4px 8px; cursor: pointer; border-radius: 3px; font-size: 0.65rem;
+        }
+        #vol-slider { width: 50px; accent-color: var(--accent); cursor: pointer; }
 
-  /* Νέο στυλ για την προειδοποίηση */
-  .warning-text {
-    font-family: 'Syne', sans-serif;
-    font-size: 3rem;
-    font-weight: 800;
-    color: #ff4d4d;
-    text-align: center;
-    margin-top: 20px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
-  }
+        /* Categories Bar */
+        #cat-bar {
+            background: #000; padding: 8px 12px; border-bottom: 1px solid var(--border);
+            display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;
+        }
+        #cat-bar::-webkit-scrollbar { height: 3px; }
+        .cat-chip {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; cursor: pointer;
+        }
+        .cat-chip.active { background: var(--accent-dim); color: #fff; border-color: var(--accent); }
 
-  header{padding:30px 0 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);margin-bottom:28px;gap:16px;flex-wrap:wrap;}
-  .logo h1{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;letter-spacing:-1px;}
-  .logo h1 span{color:var(--accent);}
-  .logo p{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:2px;}
+        #content { flex: 1; overflow-y: auto; padding: 10px; }
+        .category-section { margin-bottom: 20px; }
+        .cat-header {
+            font-size: 0.65rem; font-weight: 800; color: var(--accent);
+            text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;
+        }
+        .cat-header::after { content: ""; height: 1px; background: var(--accent-dim); flex: 1; opacity: 0.3; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
+        
+        /* Station Card */
+        .station-card {
+            background: var(--surface); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: 0.1s;
+        }
+        .station-card:hover { border-color: var(--accent-dim); }
+        .station-card.active { border-color: var(--accent); background: #1a1525; }
+        .st-name { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .fav-btn { color: #444; font-size: 1rem; margin-left: 8px; transition: 0.2s; }
+        .fav-btn.active { color: var(--fav); }
 
-  #npbar{display:none;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(232,168,56,.1),rgba(196,92,46,.07));border:1px solid rgba(232,168,56,.28);border-radius:50px;padding:9px 18px 9px 12px;animation:fadeIn .3s;}
-  #npbar.on{display:flex;}
-  @keyframes fadeIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
-  .bars{display:flex;gap:2px;align-items:flex-end;height:18px;}
-  .bar{width:3px;background:var(--accent);border-radius:2px;animation:bounce .7s ease-in-out infinite;}
-  .bar:nth-child(2){animation-delay:.12s}.bar:nth-child(3){animation-delay:.24s}.bar:nth-child(4){animation-delay:.36s}
-  @keyframes bounce{0%,100%{height:5px}50%{height:16px}}
-  #npname{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:var(--accent);}
-  .stopbtn{width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:var(--text);cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;transition:background .2s;margin-left:4px;}
-  .stopbtn:hover{background:rgba(255,80,80,.3);}
-
-  .bgpicker{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .bgpicker label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
-  .swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .18s,border-color .18s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-  .swatch:hover,.swatch.on{transform:scale(1.18);border-color:var(--accent);}
-
-  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
-  .tab{padding:9px 22px;border-radius:50px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.87rem;transition:all .2s;}
-  .tab:hover{color:var(--text);border-color:rgba(232,168,56,.3);}
-  .tab.on{background:var(--accent);color:#0d0d0d;border-color:var(--accent);font-weight:600;}
-  .searchbox{margin-left:auto;background:var(--card);border:1px solid var(--border);border-radius:50px;padding:8px 16px;display:flex;align-items:center;gap:8px;transition:border-color .2s;}
-  .searchbox:focus-within{border-color:rgba(232,168,56,.4);}
-  .searchbox input{background:none;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.87rem;width:160px;}
-  .searchbox input::placeholder{color:var(--muted);}
-
-  #cnt{font-size:.72rem;color:var(--muted);padding:2px 0 16px;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:14px;}
-
-  /* Αναβαθμισμένη κάρτα ως όλο κουμπί */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 18px;
-    cursor: pointer;
-    transition: all .22s cubic-bezier(.4,0,.2,1);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
-    user-select: none;
-  }
-  .card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(232,168,56,.07),transparent);opacity:0;transition:opacity .25s;pointer-events:none;border-radius:14px;}
-  .card:hover{background:var(--card-h);border-color:rgba(232,168,56,0.4);transform:translateY(-3px);}
-  .card:hover::before{opacity:1;}
-  .card.playing {
-    border-color: var(--accent);
-    box-shadow: var(--glow);
-    background: rgba(232,168,56,0.12);
-  }
-  .card.playing::before{opacity:1;}
-  
-  .card-top{display:flex;justify-content:center;align-items:center;gap:6px;}
-  .ico{width:60px;height:60px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:rgba(255,255,255,0.05);transition: transform 0.2s;}
-  .card:hover .ico {transform: scale(1.1);}
-  .card.playing .ico {background: var(--accent); color: #0d0d0d; animation: pulse 1.8s ease infinite;}
-
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,168,56,.4)}70%{box-shadow:0 0 0 10px rgba(232,168,56,0)}100%{box-shadow:0 0 0 0 rgba(232,168,56,0)}}
-  
-  .name{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;line-height:1.25;text-align: center;}
-  .gtag{font-size:.67rem;color:var(--muted);background:rgba(255,255,255,.04);padding:4px 10px;border-radius:50px;width:fit-content;margin: 0 auto;}
-  .err{position:absolute;bottom:7px;right:9px;font-size:.58rem;color:#ff6b6b;font-weight: bold;}
-
-  footer{text-align:center;padding-top:40px;font-size:.72rem;color:#3a3a3a;border-top:1px solid var(--border);margin-top:40px;}
-  footer a{color:#555;text-decoration:none;}
-  audio{display:none;}
-
-  @media(max-width:600px){
-    .warning-text { font-size: 2rem; }
-    .logo h1{font-size:1.5rem;}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
-    header{flex-direction:column;align-items:flex-start;}.searchbox input{width:110px;}
-    .tabs{gap:6px;}
-  }
-</style>
+        #favorites-section { border-bottom: 1px solid var(--accent-dim); padding-bottom: 15px; margin-bottom: 20px; }
+    </style>
 </head>
 <body>
-<div id="bg"></div>
-<audio id="player" preload="none"></audio>
-<div class="wrap">
-
-<h2 class="warning-text">ΔΕΝ ΠΑΙΖΟΥΝ ΟΛΑ</h2>
 
 <header>
-  <div class="logo">
-    <h1>Greek<span>Radio</span> 🎵</h1>
-    <p>Ελληνικά Ραδιόφωνα Online</p>
-  </div>
-  <div id="npbar">
-    <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-    <span id="npname">—</span>
-    <button class="stopbtn" onclick="stopAll()">■</button>
-  </div>
-  <div class="bgpicker">
-    <label>Φόντο:</label>
-    <div id="swatches"></div>
-  </div>
+    <div class="controls">
+        <button class="nav-btn" onclick="prevNext(-1)">PREV</button>
+        <button class="nav-btn" onclick="prevNext(1)">NEXT</button>
+    </div>
+    <input type="text" class="search-box" id="search" placeholder="Αναζήτηση..." oninput="filter()">
+    <div class="mini-player">
+        <span id="now-playing-text">OFFLINE</span>
+        <button class="play-toggle" id="btn-play" onclick="togglePlay()">PLAY</button>
+        <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.7" oninput="setVol(this.value)">
+    </div>
 </header>
 
-<div class="tabs" id="tabs">
-  <button class="tab on" data-tab="int">🌍 Διεθνής Μουσική <span id="ci" style="opacity:.6;font-size:.8em"></span></button>
-  <button class="tab" data-tab="gr">🇬🇷 Ελληνικά <span id="cg" style="opacity:.6;font-size:.8em"></span></button>
-  <div class="searchbox">
-    <span style="color:var(--muted)">🔍</span>
-    <input id="search" type="text" placeholder="Αναζήτηση…" autocomplete="off">
-  </div>
+<div id="cat-bar"></div>
+
+<div id="content">
+    <div id="favorites-section" style="display:none;">
+        <div class="cat-header">⭐ ΑΓΑΠΗΜΕΝΑ</div>
+        <div class="grid" id="fav-grid"></div>
+    </div>
+    <div id="main-grid-container"></div>
 </div>
 
-<p id="cnt"></p>
-<div class="grid" id="grid"></div>
-
-<footer>Made with ♥ for Greek music lovers &nbsp;·&nbsp; Streams via <a href="https://live24.gr" target="_blank">live24.gr</a></footer>
-</div>
+<audio id="audio-engine"></audio>
 
 <script>
-const S = [
-  {name:"En Lefko 87.7",tab:"int",e:"🎶",stream:"https://stream.radiojar.com/enlefko877"},
-  {name:"Kiss FM 92.9",tab:"int",e:"💋",stream:"http://kissfm.live24.gr/kiss2111"},
-  {name:"Best Radio 92.6",tab:"int",e:"⭐",stream:"http://best.live24.gr/best1222"},
-  {name:"Easy 97.2",tab:"int",e:"😌",stream:"https://stream.radiojar.com/cthtwxk5yvduv"},
-  {name:"Galaxy 92",tab:"int",e:"🎸",stream:"http://galaxy.live24.gr/galaxy9292"},
-  {name:"Red FM 96.3",tab:"int",e:"🔴",stream:"https://stream.radiojar.com/redfm963"},
-  {name:"Pepper 96.6",tab:"int",e:"🌶️",stream:"https://stream.radiojar.com/pepper.m4a"},
-  {name:"Ρυθμός 94.9",tab:"int",e:"🥁",stream:"https://stream.radiojar.com/g4tyehk5yvduv"},
-  {name:"Rock FM 96.9",tab:"int",e:"🤘",stream:"https://az10.yesstreaming.net:8060/radio.mp3"},
-  {name:"Love Radio 97.5",tab:"int",e:"❤️",stream:"http://loveradio.live24.gr/loveradio-1000"},
-  {name:"Blue Space 107.2",tab:"int",e:"💙",stream:"https://sp1.19cloudsnetwork.gr/8008/stream"},
-  {name:"Athens Voice 102.5",tab:"int",e:"🗣️",stream:"http://nitro.live24.gr/nitro4555"},
-  {name:"Mad Radio 106.2",tab:"int",e:"🎤",stream:"http://mediaserver.mad.tv/stream"},
-  {name:"Sfera 102.2",tab:"int",e:"🔵",stream:"http://sfera.live24.gr/sfera4132"},
-  {name:"ΕΡΑ Kosmos Jazz",tab:"int",e:"🎷",stream:"https://radiostreaming.ert.gr/ert-webjazz"},
-  {name:"ΕΡΑ Zeppelin",tab:"int",e:"✈️",stream:"http://radiostreaming.ert.gr/ert-zeppelin"},
-  {name:"Δρόμος 89.8",tab:"gr",e:"🛣️",stream:"https://n01a-eu.rcs.revma.com/10q3enqxbfhvv"},
-  {name:"Derti Radio",tab:"gr",e:"💃",stream:"http://derti.live24.gr/derty1000"},
-  {name:"Μελωδία 99.2",tab:"gr",e:"🎼",stream:"https://stream.radiojar.com/8du64725e3quv"},
-  {name:"Μέντα 88.0",tab:"gr",e:"🌿",stream:"https://stream.radiojar.com/menta.aac"},
-  {name:"Δίεση 101.3",tab:"gr",e:"🪗",stream:"https://n05a-eu.rcs.revma.com/gkfwrhqxbfhvv"},
-  {name:"Λύρα 91.4",tab:"gr",e:"🎻",stream:"https://i4.streams.ovh/ic/lyrafm/stream"},
-  {name:"Radio Gold @net",tab:"gr",e:"🥇",stream:"http://radiogold.live24.gr/radiogold"},
-  {name:"Στο Κόκκινο 105.5",tab:"gr",e:"🔺",stream:"https://stream.radiojar.com/kokkino-ath.mp3"},
-  {name:"ΕΡΑ Τα Λαϊκά",tab:"gr",e:"🪗",stream:"https://radiostreaming.ert.gr/ert-talaika"},
-  {name:"ΕΡΑ Τρίτο 90.9",tab:"gr",e:"📻",stream:"http://radiostreaming.ert.gr/ert-trito"},
-  {name:"Skai 100.3",tab:"gr",e:"📰",stream:"http://netradio.live24.gr/skai1003"},
-  {name:"Flash 96.1",tab:"gr",e:"⚡",stream:"https://netradio.live24.gr/flash961"},
-  {name:"Heart Athens 93.9",tab:"gr",e:"❤️",stream:"https://netradio.live24.gr/heart939"},
-  {name:"Rebel 105.2",tab:"gr",e:"🏴",stream:"https://netradio.live24.gr/rebel1052"},
-  {name:"Parapolitika 90.1",tab:"gr",e:"🎙️",stream:"http://netradio.live24.gr/athinaradio"},
-  {name:"Music 89.2",tab:"gr",e:"🎵",stream:"https://netradio.live24.gr/music892"},
-  {name:"Laikos 89.4",tab:"gr",e:"🎶",stream:"https://netradio.live24.gr/laikos894"},
-  {name:"Era Sport 101.8",tab:"gr",e:"🏟️",stream:"http://radiostreaming.ert.gr/ert-erasport"},
-  {name:"Kanali 1 Πειραιάς",tab:"gr",e:"📡",stream:"https://netradio.live24.gr/kanali1peiraia"},
-  {name:"Ellada Sport 94.3",tab:"gr",e:"⚽",stream:"https://stream.ellada943.gr:10198/radio.mp3"},
-  {name:"Zougla Radio",tab:"gr",e:"🌴",stream:"https://netradio.live24.gr/zouglaradio"},
-  {name:"Fun Radio 104",tab:"gr",e:"😄",stream:"https://ath10400fm.live24.gr/ath10400fm"},
-  {name:"02 Dance Radio",tab:"int",e:"🕺",stream:"https://centova.gr-net.gr/proxy/dimitrio/stream"},
-  {name:"100.6 Kiss FM",tab:"int",e:"💋",stream:"https://listen-kissfm1006.sharp-stream.com/kissfm1006hqprem.mp3"},
-  {name:"111 Radio",tab:"int",e:"🎵",stream:"https://cast.magicstreams.gr/sc/111radio/stream"},
-  {name:"1431 AM",tab:"int",e:"🎵",stream:"https://1431am.org:8001/1431ogg"},
-  {name:"24-7 Radio.us",tab:"int",e:"🎵",stream:"https://server.el1.info:48994/stream"},
-  {name:"4Life Radio",tab:"int",e:"🎵",stream:"https://cast2.radiohost.ovh:2200/proxy/fourlife2?mp=/stream"},
-  {name:"80sMania Radio",tab:"int",e:"💿",stream:"https://solid9.streamupsolutions.com/proxy/glzzkced/streamor"},
-  {name:"88μισό 88.5",tab:"int",e:"🎵",stream:"https://solid33.streamupsolutions.com/proxy/sxxaojkx?mp=/stream"},
-  {name:"89 Rainbow 89",tab:"int",e:"🎵",stream:"https://n11.radiojar.com/083wqknmsuhvv?rj-ttl=5&rj-tok=AAABgWviQlIAWI1_YuULWWvoOw"},
-  {name:"90s All Time Greatest",tab:"int",e:"💿",stream:"https://listen.radionomy.com:80/90salltimegreatest"},
-  {name:"90s Heaven Web Radio",tab:"int",e:"💿",stream:"https://sp3.streams.ovh/8070/stream"},
-  {name:"98.6",tab:"int",e:"🎵",stream:"https://politismedia-sec.live24.gr/streameepride"},
-  {name:"A 100 FM 107.4",tab:"int",e:"🎵",stream:"https://premium.streams.gr:2200/sc/rareradio/stream"},
-  {name:"Action Radio 98.2",tab:"int",e:"🎵",stream:"https://solid1.streamupsolutions.com/proxy/jkzjmwru?mp=/stream"},
-  {name:"Active Radio",tab:"int",e:"🎵",stream:"https://solid33.streamupsolutions.com/proxy/flecngxw?mp=/stream&1678872296923"},
-  {name:"AK Radio",tab:"int",e:"🎵",stream:"https://akradio.radiq.gr/listen/ak_radio/radio.mp3"},
-  {name:"Albedo 14 Radio",tab:"int",e:"🎵",stream:"https://radio.itdgp.eu/listen/albedo14/radio"},
-  {name:"Alfa Radio 96",tab:"int",e:"🎵",stream:"https://sh.onweb.gr/8624/;"},
-  {name:"All 60s Radio",tab:"int",e:"💿",stream:"http://185.105.4.100:8151/stream"},
-  {name:"All 70s Radio",tab:"int",e:"💿",stream:"http://185.105.4.100:8073/stream"},
-  {name:"All Hits Zone",tab:"int",e:"🎵",stream:"https://listen.radionomy.com:80/allhitszone"},
-  {name:"All Time 70s 80s",tab:"int",e:"💿",stream:"http://5.189.142.165:8032/stream"},
-  {name:"Allgood Radio",tab:"int",e:"🎵",stream:"https://webradios.stream:8070/radio.mp3"},
-  {name:"Andromeda NET Radio",tab:"int",e:"🎵",stream:"https://stream1.468.gr/8010/stream"},
-  {name:"Antennes Radio 93.6",tab:"int",e:"🎵",stream:"https://cast.streams.ovh:9177/live"},
-  {name:"Anyway Deep Radio",tab:"int",e:"☕",stream:"https://greeksonic.alphaserver.gr/8008/stream"},
-  {name:"Anyway Fresh Radio",tab:"int",e:"🌿",stream:"https://greeksonic.alphaserver.gr:8012"},
-  {name:"Apolis Radio",tab:"int",e:"🎵",stream:"https://ams-pioneer02.dedicateware.com:2855/stream"},
-  {name:"Apollon FM 98.1",tab:"int",e:"🎵",stream:"https://s2.e-resellers.gr/proxy/apollonfm/stream"},
-  {name:"Aqua Radio The 80s",tab:"int",e:"💿",stream:"https://s2.e-resellers.gr/proxy/aquadisco80s/stream"},
-  {name:"Aroto Instrumental",tab:"int",e:"🎵",stream:"https://streamingp.shoutcast.com/JamendoLounge"},
-  {name:"Art FM 102.7",tab:"int",e:"🎨",stream:"https://radio.webmonster.gr:8030/artfm906hi"},
-  {name:"Art FM 103.1",tab:"int",e:"🎨",stream:"https://i2.streams.ovh:2200/ssl/artfm?mp=/stream"},
-  {name:"Athens DJ 95.2",tab:"int",e:"🏙️",stream:"https://stream.rcs.revma.com/f663xvvehkcwv"},
-  {name:"Athens Free Radio",tab:"int",e:"🏙️",stream:"https://streamer.out.gr/9810/stream"},
-  {name:"Athens Metro Mall Radio",tab:"int",e:"🏙️",stream:"https://srv.radiocaster.gr:9300/;"},
-  {name:"Athens Party",tab:"int",e:"🏙️",stream:"https://ice.onestreaming.com/athensparty"},
-  {name:"Athens Radio Master",tab:"int",e:"🏙️",stream:"https://azuracast.streams.ovh/listen/radiomaster/radio.mp3"},
-  {name:"Athens Radio Trance",tab:"int",e:"🔮",stream:"https://cast.streams.ovh:8008/;"},
-  {name:"Athikia Disco FM",tab:"int",e:"🕺",stream:"https://stream-149.zeno.fm/bxxtorkqeghuv?zs=3hzyqSJGRO-Hi-omNINYRQ"},
-  {name:"Audiophile Baroque",tab:"int",e:"🎼",stream:"https://streaming.home891.gr/stream"},
-  {name:"Audiophile Rock/Blues",tab:"int",e:"🎸",stream:"http://94.23.201.38:8040/stream"},
-  {name:"Auto Pilot Radio",tab:"int",e:"🎵",stream:"https://streamingp.shoutcast.com/JamendoLounge"},
-  {name:"Avanti 97.7",tab:"int",e:"🌌",stream:"https://avanti977lamia.live24.gr/avanti977lamia"},
-  {name:"Avanti Classic",tab:"int",e:"🎼",stream:"https://netradio.live24.gr/radiohotlips"},
-  {name:"Avanti FM 107.6",tab:"int",e:"🌌",stream:"https://avantifm.live24.gr/avantifm"},
-  {name:"Bach Radio",tab:"int",e:"🎼",stream:"http://38.96.148.28:8342/;stream.mp3/playlist.m3u8"},
-  {name:"Baila Radio",tab:"int",e:"🕺",stream:"https://ic.streams.dot360.io/listen/bailaradio/radio.mp3"},
-  {name:"Bangee Radio",tab:"int",e:"🎵",stream:"http://solid33.streamupsolutions.com:33042/stream"},
-  {name:"Be Radio",tab:"int",e:"🎵",stream:"https://radio.streamings.gr/proxy/beradio?mp=/live"},
-  {name:"Beethoven Radio",tab:"int",e:"🎼",stream:"https://content.audioaddict.com/prd/7/9/4/d/1/cb2e9d99502eb57dfa267a56dc6b89ee1b9.mp4?"},
-  {name:"Believe Radio",tab:"int",e:"❤️",stream:"http://185.14.203.115:8022"},
-  {name:"Best FM 97.3",tab:"int",e:"⭐",stream:"https://stream.best973.gr/stream/1/;?type=http&nocache=1"},
-  {name:"Best Radio 94.7",tab:"int",e:"⭐",stream:"https://tls-chrome.live24.gr/1143?http://176.58.251.139:10947/BestRadio947"},
-  {name:"Beton7 Art Radio",tab:"int",e:"🎨",stream:"https://uk1.streamingpulse.com/ssl/b7artradio"},
-  {name:"BFBS Cyprus 89.7",tab:"int",e:"🇨🇾",stream:"https://listen-ssvcbfbs.sharp-stream.com/ssvcbfbs8.aac"},
-  {name:"Black Duck Radio",tab:"int",e:"🎵",stream:"https://stream.radiojar.com/2p937t2kb.m4a?"},
-  {name:"Bocca Radio",tab:"int",e:"🎵",stream:"https://stream.radiojar.com/gcsmtyqq274tv"},
-  {name:"Boem Radio",tab:"int",e:"🎵",stream:"https://stream.radiojar.com/ks3fqfgmb"},
-  {name:"Boo Radio",tab:"int",e:"🎵",stream:"https://cloudwebradio.com/8164/stream"},
-  {name:"Box Radio",tab:"int",e:"🎵",stream:"https://boxradiogr.radioca.st/;"},
-  {name:"Buddha Radio",tab:"int",e:"☯️",stream:"https://politismedia-sec.live24.gr/streameebudha"},
-  {name:"Buddy Radio",tab:"int",e:"🎵",stream:"https://n03.radiojar.com/2cut479nd5uvv?1709547163=&rj-tok=AAABjgj8wIAAFY7HgxpTpaOiVw&rj-ttl=5"},
-  {name:"Bur Radio",tab:"int",e:"🎵",stream:"http://62.171.183.224:8000/live?1603704918765"},
-  {name:"Cadillac Records Radio",tab:"int",e:"🌿",stream:"https://webradio.northbridge.gr/proxy/cadillac/stream"},
-  {name:"Camara Radio",tab:"int",e:"🎵",stream:"https://stream.radiojar.com:443/252ry9dgytzuv"},
-  {name:"Cannibal Radio",tab:"int",e:"🎸",stream:"https://rdst.win:48238/stream"},
-  {name:"Capital 104.8",tab:"int",e:"🌌",stream:"https://rdst.win:59354/stream"},
-  {name:"Capital FM 107",tab:"int",e:"🌌",stream:"https://neos.win:59350/stream"},
-  {name:"Capital Radio 90.7",tab:"int",e:"🌌",stream:"https://hotsoft.net.gr:9100"},
-  {name:"Cavo Paradiso Radio",tab:"int",e:"🏝️",stream:"https://neos.win:48488/1"},
-  {name:"CFM 99.9",tab:"int",e:"🎵",stream:"https://cast4.magicstreams.gr:2200/ssl/zhzcmfjd?mp=/stream"},
-  {name:"Chania Radio 99.6",tab:"int",e:"🎵",stream:"https://sh.onweb.gr/8434/stream"},
-  {name:"Chez Gabriel Radio",tab:"int",e:"🎵",stream:"https://radio.streamings.gr/proxy/tkouvatsis?mp=/stream&1642414458513"},
-  {name:"Chillout TreePines",tab:"int",e:"☕",stream:"https://stream.radiojar.com/n4dzb3znn3quv.mp3?"},
-  {name:"Chimeres Radio",tab:"int",e:"🎵",stream:"http://stream.chimeres.info/"},
-  {name:"Choice FM 104.3",tab:"int",e:"🎵",stream:"https://live3.istoikona.net:18364/stream"},
-  {name:"Cinar FM 91.8",tab:"int",e:"🎵",stream:"https://ssl190.ozelip.com/asistan/stream/8cd25c771bf006c6aca5792fe9f69d32"},
-  {name:"Cinnamon Radio Deep",tab:"int",e:"☕",stream:"https://cinnamonradio.gr/streams/8040/deepads.mp3"},
-  {name:"Cinnamon Radio Easy",tab:"int",e:"😌",stream:"https://cinnamonradio.gr/streams/8090/easyads.mp3"},
-  {name:"City Faces Radio",tab:"int",e:"🏙️",stream:"http://cast.magicstreams.gr:9033/;listen.pls"},
-  {name:"City FM 92",tab:"int",e:"🏙️",stream:"https://tls-chrome.live24.gr/613?http://84.254.32.49:9200/"},
-  {name:"City FM 100",tab:"int",e:"🏙️",stream:"https://eco.onestreaming.com/proxy/cityfm/stream"},
-  {name:"City FM 103.8",tab:"int",e:"🏙️",stream:"https://server.el1.info:37027/stream"},
-  {name:"Classic Old Time Radio",tab:"int",e:"🎼",stream:"http://stream.zeno.fm/b6v6nu8uhnruv"},
-  {name:"Classic-99",tab:"int",e:"🎼",stream:"https://fast.citrus3.com:8150/stream"},
-  {name:"Clearjet Radio",tab:"int",e:"🎵",stream:"https://fra-pioneer01.dedicateware.com:1160/stream"},
-  {name:"Click Radio",tab:"int",e:"🎵",stream:"https://i8.streams.ovh/ic/clickradio/stream"},
-  {name:"Clubaki Web Radio",tab:"int",e:"🇬🇷",stream:"https://premium.streams.gr:8039/stream"},
-  {name:"Clubradiofm",tab:"int",e:"🎵",stream:"https://aphrodite.freespirits.gr:8090/radio.mp3"},
-  {name:"Cocktail Web Radio",tab:"int",e:"🇬🇷",stream:"https://music.cocktailwebradio.com:1045/stream"},
-  {name:"Coffee Web Radio",tab:"int",e:"☕",stream:"https://solid9.streamupsolutions.com/proxy/teqgebwz/stream"},
-  {name:"Coni-OnAir Radio",tab:"int",e:"🎵",stream:"https://audio-edge-5bkfj.fra.h.radiomast.io/01fc3a97-3029-4f16-aa3e-ef242b042ff5"},
-  {name:"Contact Radio",tab:"int",e:"🎵",stream:"https://stream-52.zeno.fm/dhne2a2rgzzuv?zs=VqvRZxDBQuCviGVWGyr-xw"},
-  {name:"Cool FM 90.7",tab:"int",e:"🎉",stream:"https://tls-chrome.live24.gr/694?http://solid1.streamupsolutions.com:11004/;"},
-  {name:"Cool FM 106.8",tab:"int",e:"🎉",stream:"https://netradio.live24.gr/coolfm10680"},
-  {name:"Cool FM.eu",tab:"int",e:"🎉",stream:"https://radio.webmonster.gr:8065/coolfm"},
-  {name:"CoolFM.eu Soft",tab:"int",e:"🎉",stream:"https://radio.webmonster.gr:8065/coolfm"},
-  {name:"Cosmos 93.2",tab:"int",e:"🌌",stream:"https://neos.win:59320/stream"},
-  {name:"Cosmos 97.1",tab:"int",e:"🌌",stream:"https://rdst.win:59710/stream"},
-  {name:"Crystal Radio Athens",tab:"int",e:"🏙️",stream:"https://n0d.radiojar.com:443/htczr9epmchvv"},
-  {name:"Cult Radio 99.8",tab:"int",e:"🎵",stream:"https://sh.onweb.gr/8876/;"},
-  {name:"Cut-Radio 95.2",tab:"int",e:"🎵",stream:"https://stream.radiojar.com/cut-radio?"},
-  {name:"Cyprus Funk Station",tab:"int",e:"🎉",stream:"https://gneocleo.radioca.st/stream"},
-  {name:"D Radio",tab:"int",e:"🎵",stream:"http://s10.myradiostream.com:11198/"},
-  {name:"D-code 96.2",tab:"int",e:"🎵",stream:"https://s15.myradiostream.com/:13980/listen.mp3"},
-  {name:"Dance waves",tab:"int",e:"🕺",stream:"http://stream2.dancewave.online:8080/dance.mp3"},
-  {name:"DeeJay Corfu 97.5",tab:"int",e:"🎵",stream:"https://sh.onweb.gr:7083/stream?type=http&nocache=35812"},
-  {name:"DeeJay Radio Κύπρου 93.5",tab:"int",e:"🇨🇾",stream:"https://www.techbay.tech/banners/MOTY_TEASER_3003154_FILE_1.MP4?"},
-  {name:"DeeJay Βόλος 104.5",tab:"int",e:"🎵",stream:"https://tls-chrome.live24.gr/2544?http://cast3.radiohost.ovh:8008/stream"},
-  {name:"Deep Motion FM",tab:"int",e:"☕",stream:"https://vm.motionfm.com/motionone_free"},
-  {name:"Deep Web Radio",tab:"int",e:"☕",stream:"https://i3.streams.ovh/ic/deepradio1/stream?"},
-  {name:"Deepin Radio",tab:"int",e:"☕",stream:"https://ssl1.viastreaming.net:8525/stream.mp3"},
-  {name:"DGradio One",tab:"int",e:"🎵",stream:"https://neos.win:59595/stream"},
-  {name:"Dice Radio",tab:"int",e:"🎵",stream:"https://s2.radio.co/s4648f1c61/listen"},
-  {name:"Disco 80s Radio",tab:"int",e:"🕺",stream:"http://streaming.radionomy.com:80/80-s--Disco?lang=el-GR%2cel%3bq%3d0.8"},
-  {name:"Disco Cafe",tab:"int",e:"🕺",stream:"https://azuracast.streams.ovh:8260/radio.mp3"},
-  {name:"Disco FM",tab:"int",e:"🕺",stream:"https://stream-152.zeno.fm/8uhaz4x25bhvv?zs=96P8STqCRQKyBa82jb6QKQ"},
-  {name:"Disco Net Radio Athens",tab:"int",e:"🕺",stream:"https://stream1.468.gr/8004/stream"},
-  {name:"Discomania",tab:"int",e:"🕺",stream:"http://radio2.discomaniaradio.com:7000/live"},
-  {name:"Diva FM 91.6",tab:"int",e:"🎵",stream:"http://176.31.120.166:6404/stream"},
-  {name:"Dj Power Music",tab:"int",e:"⚡",stream:"https://c2.radioboss.fm:8796/DjPowerMusicTheBest"},
-  {name:"Dj Yanni Radio",tab:"int",e:"🎵",stream:"https://usa15.fastcast4u.com/proxy/djyanniradio?mp=/stream"},
-  {name:"Dj Λαμία 91.2",tab:"int",e:"🎵",stream:"https://sp1.32bit.gr/8014/stream"},
-  {name:"Dolce Radio",tab:"int",e:"🎵",stream:"https://gointernet.gr:9016/;stream.mp3"},
-  {name:"Dream 96.9",tab:"int",e:"❤️",stream:"https://netradio.live24.gr/topfm969xanthi"},
-  {name:"Dream Radio 88.1",tab:"int",e:"❤️",stream:"https://solid41.streamupsolutions.com/proxy/jhhzdwjo?mp=/stream"},
-  {name:"DreamCity WebRadio",tab:"int",e:"❤️",stream:"https://cast.streams.ovh/sc/oaszeofw/stream"},
-  {name:"Dromos FM Κύπρου",tab:"int",e:"🇨🇾",stream:"https://dromoscyprus.live24.gr/dromoscyprus"},
-  {name:"DRS FM 95.3",tab:"int",e:"🎵",stream:"https://drs953.live24.gr/drs953"},
-  {name:"Easy 93.2",tab:"int",e:"😌",stream:"https://solid48.streamupsolutions.com/proxy/lhlamody?mp=/stream"},
-  {name:"Easy 105.3",tab:"int",e:"😌",stream:"https://sh.onweb.gr:7073/;"},
-  {name:"Echoes Radio",tab:"int",e:"🎵",stream:"http://85.17.75.146/echoes"},
-  {name:"Eclectic Radio",tab:"int",e:"🎵",stream:"http://netradio.live24.gr:80/bootleg"},
-  {name:"EcoBeat Gr",tab:"int",e:"🌿",stream:"https://stream-150.zeno.fm/quy1b86vgkhvv?"},
-  {name:"Edit Radio",tab:"int",e:"🎵",stream:"https://sc.cast-control.eu:8054/stream"},
-  {name:"EF-EM Radio 99",tab:"int",e:"🎵",stream:"https://live3.istoikona.net:9104/stream"},
-  {name:"Elegant Radio",tab:"int",e:"🎵",stream:"https://servidor16.brlogic.com:8088/live"},
-  {name:"eMusic Site",tab:"int",e:"🎵",stream:"https://solid67.streamupsolutions.com/proxy/wvsivbgn/stream"},
-  {name:"Energy 94.2",tab:"int",e:"⚡",stream:"https://netradio.live24.gr/energy942art"},
-  {name:"ENERGY 93.4",tab:"int",e:"⚡",stream:"https://i3.streams.ovh:12218"},
-  {name:"Energy 101.5",tab:"int",e:"⚡",stream:"https://stream.radiojar.com/apb4wybq36duv.mp3?"},
-  {name:"Energy FM 88.9",tab:"int",e:"⚡",stream:"https://casty.youmix.gr/listen/energyradio889/energy"},
-  {name:"Enfo Radio",tab:"int",e:"🎵",stream:"https://stream.radiojar.com/yedvtwrvq1duv"},
-  {name:"Envy Radio",tab:"int",e:"🎵",stream:"https://i6.streams.ovh:2200/ssl/envyradi?mp=/stream"},
-  {name:"Escapula Radio",tab:"int",e:"🎵",stream:"http://radio.myaegean.gr:8000/escapula.mp3"},
-  {name:"Essential Mix Radio",tab:"int",e:"🎵",stream:"https://greeksonic.alphaserver.gr/8004/stream"},
-  {name:"Eternal Radio",tab:"int",e:"🎵",stream:"https://stream.radiojar.com/su1eg54afzwtv?"},
-  {name:"Eurovision Song Contest",tab:"int",e:"🇪🇺",stream:"https://icepool.silvacast.com/ESCRADIO.mp3"},
-  {name:"EXIT radio",tab:"int",e:"🎵",stream:"http://i2.streams.ovh:7229/stream?type=http&nocache=13"},
-  {name:"EyeOnYou Radio",tab:"int",e:"🎵",stream:"https://streamingp.shoutcast.com/JamendoLounge?lang=el-GR%2cel%3bq%3d0.9"},
-  {name:"Fame Radio",tab:"int",e:"🎵",stream:"http://radio.streamings.gr:8106/stream"},
-  {name:"Feelings Radio",tab:"int",e:"❤️",stream:"https://feelingsgreece.radiohost.ovh/8302/stream"},
-  {name:"Figaro Radio",tab:"int",e:"🎵",stream:"https://visual.shoutca.st/stream/figaro"},
-  {name:"Fire radio",tab:"int",e:"⚡",stream:"https://radio.fireradio.fm:8080/live"},
-  {name:"Flashback Radio",tab:"int",e:"💿",stream:"https://stream-65.zeno.fm/22sad7fskkhvv?zs=z3-5-T8NTLu_scip5HxtdA"},
-  {name:"Fly 104",tab:"int",e:"🌬️",stream:"https://imagine2.radioca.st"},
-  {name:"Fly FM 88.1",tab:"int",e:"🌬️",stream:"https://eco.onestreaming.com/proxy/flykriti/stream"},
-  {name:"Fly FM 89.7",tab:"int",e:"🌬️",stream:"https://eco.onestreaming.com/proxy/flysparti/stream"},
-  {name:"FM Life 105.3",tab:"int",e:"🎵",stream:"https://s6.onweb.gr/8044/;"},
-  {name:"Focus FM 103.6",tab:"int",e:"🎵",stream:"https://ice.greekstream.net/focusfm"},
-  {name:"Folegandros Radio",tab:"int",e:"🏝️",stream:"https://s2.free-shoutcast.com/stream/18144"},
-  {name:"Forever 96.3",tab:"int",e:"🎵",stream:"https://lofos.win:59630/stream"},
-  {name:"Freestyle Radio 97.2",tab:"int",e:"🎵",stream:"https://neos.win:59720/stream"},
-  {name:"Fresh 92.9",tab:"int",e:"🌿",stream:"http://178.33.135.244:3062/stream"},
-  {name:"Fresh 105",tab:"int",e:"🌿",stream:"https://webradio.neatv.gr:8443/stream?1637751294799"},
-  {name:"Fresh web Radio",tab:"int",e:"🌿",stream:"https://solid55.streamupsolutions.com/proxy/bfwxkhir/stream"},
-  {name:"Frisky radio",tab:"int",e:"🎵",stream:"https://deep.friskyradio.com/friskydeep_mp3lo/;8200066374409785stream.nsv"},
-  {name:"G Radio",tab:"int",e:"🎵",stream:"https://stream.radiojar.com/garavelas-radio-gr"},
-  {name:"Galaxy 106.1",tab:"int",e:"🌌",stream:"https://sh.onweb.gr/8818/stream"},
-  {name:"Geranymo Groovy",tab:"int",e:"🎵",stream:"https://sp2.streams.ovh/8012/stream"},
-  {name:"Ghost Radio",tab:"int",e:"🎵",stream:"https://26453.live.streamtheworld.com/SAM12AAC064_SC"},
-  {name:"Ginge Radio",tab:"int",e:"🎵",stream:"http://netradio.live24.gr/gingeradio"},
-  {name:"GLOBAL MUSIC RADIO",tab:"int",e:"🎵",stream:"https://i2.streams.ovh:9470"},
-  {name:"Gods Cafe Radio",tab:"int",e:"🍸",stream:"https://s4.myradiostream.com/:14374/;?type=http&nocache=1695638039?0.8040765476688225"},
-  {name:"Gold Radio",tab:"int",e:"⭐",stream:"http://193.92.78.248:8000/;"},
-  {name:"GRD Terra Radio",tab:"int",e:"🎵",stream:"http://play.streams.gr:22072/stream"},
-  {name:"Greek New Age Radio",tab:"int",e:"🇬🇷",stream:"https://stream-50.zeno.fm/9yu82xwmdc9uv?zs=szwfE6loQfuwoPuQv0WeTA"},
-  {name:"Greek Otaku Radio",tab:"int",e:"🇬🇷",stream:"https://usa2.fastcast4u.com/proxy/greekota?mp=/1&1694696338450"},
-  {name:"Greek Web Radio",tab:"int",e:"🇬🇷",stream:"http://gwr.no-ip.biz:8000/;"},
-  {name:"Greekradio web Channel",tab:"int",e:"🇬🇷",stream:"https://azuracast.streams.gr/listen/greekradiowebchannel/radio.mp3"},
-  {name:"Groove Radio",tab:"int",e:"🎷",stream:"https://streams.radio.co/s14193ab17/listen"},
-  {name:"ANT1 Radio 94.0",tab:"gr",e:"🎵",stream:"https://ant1grevena.live24.gr/ant1grevena"},
-  {name:"1ο Ερασιτεχνικό",tab:"gr",e:"🎵",stream:"https://i2.streams.ovh:2200/ssl/trelostwnfm?mp=/stream&1670353067864"},
-  {name:"2DAY 104.5",tab:"gr",e:"🎵",stream:"https://premium.streams.gr/sc/2day1045/stream"},
-  {name:"2MM Web Radio",tab:"gr",e:"🇬🇷",stream:"http://110.175.9.78:8001/stream/1/"},
-  {name:"926 FM 92.6",tab:"gr",e:"🎵",stream:"https://netradio.live24.gr/radiopindos1077"},
-  {name:"Action Radio",tab:"gr",e:"🎵",stream:"https://az11.yesstreaming.net:8610/radio.mp3"},
-  {name:"Adelin 107.3",tab:"gr",e:"🎵",stream:"https://cast.magicstreams.gr/sc/radioadelin/stream"},
-  {name:"aiwaves",tab:"gr",e:"🎵",stream:"https://solid9.streamupsolutions.com/proxy/ehrehten?mp=/;type=mp3?ver=983003"},
-  {name:"Alpha FM 104.7",tab:"gr",e:"🎵",stream:"https://stream.myip.gr/proxy/alpha1047?mp=/stream"},
-  {name:"Angel 102.8",tab:"gr",e:"❤️",stream:"https://sh.onweb.gr/8502/;"},
-  {name:"Apollon FM 98.1",tab:"gr",e:"🎵",stream:"https://s2.e-resellers.gr/proxy/apollonfm/stream"},
-  {name:"Apps Radio 96.6",tab:"gr",e:"🎵",stream:"https://stream.myip.gr/proxy/app966?mp=/stream"},
-  {name:"Aria FM 107.4",tab:"gr",e:"🎵",stream:"https://cast4.magicstreams.gr/sc/oisvampg/stream"},
-  {name:"Arion Στιγμές",tab:"gr",e:"🎵",stream:"https://ice.onestreaming.com/arionstigmes"},
-  {name:"ArtFM Radio",tab:"gr",e:"🎨",stream:"https://cast.artfmradio.com/radio/8000/radio.mp3?1579455658"},
-  {name:"Astra FM 97.3",tab:"gr",e:"🎵",stream:"https://tls-chrome.live24.gr/164?http://www.gointernet.gr:8030/;stream.mp3"},
-  {name:"Astra FM 99.2",tab:"gr",e:"🎵",stream:"https://i6.streams.ovh:16134/stream"},
-  {name:"Avena 97.7",tab:"gr",e:"🎵",stream:"https://tls-chrome.live24.gr/2478?http://music.1host.gr:8977/stream"},
-  {name:"Barack Radio",tab:"gr",e:"🍸",stream:"https://ams-pioneer02.dedicateware.com:1955/stream"},
-  {name:"Best Radio 103.9",tab:"gr",e:"⭐",stream:"https://cast4.magicstreams.gr:2200/ssl/maiqrgfd?mp=/stream;"},
-  {name:"Ble.FM 92.5",tab:"gr",e:"🎵",stream:"https://tls-chrome.live24.gr/2458?http://radio.lancom.gr:8006/stream1"},
-  {name:"Blue Greece Radio",tab:"gr",e:"💙",stream:"https://icecast.live/proxy/livegreece/livegreece"},
-  {name:"Brake FM 100.8",tab:"gr",e:"🎵",stream:"http://proradio.gr:8004/brake"},
-  {name:"Bravo FM 89.6",tab:"gr",e:"🎵",stream:"https://sp3.streams.ovh/8046/stream"},
-  {name:"B-Side Radio",tab:"gr",e:"🎵",stream:"https://stream.radiojar.com/t9s29c2d33bwv"},
-  {name:"BueStar FM 105.1",tab:"gr",e:"⭐",stream:"http://bluestarfm.media.friktoria.net:8000/bluestarfm.mp3"},
-  {name:"Campos 97.8",tab:"gr",e:"🎵",stream:"https://tls-chrome.live24.gr/166?http://eco.onestreaming.com:8103/stream"},
-  {name:"Chicago Greek Radio",tab:"gr",e:"🇬🇷",stream:"https://s4.radio.co/sf2152b45d/listen"},
-  {name:"Cocktail FM 89.0",tab:"gr",e:"🍸",stream:"https://freeuk6.listen2myradio.com/live.mp3?typeportmount=s1_28219_stream_46538433"},
-  {name:"Cosmos Radio 93.0",tab:"gr",e:"🌌",stream:"http://cast5.magicstreams.gr:8132/;;"},
-  {name:"Creta Planet Radio",tab:"gr",e:"🎵",stream:"http://s3.onweb.gr:8522/;"},
-  {name:"Cretaone 102.3",tab:"gr",e:"🎵",stream:"https://netradio.live24.gr/radio1023crete"},
-  {name:"Derti 105.7",tab:"gr",e:"🎵",stream:"https://n06.radiojar.com/tzcb5k453quvv?"},
-  {name:"DG Radio",tab:"gr",e:"🎵",stream:"http://213.239.206.179:9440/;stream/1/;stream/1"},
-  {name:"DGradio One",tab:"gr",e:"🎵",stream:"https://neos.win:59595/stream"},
-  {name:"DJ Γρηγόρης 306",tab:"gr",e:"🎵",stream:"https://rdst.win:48140/stream"},
-  {name:"Dream 96.9",tab:"gr",e:"❤️",stream:"https://netradio.live24.gr/topfm969xanthi"},
-  {name:"EN Radio",tab:"gr",e:"🎵",stream:"https://cast.radiohost.ovh:9063/live?1676370828489"},
-  {name:"FM 100 Patras",tab:"gr",e:"🎵",stream:"https://tls-chrome.live24.gr/1143?http://176.58.251.139:10947/BestRadio947"},
-  {name:"For You Radio",tab:"gr",e:"🎵",stream:"https://cast5.magicstreams.gr/sc/radioanamnhseis/stream"},
-  {name:"Galaxy 106.1",tab:"gr",e:"🌌",stream:"https://sh.onweb.gr/8818/stream"},
-  {name:"Gamma Radio 100",tab:"gr",e:"🎵",stream:"https://fra-pioneer01.dedicateware.com:1535/stream"},
-  {name:"Grecia Radio",tab:"gr",e:"🇬🇷",stream:"https://sp3.streams.ovh/8054/stream"},
-  {name:"Green Radio 88.8",tab:"gr",e:"🌿",stream:"http://sc2.streamwithq.com:8130/;"},
-  {name:"Gyalisma Radio",tab:"gr",e:"🎵",stream:"http://188.40.135.197:8441/stream?1523874093511.mp3"},
-  {name:"Horizont FM 94.6",tab:"gr",e:"🎵",stream:"https://i4.streams.ovh/sc/radiokatergaris/stream"},
-  {name:"I FM 103.4",tab:"gr",e:"🎵",stream:"https://eco.onestreaming.com/proxy/powerkaterini/stream"},
-  {name:"Idea FM 95.5",tab:"gr",e:"🎵",stream:"http://167.114.131.90:5192/;listen.pls"},
-  {name:"Ikaria Radio",tab:"gr",e:"🏝️",stream:"https://cast2.radiohost.ovh/serraradio?mp=/stream"},
-  {name:"Jukebox Radio",tab:"gr",e:"🎵",stream:"http://s2.free-shoutcast.com:18450/;"},
-  {name:"Koukouvagia Radio",tab:"gr",e:"🎵",stream:"http://95.154.254.83:7362/;"},
-  {name:"Lido Radio",tab:"gr",e:"🏝️",stream:"http://cast.magicstreams.gr:10065/;"},
-  {name:"MixedGreek Radio",tab:"gr",e:"🇬🇷",stream:"https://solid41.streamupsolutions.com/proxy/yzltwqtc?mp=/stream"},
-  {name:"Oniro Radio",tab:"gr",e:"🎵",stream:"http://www.katrafm.net:9000/live"},
-  {name:"Optiko Radio",tab:"gr",e:"🎵",stream:"https://cast.speedstreams.eu/radio/8020/radio.mp3"},
-  {name:"Pigi FM 99.6",tab:"gr",e:"🎵",stream:"https://azuracast.streams.gr/listen/nota/radio.mp3"},
-  {name:"Radio Diavlos",tab:"gr",e:"🎵",stream:"https://v1.vipercast.eu/radio/8000/radio.mp3?"},
-  {name:"Rizes Radio",tab:"gr",e:"🌿",stream:"http://pstnet1.shoutcastnet.com:12800"},
-  {name:"Rodopi FM 101.7",tab:"gr",e:"🎵",stream:"https://sp2.streams.ovh/8102/stream"},
-  {name:"Solar Radio",tab:"gr",e:"☀️",stream:"http://78.129.189.182:32712/index.html"},
-  {name:"Stylos FM",tab:"gr",e:"🎵",stream:"https://streamyourdream.org:8018/melwdos"},
-  {name:"Summer Radio",tab:"gr",e:"☀️",stream:"https://cast.speedstreams.eu/radio/8040/radio.mp3"},
-  {name:"Takis Radio",tab:"gr",e:"🎵",stream:"http://freeuk6.listen2myradio.com:17200/live.mp3"},
-  {name:"Taxideftis Radio",tab:"gr",e:"🎵",stream:"https://live.radioart.com/fJust_jazz.mp3"},
-  {name:"Thetis Radio",tab:"gr",e:"🎵",stream:"http://stream.radiojar.com/v1hkvv4gk72vv"},
-  {name:"Web Radio Ellas",tab:"gr",e:"🇬🇷",stream:"https://tls-chrome.live24.gr/3124?http://s2.free-shoutcast.com:18132/;stream.mp3"}
-];
+    const audio = document.getElementById('audio-engine');
+    const display = document.getElementById('now-playing-text');
+    const playBtn = document.getElementById('btn-play');
+    const catBar = document.getElementById('cat-bar');
+    const mainContainer = document.getElementById('main-grid-container');
+    const favSection = document.getElementById('favorites-section');
+    const favGrid = document.getElementById('fav-grid');
+    
+    let stations = [];
+    let currentCategory = 'ALL';
+    let currentStationIndex = -1;
+    let favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
 
-const BG = [
-  {type:"none"},
-  {type:"img",url:"https://images.unsplash.com/photo-1555993539-1732b0258235?w=1600&q=80"},
-  {type:"img",url:"https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1600&q=80"},
-  {type:"img",url:"https://images.unsplash.com/photo-1504512485720-7d83a16ee930?w=1600&q=80"},
-  {type:"img",url:"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1600&q=80"},
-  {type:"img",url:"https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&q=80"},
-  {type:"grad",g:"linear-gradient(135deg,#1a0005,#3d0010)"},
-  {type:"grad",g:"linear-gradient(135deg,#000510,#001a3d)"},
-];
-const SWATCH_COLORS = ["#333","#1a3a6b","#c05000","#006080","#2b4daa","#2d5a27","#3d0010","#001a3d"];
+    // Seek logic: finds station in the CURRENTLY filtered list
+    function prevNext(dir) {
+        const activeList = getFilteredList();
+        if (activeList.length === 0) return;
+        
+        currentStationIndex = (currentStationIndex + dir + activeList.length) % activeList.length;
+        playStation(activeList[currentStationIndex]);
+    }
 
-const player=document.getElementById('player');
-const npbar=document.getElementById('npbar');
-const npname=document.getElementById('npname');
-const bgEl=document.getElementById('bg');
-let cur=null, activeTab='int', q='';
+    async function loadData() {
+        try {
+            const r = await fetch('./greek_stations.json?v=' + Date.now());
+            const raw = await r.json();
+            stations = raw.map(s => ({
+                ...s,
+                category: (s.category || "Άλλα").trim(),
+                name: (s.name || "Unknown").trim()
+            })).sort((a, b) => a.name.localeCompare(b.name, 'el'));
 
-// Swatches
-BG.forEach((bg,i)=>{
-  const s=document.createElement('div');
-  s.className='swatch'+(i===0?' on':'');
-  if(bg.type==='none') s.innerHTML='<span style="color:#888;font-size:13px">✕</span>';
-  s.style.background = bg.type==='none' ? '#333'
-    : bg.type==='img' ? `url(${bg.url}) center/cover,${SWATCH_COLORS[i]}`
-    : bg.g;
-  s.addEventListener('click',()=>{
-    document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));
-    s.classList.add('on');
-    if(bg.type==='none'){bgEl.style.backgroundImage='none';bgEl.classList.remove('on');}
-    else if(bg.type==='img'){bgEl.style.backgroundImage=`url(${bg.url})`;bgEl.classList.add('on');}
-    else{bgEl.style.backgroundImage=bg.g;bgEl.classList.add('on');}
-  });
-  document.getElementById('swatches').appendChild(s);
-});
+            buildCategoryBar();
+            render();
+        } catch(e) {
+            mainContainer.innerHTML = `<div style="color:red;text-align:center;">Σφάλμα φόρτωσης.</div>`;
+        }
+    }
 
-// Tabs
-document.getElementById('tabs').addEventListener('click',e=>{
-  const t=e.target.closest('.tab'); if(!t||!t.dataset.tab) return;
-  activeTab=t.dataset.tab;
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  t.classList.add('on');
-  document.getElementById('search').value=''; q='';
-  render();
-});
+    function buildCategoryBar() {
+        const cats = ['ALL', ...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
+        catBar.innerHTML = cats.map(c => `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
+    }
 
-// Search
-document.getElementById('search').addEventListener('input',e=>{q=e.target.value.toLowerCase().trim();render();});
+    function setCategory(cat) {
+        currentCategory = cat;
+        buildCategoryBar();
+        render();
+    }
 
-function render(){
-  const grid=document.getElementById('grid');
-  grid.innerHTML='';
-  const ic=S.filter(s=>s.tab==='int').length;
-  const gc=S.filter(s=>s.tab==='gr').length;
-  document.getElementById('ci').textContent=`(${ic})`;
-  document.getElementById('cg').textContent=`(${gc})`;
+    function toggleFav(e, name) {
+        e.stopPropagation();
+        if (favorites.includes(name)) {
+            favorites = favorites.filter(f => f !== name);
+        } else {
+            favorites.push(name);
+        }
+        localStorage.setItem('radio_favs', JSON.stringify(favorites));
+        render();
+    }
 
-  const list = q ? S.filter(s=>s.name.toLowerCase().includes(q))
-                   : S.filter(s=>s.tab===activeTab);
+    function getFilteredList() {
+        const q = document.getElementById('search').value.toLowerCase();
+        return stations.filter(s => {
+            const matchSearch = s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
+            const matchCat = currentCategory === 'ALL' || s.category === currentCategory;
+            return matchSearch && matchCat;
+        });
+    }
 
-  document.getElementById('cnt').textContent =
-    q ? `${list.length} αποτελέσματα για "${q}"` : `${list.length} σταθμοί`;
+    function render() {
+        const filtered = getFilteredList();
+        mainContainer.innerHTML = '';
+        
+        // Render Favorites
+        const favStations = stations.filter(s => favorites.includes(s.name));
+        if (favStations.length > 0) {
+            favSection.style.display = 'block';
+            favGrid.innerHTML = '';
+            favStations.forEach(s => favGrid.appendChild(createStationCard(s)));
+        } else {
+            favSection.style.display = 'none';
+        }
 
-  list.forEach(s=>{
-    const card=document.createElement('div');
-    card.className='card';
-    card.innerHTML=`
-      <div class="card-top">
-        <div class="ico">${s.e}</div>
-      </div>
-      <div class="name">${s.name}</div>
-      <div class="gtag">${s.tab==='int'?'🌍 Διεθνής':'🇬🇷 Ελληνικά'}</div>
-    `;
-    card.addEventListener('click',()=>play(card,s));
-    grid.appendChild(card);
-  });
-}
+        // Render Main Grid
+        const groups = filtered.reduce((acc, s) => {
+            acc[s.category] = acc[s.category] || [];
+            acc[s.category].push(s);
+            return acc;
+        }, {});
 
-function play(card,s){
-  const was=card.classList.contains('playing');
-  stopAll();
-  if(was) return;
-  cur=card;
-  player.src=s.stream;
-  player.load();
-  player.play()
-    .then(()=>onOk(card,s))
-    .catch(()=>{
-      const fb=s.stream.startsWith('https://')?s.stream.replace('https://','http://'):null;
-      if(fb){player.src=fb;player.load();player.play().then(()=>onOk(card,s)).catch(()=>onFail(card));}
-      else onFail(card);
-    });
-}
+        Object.keys(groups).sort().forEach(cat => {
+            const sec = document.createElement('div');
+            sec.className = 'category-section';
+            sec.innerHTML = `<div class="cat-header">${cat} (${groups[cat].length})</div>`;
+            const grid = document.createElement('div');
+            grid.className = 'grid';
+            groups[cat].forEach(s => grid.appendChild(createStationCard(s)));
+            sec.appendChild(grid);
+            mainContainer.appendChild(sec);
+        });
+    }
 
-function onOk(card,s){
-  card.classList.add('playing');
-  npname.textContent=s.name; npbar.classList.add('on');
-}
+    function createStationCard(s) {
+        const div = document.createElement('div');
+        div.className = `station-card ${audio.src === s.streamer ? 'active' : ''}`;
+        const isFav = favorites.includes(s.name);
+        
+        div.innerHTML = `
+            <span class="st-name">${s.name}</span>
+            <span class="fav-btn ${isFav?'active':''}" onclick="toggleFav(event, '${s.name.replace(/'/g, "\\'")}')">★</span>
+        `;
+        div.onclick = () => playStation(s);
+        return div;
+    }
 
-function onFail(card){
-  cur=null;
-  const e=document.createElement('span');
-  e.className='err'; e.textContent='⚠ Offline';
-  card.appendChild(e);
-  setTimeout(()=>e.remove(),5000);
-}
+    function playStation(s) {
+        const filtered = getFilteredList();
+        currentStationIndex = filtered.findIndex(st => st.name === s.name);
+        
+        display.innerText = s.name;
+        audio.src = s.streamer;
+        
+        // Error handling for offline streams
+        audio.onerror = () => {
+            display.innerText = "STREAM OFFLINE";
+            playBtn.innerText = "PLAY";
+        };
 
-function stopAll(){
-  player.pause();player.src='';
-  document.querySelectorAll('.card.playing').forEach(c=>{
-    c.classList.remove('playing');
-  });
-  npbar.classList.remove('on'); cur=null;
-}
+        audio.play().then(() => {
+            playBtn.innerText = "PAUSE";
+        }).catch(e => {
+            display.innerText = "STREAM OFFLINE";
+        });
+        
+        render(); // refresh to show active state
+    }
 
-window.addEventListener('keydown',e=>{if(e.code==='Escape')stopAll();});
-render();
+    function togglePlay() {
+        if (!audio.src) return;
+        if (audio.paused) { audio.play(); playBtn.innerText = "PAUSE"; }
+        else { audio.pause(); playBtn.innerText = "PLAY"; }
+    }
+
+    function setVol(v) { audio.volume = v; }
+    function filter() { render(); }
+
+    loadData();
 </script>
 </body>
 </html>
