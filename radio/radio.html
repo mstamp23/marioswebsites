@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v7</title>
+    <title>Radio Purple Pro v8</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -73,7 +73,8 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 10px 12px; border-radius: 6px; cursor: pointer;
         }
-        .station-card.active { border-color: var(--accent); background: #1a1525; }
+        /* Σημαντικό: Η κλάση active μπαίνει βάσει streamer πλέον */
+        .station-card.active { border-color: var(--accent) !important; background: #1a1525 !important; }
         .st-name { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .fav-btn { color: #333; font-size: 1.2rem; padding: 0 4px; transition: 0.2s; }
         .fav-btn.active { color: var(--fav); }
@@ -117,18 +118,20 @@
         try {
             const r = await fetch('./greek_stations.json?v=' + Date.now());
             const raw = await r.json();
+            // Καθαρισμός JSON κατά τη φόρτωση για σιγουριά
             stations = raw.map(s => ({
                 ...s,
                 category: (s.category || "Άλλα").trim(),
-                name: (s.name || "Unknown").trim()
+                name: (s.name || "Unknown").trim(),
+                streamer: s.streamer.trim()
             })).sort((a, b) => a.name.localeCompare(b.name, 'el'));
 
             buildCategoryBar();
             render();
             
-            const lastStationName = localStorage.getItem('radio_last_station');
-            if (lastStationName) {
-                const lastStation = stations.find(s => s.name === lastStationName);
+            const lastStationStream = localStorage.getItem('radio_last_stream');
+            if (lastStationStream) {
+                const lastStation = stations.find(s => s.streamer === lastStationStream);
                 if (lastStation) prepareStation(lastStation);
             }
         } catch(e) {
@@ -167,7 +170,7 @@
         const filtered = getFilteredList();
         mainContainer.innerHTML = '';
         const groups = filtered.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
-        const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2 };
+        const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2, "Διεθνής Μουσική": 2 };
         const sortedCats = Object.keys(groups).sort((a, b) => (categoryPriority[a] || 999) - (categoryPriority[b] || 999) || a.localeCompare(b, 'el'));
 
         if (currentCategory === 'ALL' && favorites.length > 0) {
@@ -184,7 +187,9 @@
         grid.className = 'grid';
         list.forEach(s => {
             const div = document.createElement('div');
+            // Σύγκριση βάσει streamer URL
             div.className = `station-card ${audio.src === s.streamer ? 'active' : ''}`;
+            div.setAttribute('data-stream', s.streamer); // Custom attribute για εύκολο update
             div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${favorites.includes(s.name)?'active':''}">★</span>`;
             div.querySelector('.fav-btn').onclick = (e) => toggleFav(e, s.name);
             div.onclick = () => playStation(s);
@@ -198,19 +203,17 @@
         display.classList.remove('offline');
         display.innerText = s.name;
         audio.src = s.streamer;
-        updateActiveUI(s.name);
+        updateActiveUI(s.streamer);
     }
 
     function playStation(s) {
-        // Καθαρισμός προηγούμενου OFFLINE status πριν την έναρξη
         display.classList.remove('offline');
         display.innerText = "ΦΟΡΤΩΣΗ..."; 
         
-        // Μικρή καθυστέρηση για να προλάβει το UI να δείξει το όνομα
         setTimeout(() => { display.innerText = s.name; }, 50);
 
         audio.src = s.streamer;
-        localStorage.setItem('radio_last_station', s.name);
+        localStorage.setItem('radio_last_stream', s.streamer); // Αποθήκευση streamer αντί για όνομα
 
         audio.play().then(() => { 
             playBtn.innerText = "PAUSE"; 
@@ -222,12 +225,13 @@
             playBtn.innerText = "PLAY";
         });
 
-        updateActiveUI(s.name);
+        updateActiveUI(s.streamer);
     }
 
-    function updateActiveUI(name) {
+    function updateActiveUI(streamUrl) {
         document.querySelectorAll('.station-card').forEach(c => {
-            c.classList.toggle('active', c.querySelector('.st-name').innerText === name);
+            // Σύγκριση του attribute με το τρέχον URL
+            c.classList.toggle('active', c.getAttribute('data-stream') === streamUrl);
         });
     }
 
