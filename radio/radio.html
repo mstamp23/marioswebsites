@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v8</title>
+    <title>Radio Purple Pro v10</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -73,8 +73,7 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 10px 12px; border-radius: 6px; cursor: pointer;
         }
-        /* Σημαντικό: Η κλάση active μπαίνει βάσει streamer πλέον */
-        .station-card.active { border-color: var(--accent) !important; background: #1a1525 !important; }
+        .station-card.active { border-color: var(--accent) !important; background: #1a1525 !important; box-shadow: 0 0 10px rgba(163, 113, 255, 0.2); }
         .st-name { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .fav-btn { color: #333; font-size: 1.2rem; padding: 0 4px; transition: 0.2s; }
         .fav-btn.active { color: var(--fav); }
@@ -114,24 +113,30 @@
     let currentCategory = 'ALL';
     let favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
 
+    // Καθαρισμός κειμένου από ειδικούς χαρακτήρες και περίεργα κενά
+    function cleanStr(str) {
+        if (!str) return "";
+        return str.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
     async function loadData() {
         try {
             const r = await fetch('./greek_stations.json?v=' + Date.now());
             const raw = await r.json();
-            // Καθαρισμός JSON κατά τη φόρτωση για σιγουριά
-            stations = raw.map(s => ({
-                ...s,
-                category: (s.category || "Άλλα").trim(),
-                name: (s.name || "Unknown").trim(),
-                streamer: s.streamer.trim()
+            
+            stations = raw.map((s, index) => ({
+                id: s.sid || `gen-${index}`, // Χρήση sid ή fallback αν λείπει
+                name: cleanStr(s.name),
+                streamer: s.streamer.trim(),
+                category: cleanStr(s.category || "Άλλα")
             })).sort((a, b) => a.name.localeCompare(b.name, 'el'));
 
             buildCategoryBar();
             render();
             
-            const lastStationStream = localStorage.getItem('radio_last_stream');
-            if (lastStationStream) {
-                const lastStation = stations.find(s => s.streamer === lastStationStream);
+            const lastId = localStorage.getItem('radio_last_id');
+            if (lastId) {
+                const lastStation = stations.find(s => s.id.toString() === lastId.toString());
                 if (lastStation) prepareStation(lastStation);
             }
         } catch(e) {
@@ -170,6 +175,8 @@
         const filtered = getFilteredList();
         mainContainer.innerHTML = '';
         const groups = filtered.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
+        
+        // Σειρά εμφάνισης: Αγαπημένα -> Αθήνα -> Διεθνής -> Τα υπόλοιπα
         const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2, "Διεθνής Μουσική": 2 };
         const sortedCats = Object.keys(groups).sort((a, b) => (categoryPriority[a] || 999) - (categoryPriority[b] || 999) || a.localeCompare(b, 'el'));
 
@@ -187,9 +194,9 @@
         grid.className = 'grid';
         list.forEach(s => {
             const div = document.createElement('div');
-            // Σύγκριση βάσει streamer URL
-            div.className = `station-card ${audio.src === s.streamer ? 'active' : ''}`;
-            div.setAttribute('data-stream', s.streamer); // Custom attribute για εύκολο update
+            // Η κλάση active μπαίνει πλέον με το μοναδικό ID
+            div.className = `station-card ${localStorage.getItem('radio_last_id') == s.id ? 'active' : ''}`;
+            div.setAttribute('data-id', s.id); 
             div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${favorites.includes(s.name)?'active':''}">★</span>`;
             div.querySelector('.fav-btn').onclick = (e) => toggleFav(e, s.name);
             div.onclick = () => playStation(s);
@@ -203,17 +210,17 @@
         display.classList.remove('offline');
         display.innerText = s.name;
         audio.src = s.streamer;
-        updateActiveUI(s.streamer);
+        updateActiveUI(s.id);
     }
 
     function playStation(s) {
         display.classList.remove('offline');
-        display.innerText = "ΦΟΡΤΩΣΗ..."; 
+        display.innerText = "LOADING..."; 
         
         setTimeout(() => { display.innerText = s.name; }, 50);
 
         audio.src = s.streamer;
-        localStorage.setItem('radio_last_stream', s.streamer); // Αποθήκευση streamer αντί για όνομα
+        localStorage.setItem('radio_last_id', s.id); // Αποθηκεύουμε το ID για τη σύγκριση
 
         audio.play().then(() => { 
             playBtn.innerText = "PAUSE"; 
@@ -225,20 +232,20 @@
             playBtn.innerText = "PLAY";
         });
 
-        updateActiveUI(s.streamer);
+        updateActiveUI(s.id);
     }
 
-    function updateActiveUI(streamUrl) {
+    function updateActiveUI(activeId) {
         document.querySelectorAll('.station-card').forEach(c => {
-            // Σύγκριση του attribute με το τρέχον URL
-            c.classList.toggle('active', c.getAttribute('data-stream') === streamUrl);
+            c.classList.toggle('active', c.getAttribute('data-id') == activeId);
         });
     }
 
     function prevNext(dir) {
         const list = getFilteredList();
         if (!list.length) return;
-        let idx = list.findIndex(s => s.streamer === audio.src);
+        let currentId = localStorage.getItem('radio_last_id');
+        let idx = list.findIndex(s => s.id.toString() === currentId);
         idx = (idx === -1) ? 0 : (idx + dir + list.length) % list.length;
         playStation(list[idx]);
     }
