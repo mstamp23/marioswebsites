@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v6</title>
+    <title>Radio Purple Pro v7</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -37,7 +37,7 @@
             background: #0a0a0a; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--accent-dim);
         }
         #now-playing-text {
-            font-size: 0.75rem; color: var(--accent); width: 100px;
+            font-size: 0.75rem; color: var(--accent); width: 110px;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold;
         }
         #now-playing-text.offline { color: var(--error); }
@@ -50,9 +50,9 @@
         #cat-bar {
             background: #000; padding: 10px 12px; border-bottom: 1px solid var(--border);
             display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;
-            scrollbar-width: none; /* Hide scrollbar Firefox */
+            scrollbar-width: none;
         }
-        #cat-bar::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+        #cat-bar::-webkit-scrollbar { display: none; }
         .cat-chip {
             background: var(--surface); border: 1px solid var(--border);
             padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; color: #777;
@@ -126,13 +126,10 @@
             buildCategoryBar();
             render();
             
-            // --- ΛΕΙΤΟΥΡΓΙΑ KEEP PLAYING ---
             const lastStationName = localStorage.getItem('radio_last_station');
             if (lastStationName) {
                 const lastStation = stations.find(s => s.name === lastStationName);
-                if (lastStation) {
-                    prepareStation(lastStation);
-                }
+                if (lastStation) prepareStation(lastStation);
             }
         } catch(e) {
             mainContainer.innerHTML = `<div style="color:red;text-align:center;padding:20px;">Σφάλμα JSON</div>`;
@@ -197,23 +194,34 @@
         mainContainer.appendChild(sec);
     }
 
-    // Προετοιμασία χωρίς αυτόματη εκκίνηση (για το Keep Playing)
     function prepareStation(s) {
+        display.classList.remove('offline');
         display.innerText = s.name;
         audio.src = s.streamer;
         updateActiveUI(s.name);
     }
 
     function playStation(s) {
+        // Καθαρισμός προηγούμενου OFFLINE status πριν την έναρξη
         display.classList.remove('offline');
-        display.innerText = s.name;
-        audio.src = s.streamer;
+        display.innerText = "ΦΟΡΤΩΣΗ..."; 
         
-        // Αποθήκευση για την επόμενη φορά
+        // Μικρή καθυστέρηση για να προλάβει το UI να δείξει το όνομα
+        setTimeout(() => { display.innerText = s.name; }, 50);
+
+        audio.src = s.streamer;
         localStorage.setItem('radio_last_station', s.name);
 
-        audio.play().then(() => { playBtn.innerText = "PAUSE"; })
-                   .catch(() => { display.innerText = "STREAM OFFLINE"; display.classList.add('offline'); });
+        audio.play().then(() => { 
+            playBtn.innerText = "PAUSE"; 
+            display.classList.remove('offline'); 
+        })
+        .catch(() => { 
+            display.innerText = "STREAM OFFLINE"; 
+            display.classList.add('offline'); 
+            playBtn.innerText = "PLAY";
+        });
+
         updateActiveUI(s.name);
     }
 
