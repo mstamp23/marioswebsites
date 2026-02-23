@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v15</title>
+    <title>Radio Purple Pro v16</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -129,21 +129,13 @@
             const r = await fetch('./greek_stations.json?v=' + Date.now());
             const raw = await r.json();
             
-            // Deduplicate stations by ID while loading
-            const seen = new Set();
-            stations = raw
-                .map((s, index) => ({
-                    id: s.sid || `gen-${index}`,
-                    name: cleanStr(s.name),
-                    streamer: s.streamer.trim(),
-                    category: cleanStr(s.category || "Άλλα")
-                }))
-                .filter(s => {
-                    const isDuplicate = seen.has(s.id);
-                    seen.add(s.id);
-                    return !isDuplicate;
-                })
-                .sort((a, b) => a.name.localeCompare(b.name, 'el'));
+            // Φορτώνουμε όλους τους σταθμούς όπως είναι στο JSON (επιτρέπουμε τα duplicates για ευκολία εύρεσης)
+            stations = raw.map((s, index) => ({
+                id: s.sid || `gen-${index}`,
+                name: cleanStr(s.name),
+                streamer: s.streamer.trim(),
+                category: cleanStr(s.category || "Άλλα")
+            })).sort((a, b) => a.name.localeCompare(b.name, 'el'));
 
             buildCategoryBar();
             render();
@@ -153,7 +145,7 @@
                 const s = stations.find(x => x.id.toString() === lastId.toString());
                 if (s) prepareStation(s);
             }
-        } catch(e) { console.error("Error loading JSON:", e); }
+        } catch(e) { console.error("Error:", e); }
     }
 
     function buildCategoryBar() {
@@ -180,9 +172,23 @@
 
     function getFilteredList() {
         const q = document.getElementById('search').value.toLowerCase().trim();
-        let list = (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') ? 
-            stations.filter(s => favorites.includes(s.name)) :
-            (currentCategory === 'ALL' ? stations : stations.filter(s => s.category === currentCategory));
+        let list;
+
+        if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
+            // Εδώ κάνουμε το deduplication: Κρατάμε μόνο μία εγγραφή για κάθε όνομα σταθμού
+            const seen = new Set();
+            list = stations.filter(s => {
+                if (favorites.includes(s.name) && !seen.has(s.name)) {
+                    seen.add(s.name);
+                    return true;
+                }
+                return false;
+            });
+        } else if (currentCategory === 'ALL') {
+            list = stations;
+        } else {
+            list = stations.filter(s => s.category === currentCategory);
+        }
         
         return q ? list.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)) : list;
     }
@@ -192,7 +198,6 @@
         mainContainer.innerHTML = '';
 
         if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
-            // No category grouping for Favorites
             renderGroup("⭐ ΤΑ ΑΓΑΠΗΜΕΝΑ ΜΟΥ", filtered);
         } else {
             const groups = filtered.reduce((acc, s) => { 
@@ -217,6 +222,7 @@
         
         list.forEach(s => {
             const div = document.createElement('div');
+            // Για το active state, χρησιμοποιούμε το ID
             div.className = `station-card ${localStorage.getItem('radio_last_id') == s.id ? 'active' : ''}`;
             div.setAttribute('data-id', s.id); 
             div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${favorites.includes(s.name)?'active':''}">★</span>`;
@@ -252,6 +258,8 @@
     }
 
     function updateActiveUI(activeId) {
+        // Ενημερώνουμε όλα τα cards που μπορεί να έχουν το ίδιο stream ή όνομα αν χρειαστεί
+        // Αλλά το ID είναι το πιο ασφαλές για να ξέρουμε ποιο card πατήθηκε
         document.querySelectorAll('.station-card').forEach(c => {
             c.classList.toggle('active', c.getAttribute('data-id') == activeId);
         });
