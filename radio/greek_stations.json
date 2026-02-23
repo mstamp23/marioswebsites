@@ -6109,21 +6109,503 @@
         "streamer": "https://politismedia-sec.live24.gr/streameemykonos",
         "category": "Ελληνικά"
     },
-    {
-        "name": "Salt Radio",
-        "streamer": "https://politismedia-sec.live24.gr/streameesalt",
-        "category": "Αθήνα"
+   {
+        "sid": 1300,
+        "name": "929 Kiss 92.9",
+        "streamer": "https://kissfm.live24.gr/kissfmathens",
+        "category": "Αθήνα",
+        "live": true
     },
     {
-        "name": "Venus Mykonos",
-        "streamer": "https://politismedia-sec.live24.gr/streameemykonos",
-        "category": "Αθήνα"
+        "sid": 1301,
+        "name": "Sfera 102.2",
+        "streamer": "https://sfera.live24.gr/sfera4132",
+        "category": "Αθήνα",
+        "live": true
     },
     {
-        "name": "Kasseta Radio",
-        "streamer": "https://politismedia-sec.live24.gr/streameekasetta",
-        "category": "Αθήνα"
+        "sid": 1305,
+        "name": "Sport FM 94.6",
+        "streamer": "https://sportfm.live24.gr/sportfm7712",
+        "category": "Αθήνα",
+        "live": true
     },
+    {
+        "sid": 1306,
+        "name": "Best Radio 92.6",
+        "streamer": "https://best.live24.gr/best1222",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1308,
+        "name": "En Lefko 87.7",
+        "streamer": "https://stream.rcs.revma.com/trm75ret4c3vv",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1311,
+        "name": "Church of Greece 89.5",
+        "streamer": "https://loki.mental-media.gr:8038/index.html?sid=1",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1313,
+        "name": "Κανάλι 1 – Δημοτική Ραδιοφωνία Πειραιά 90.4",
+        "streamer": "https://netradio.live24.gr/kanali1peiraia",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1314,
+        "name": "Church of Piraeus 91.2",
+        "streamer": "https://impradio.bytemasters.gr/8002/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1315,
+        "name": "Galaxy 92",
+        "streamer": "https://galaxy.live24.gr/galaxy9292",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1316,
+        "name": "Λάμψη FM 92.3",
+        "streamer": "https://n42a-eu.rcs.revma.com/hnqr3yvehkcwv",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1319,
+        "name": "ΕΡΤ Κόσμος 93.6",
+        "streamer": "https://radiostreaming.ert.gr/ert-kosmos",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1320,
+        "name": "Επικοινωνία FM 94.0",
+        "streamer": "https://radio.streamings.gr/proxy/epikoinwnia94fm?mp=/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1321,
+        "name": "Rythmos 94.9",
+        "streamer": "https://rythmos.live24.gr/rythmos",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1322,
+        "name": "Athens DJ 95.2",
+        "streamer": "https://stream.rcs.revma.com/f663xvvehkcwv",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1324,
+        "name": "Red 96.3",
+        "streamer": "https://netradio.live24.gr/red9630",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1326,
+        "name": "Rock FM 96.9",
+        "streamer": "https://stream.rcs.revma.com/sm9b1svehkcwv",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1327,
+        "name": "Easy 97.2",
+        "streamer": "https://easy972.live24.gr/easy972",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1328,
+        "name": "Love Radio 97.5",
+        "streamer": "https://loveradio.live24.gr/loveradio-1000",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1329,
+        "name": "Αθήνα 98.4",
+        "streamer": "https://athina984.live24.gr/athina984",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1331,
+        "name": "Alpha Radio 98.9",
+        "streamer": "https://n13.radiojar.com/xcdg6yggzfeuv?rj-ttl=5&rj-tok=AAABjBHSGnEAXlWRWQk4_lrKww",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1332,
+        "name": "Μελωδία 99.2",
+        "streamer": "https://stream.rcs.revma.com/zmmwrmft4c3vv",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1334,
+        "name": "ΣΚΑΪ 100.3",
+        "streamer": "https://skai.live24.gr/skai1003",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1344,
+        "name": "Radio Gold @net",
+        "streamer": "https://radiogold.live24.gr/radiogold",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1347,
+        "name": "Liquid FM",
+        "streamer": "https://netradio.live24.gr/freeradio-1000",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1348,
+        "name": "Real FM 97.8",
+        "streamer": "https://realfm.live24.gr/realfm",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1349,
+        "name": "Derti Radio",
+        "streamer": "https://derti.live24.gr/derty1000",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1353,
+        "name": "MAD Radio 106.2",
+        "streamer": "https://mediaserver.mad.tv/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1360,
+        "name": "Hit 88.9",
+        "streamer": "https://stream.rcs.revma.com/e4661aft4c3vv",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1361,
+        "name": "Κρήτη FM 87.5",
+        "streamer": "https://tls-chrome.live24.gr/1361?http://s3.onweb.gr:8878/;",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1365,
+        "name": "Pepper 96.6",
+        "streamer": "https://netradio.live24.gr/pepper9660",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1379,
+        "name": "Στο κόκκινο 105.5",
+        "streamer": "https://stream.radiojar.com/kokkino-ath.mp3",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1397,
+        "name": "Dromos FM 89.8",
+        "streamer": "http://netradio.live24.gr/dromos2",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1414,
+        "name": "Music 89.2",
+        "streamer": "https://netradio.live24.gr/music892",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1431,
+        "name": "Μινόρε FM .",
+        "streamer": "https://minorefm.live24.gr/minorefm",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1466,
+        "name": "Hot FM",
+        "streamer": "https://hotfm.live24.gr/hotfm",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1596,
+        "name": "Piqeras DeeJay 105.6",
+        "streamer": "https://piqeras.radioca.st/stream/1/",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1700,
+        "name": "A 100 FM 107.4",
+        "streamer": "https://premium.streams.gr:2200/sc/rareradio/stream",
+        "category": "Αθήνα",
+        "live": false
+    },
+    {
+        "sid": 1968,
+        "name": "Μέντα FM 88.0",
+        "streamer": "https://netradio.live24.gr/menta88ath",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 1986,
+        "name": "Παραπολιτικά FM 90.1",
+        "streamer": "https://netradio.live24.gr/athinaradio",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2016,
+        "name": "Melodia FM 99.2",
+        "streamer": "https://stream.rcs.revma.com/zmmwrmft4c3vv",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2061,
+        "name": "Χριστιανισμός 104.3",
+        "streamer": "https://uk1.streamingpulse.com/ssl/ChristianityRadio",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2073,
+        "name": "ERTnews Radio 105.8",
+        "streamer": "https://radiostreaming.ert.gr/ert-proto",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2074,
+        "name": "ΕΡΤ Τρίτο πρόγραμμα 90.9",
+        "streamer": "https://radiostreaming.ert.gr/ert-trito",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2197,
+        "name": "ΕΡΤ Δεύτερο πρόγραμμα 103.7",
+        "streamer": "https://radiostreaming.ert.gr/ert-deftero",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2228,
+        "name": "Art FM 102.7",
+        "streamer": "https://radio.webmonster.gr:8030/artfm906hi",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2231,
+        "name": "ΕΡΑ σπορ 101.8",
+        "streamer": "https://radiostreaming.ert.gr/ert-erasport",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2269,
+        "name": "Ertopen 106.7",
+        "streamer": "http://netradio.live24.gr:80/erasport",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2306,
+        "name": "Ελληνικός FM 93.2",
+        "streamer": "https://orange.live24.gr/orange9320",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2386,
+        "name": "Λύρα FM 91.4",
+        "streamer": "https://i4.streams.ovh/ic/lyrafm/stream",
+        "category": "Αθήνα",
+        "live": false
+    },
+    {
+        "sid": 2425,
+        "name": "Nostos 100.6",
+        "streamer": "https://neos.win:37878/stream?type=.mp3?ver=325606",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2470,
+        "name": "Over FM .",
+        "streamer": "https://netradio.live24.gr/overfm-internet",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2542,
+        "name": "Blue Space Athens 107.2",
+        "streamer": "https://sp1.19cloudsnetwork.gr/8008/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2567,
+        "name": "Black Man 103.3",
+        "streamer": "https://cloud.123hosting.gr:2200/radio/black9326?mp=/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2824,
+        "name": "Voice 102.5",
+        "streamer": "https://nitro.live24.gr/nitro4555",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2871,
+        "name": "Μουσικός",
+        "streamer": "https://netradio.live24.gr/mousikos986",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 2943,
+        "name": "Avanti Classic",
+        "streamer": "https://netradio.live24.gr/radiohotlips",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3024,
+        "name": "My Radio 104.6",
+        "streamer": "https://streaming.myradio1046.fm/myradio1046",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3297,
+        "name": "Interwetten Ellada Sports 94.3",
+        "streamer": "https://tls-chrome.live24.gr/3297?http://stream.ellada943.gr:10198/radio.mp3",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3399,
+        "name": "Πειρατικός FM 99.5",
+        "streamer": "https://shoutcast.k-planet.eu/9800/stream;",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3741,
+        "name": "Radio Gold 2",
+        "streamer": "https://radiogold.live24.gr/radiogoldies",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3794,
+        "name": "Athens Free Radio .",
+        "streamer": "https://streamer.out.gr/9810/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3807,
+        "name": "Zeppelin 106.7",
+        "streamer": "https://radiostreaming.ert.gr/ert-zeppelin",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3821,
+        "name": "Kontra Radio .",
+        "streamer": "https://netradio.live24.gr/kontratv?",
+        "category": "Αθήνα",
+        "live": false
+    },
+    {
+        "sid": 3832,
+        "name": "107.7 RadioIn",
+        "streamer": "https://rdst.win:48383/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3833,
+        "name": "Rebel 105.2",
+        "streamer": "https://netradio.live24.gr/rebel1052",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3916,
+        "name": "98.6",
+        "streamer": "https://politismedia-sec.live24.gr/streameepride",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 3940,
+        "name": "Happy Radio 104",
+        "streamer": "https://ath10400fm.live24.gr/ath10400fm",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 4106,
+        "name": "Νότες 96",
+        "streamer": "https://netradio.live24.gr/stylfmathens",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 4115,
+        "name": "Μάχη 99.8",
+        "streamer": "https://maxhfm.streams.gr/ic/maxhfm/stream",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 4122,
+        "name": "Action24",
+        "streamer": "https://push-int.siliconweb.com/actionlive/actiontv/icecast.audio",
+        "category": "Αθήνα",
+        "live": true
+    },
+    {
+        "sid": 4158,
+        "name": "VIRAL FM 102.7",
+        "streamer": "https://shoutcast.k-planet.eu/8040/stream",
+        "category": "Αθήνα",
+        "live": true
+    }
     {
         "name": "101 ROCK",
         "streamer": "http://sh.onweb.gr:9110/stream",
