@@ -6357,13 +6357,6 @@
         "live": true
     },
     {
-        "sid": 1700,
-        "name": "A 100 FM 107.4",
-        "streamer": "https://premium.streams.gr:2200/sc/rareradio/stream",
-        "category": "Αθήνα",
-        "live": false
-    },
-    {
         "sid": 1968,
         "name": "Μέντα FM 88.0",
         "streamer": "https://netradio.live24.gr/menta88ath",
