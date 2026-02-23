@@ -1,666 +1,206 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Greek Radio Live 🎵</title>
-<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Orbitron:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --accent:#e8a838; --bg:#0d0d0d;
-    --card:rgba(255,255,255,0.04); --card-h:rgba(255,255,255,0.08);
-    --border:rgba(255,255,255,0.07); --text:#f0ece3; --muted:#777;
-    --glow:0 0 28px rgba(232,168,56,0.35);
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
-  
-  #bg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;transition:opacity .8s;pointer-events:none;}
-  #bg.on{opacity:.2;}
-  
-  .container{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:20px;}
-  
-  /* RETRO RADIO PHONE INTERFACE */
-  .radio-phone-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-    position: relative;
-    z-index: 10;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greek Radio Mini</title>
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --surface: #1a1a1a;
+            --accent: #e8a838; /* Amber instead of Green */
+            --text: #e0e0e0;
+            --muted: #888;
+            --border: #333;
+        }
 
-  .radio-phone {
-    width: 100%;
-    max-width: 480px;
-    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-    border: 8px solid #3d3d3d;
-    border-radius: 40px;
-    padding: 30px;
-    box-shadow: 
-      0 20px 60px rgba(0,0,0,0.8),
-      inset 0 2px 4px rgba(255,255,255,0.1),
-      inset 0 -2px 4px rgba(0,0,0,0.5);
-    position: relative;
-    overflow: hidden;
-  }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-  .radio-phone::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(232,168,56,0.02) 0%, transparent 50%);
-    pointer-events: none;
-  }
+        /* Player Bar */
+        #player-container {
+            background: var(--surface);
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
 
-  .radio-screen {
-    background: linear-gradient(135deg, #1a3a2a 0%, #0d2015 100%);
-    border: 2px solid #4a6a5a;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 30px;
-    box-shadow: 
-      inset 0 2px 8px rgba(0,0,0,0.8),
-      0 0 20px rgba(78,255,78,0.2);
-    position: relative;
-    overflow: hidden;
-  }
+        .now-playing {
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-  .radio-screen::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: 
-      repeating-linear-gradient(
-        0deg,
-        rgba(0,0,0,0.15) 0px,
-        rgba(0,0,0,0.15) 1px,
-        transparent 1px,
-        transparent 2px
-      );
-    pointer-events: none;
-    animation: scanlines 8s linear infinite;
-  }
+        .now-playing small { color: var(--muted); display: block; font-size: 0.75rem; }
+        .now-playing span { font-weight: bold; font-size: 0.9rem; color: var(--accent); }
 
-  @keyframes scanlines {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(4px); }
-  }
+        audio { height: 30px; filter: invert(100%) hue-rotate(180deg) brightness(1.5); }
 
-  .station-display {
-    position: relative;
-    z-index: 1;
-    font-family: 'Orbitron', monospace;
-    text-align: center;
-  }
+        /* Controls & Search */
+        #search-container {
+            padding: 8px 15px;
+            background: #151515;
+        }
 
-  .station-label {
-    font-size: 0.7rem;
-    color: #88aa88;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-    opacity: 0.8;
-  }
+        input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            outline: none;
+            font-size: 0.85rem;
+        }
 
-  .station-name {
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: #4eff4e;
-    text-shadow: 0 0 10px #4eff4e, 0 0 20px rgba(78,255,78,0.5);
-    margin-bottom: 12px;
-    min-height: 2.2rem;
-    line-height: 1.2;
-    word-wrap: break-word;
-  }
+        input:focus { border-color: var(--accent); }
 
-  .station-category {
-    font-size: 0.85rem;
-    color: #88aa88;
-    letter-spacing: 1px;
-    opacity: 0.8;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-  }
+        /* Stations List */
+        #content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
 
-  .signal-bars {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 4px;
-    margin-top: 12px;
-    height: 24px;
-  }
+        .category-group { margin-bottom: 15px; }
+        .category-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin: 10px 0 5px 5px;
+            border-bottom: 1px solid #222;
+        }
 
-  .signal-bar {
-    width: 3px;
-    background: #4eff4e;
-    border-radius: 2px;
-    opacity: 0.4;
-    transition: opacity 0.3s;
-  }
+        .station-row {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 2px;
+            font-size: 0.85rem;
+        }
 
-  .signal-bar.active {
-    opacity: 1;
-    box-shadow: 0 0 8px #4eff4e;
-  }
+        .station-row:hover { background: var(--surface); }
+        .station-row.active { background: rgba(232, 168, 56, 0.15); color: var(--accent); }
 
-  .signal-bar:nth-child(1) { height: 12px; }
-  .signal-bar:nth-child(2) { height: 18px; }
-  .signal-bar:nth-child(3) { height: 24px; }
-  .signal-bar:nth-child(4) { height: 20px; }
-  .signal-bar:nth-child(5) { height: 16px; }
+        .play-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 0.6rem;
+            color: white;
+        }
 
-  /* CONTROL BUTTONS */
-  .controls {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    margin-bottom: 30px;
-    position: relative;
-    z-index: 2;
-    flex-wrap: wrap;
-  }
+        .active .play-btn { background: var(--accent); color: black; }
 
-  .control-btn {
-    width: 50px;
-    height: 50px;
-    border: 2px solid #4a6a5a;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #2a4a3a 0%, #1a3a2a 100%);
-    color: #4eff4e;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .control-btn:hover {
-    border-color: #4eff4e;
-    box-shadow: 0 0 15px rgba(78,255,78,0.5), 0 4px 12px rgba(0,0,0,0.6);
-    transform: scale(1.05);
-  }
-
-  .control-btn:active {
-    transform: scale(0.95);
-  }
-
-  .control-btn.stop-btn {
-    background: linear-gradient(135deg, #4a2a2a 0%, #3a1a1a 100%);
-    border-color: #ff6b6b;
-    color: #ff6b6b;
-  }
-
-  .control-btn.stop-btn:hover {
-    border-color: #ff6b6b;
-    box-shadow: 0 0 15px rgba(255,107,107,0.5), 0 4px 12px rgba(0,0,0,0.6);
-  }
-
-  /* CATEGORY BUTTONS */
-  .category-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
-    position: relative;
-    z-index: 2;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px 0;
-  }
-
-  .category-btn {
-    padding: 10px 14px;
-    border: 2px solid #4a6a5a;
-    border-radius: 6px;
-    background: linear-gradient(135deg, rgba(42,74,58,0.6) 0%, rgba(26,58,42,0.6) 100%);
-    color: #4eff4e;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.7rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  .category-btn:hover {
-    border-color: #4eff4e;
-    box-shadow: 0 0 15px rgba(78,255,78,0.3);
-    transform: translateY(-2px);
-  }
-
-  .category-btn.active {
-    background: linear-gradient(135deg, #4eff4e 0%, #3acc3a 100%);
-    color: #0d2015;
-    border-color: #4eff4e;
-    box-shadow: 0 0 20px rgba(78,255,78,0.6);
-  }
-
-  /* SEARCH BOX */
-  .search-box {
-    position: relative;
-    margin-bottom: 20px;
-    z-index: 2;
-  }
-
-  .search-box input {
-    width: 100%;
-    padding: 10px 16px;
-    border: 2px solid #4a6a5a;
-    border-radius: 8px;
-    background: rgba(26,58,42,0.4);
-    color: #4eff4e;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
-    transition: all 0.3s;
-  }
-
-  .search-box input::placeholder {
-    color: #4eff4e;
-    opacity: 0.5;
-  }
-
-  .search-box input:focus {
-    outline: none;
-    border-color: #4eff4e;
-    box-shadow: 0 0 15px rgba(78,255,78,0.3);
-    background: rgba(26,58,42,0.6);
-  }
-
-  /* GRID VIEW */
-  .grid-wrapper {
-    position: relative;
-    z-index: 1;
-    margin-top: 40px;
-  }
-
-  .grid-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 1rem;
-    color: #4eff4e;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 20px;
-    text-shadow: 0 0 10px rgba(78,255,78,0.3);
-  }
-
-  .stations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-  }
-
-  .station-card {
-    background: linear-gradient(135deg, rgba(42,74,58,0.3) 0%, rgba(26,58,42,0.3) 100%);
-    border: 2px solid rgba(78,255,78,0.3);
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .station-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(78,255,78,0.1) 0%, transparent 100%);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .station-card:hover {
-    border-color: #4eff4e;
-    box-shadow: 0 0 20px rgba(78,255,78,0.3);
-    transform: translateY(-3px);
-  }
-
-  .station-card:hover::before {
-    opacity: 1;
-  }
-
-  .station-card.playing {
-    border-color: #4eff4e;
-    background: linear-gradient(135deg, rgba(78,255,78,0.15) 0%, rgba(58,204,58,0.1) 100%);
-    box-shadow: 0 0 25px rgba(78,255,78,0.5);
-  }
-
-  .station-card-name {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.7rem;
-    color: #4eff4e;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1.3;
-  }
-
-  /* RESPONSIVE */
-  @media (max-width: 768px) {
-    .radio-phone {
-      max-width: 100%;
-      padding: 20px;
-    }
-
-    .station-name {
-      font-size: 1.3rem;
-    }
-
-    .category-buttons {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .stations-grid {
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    }
-
-    .control-btn {
-      width: 45px;
-      height: 45px;
-      font-size: 1rem;
-    }
-  }
-
-  audio {
-    display: none;
-  }
-
-  .loading {
-    text-align: center;
-    color: #4eff4e;
-    font-family: 'Orbitron', monospace;
-    padding: 20px;
-  }
-</style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    </style>
 </head>
 <body>
-<div id="bg"></div>
-<audio id="player" preload="none"></audio>
 
-<div class="radio-phone-wrapper">
-  <div class="radio-phone">
-    <!-- SCREEN -->
-    <div class="radio-screen">
-      <div class="station-display">
-        <div class="station-label">Σταθμός</div>
-        <div class="station-name" id="displayName">SELECT STATION</div>
-        <div class="station-category" id="displayCategory">---</div>
-        <div class="signal-bars" id="signalBars">
-          <div class="signal-bar"></div>
-          <div class="signal-bar"></div>
-          <div class="signal-bar"></div>
-          <div class="signal-bar"></div>
-          <div class="signal-bar"></div>
+    <div id="player-container">
+        <div class="now-playing">
+            <small>ΣΕ ΑΝΑΠΑΡΑΓΩΓΗ:</small>
+            <span id="current-station-name">Επιλέξτε σταθμό...</span>
         </div>
-      </div>
+        <audio id="main-player" controls autoplay></audio>
     </div>
 
-    <!-- CONTROLS -->
-    <div class="controls">
-      <button class="control-btn" onclick="previousStation()" title="Προηγούμενος">◀◀</button>
-      <button class="control-btn" id="playBtn" onclick="togglePlay()" title="Play/Pause">▶</button>
-      <button class="control-btn stop-btn" onclick="stopStation()" title="Stop">⏹</button>
-      <button class="control-btn" onclick="nextStation()" title="Επόμενος">▶▶</button>
+    <div id="search-container">
+        <input type="text" id="search" placeholder="Αναζήτηση σταθμού..." oninput="filterStations()">
     </div>
 
-    <!-- CATEGORIES -->
-    <div id="categoryContainer">
-      <div class="category-buttons" id="categoryButtons"></div>
-    </div>
+    <div id="content">
+        </div>
 
-    <!-- SEARCH -->
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Αναζήτηση σταθμού..." autocomplete="off">
-    </div>
-  </div>
-</div>
+    <script>
+        const player = document.getElementById('main-player');
+        const stationLabel = document.getElementById('current-station-name');
+        const content = document.getElementById('content');
+        let allStations = [];
 
-<!-- GRID VIEW (after phone) -->
-<div class="container">
-  <div class="grid-wrapper">
-    <div class="grid-title" id="gridTitle">Φόρτωση σταθμών...</div>
-    <div class="stations-grid" id="stationsGrid"></div>
-  </div>
-  <footer style="text-align: center; padding: 40px 20px; margin-top: 60px; font-size: 0.75rem; color: #4eff4e; opacity: 0.6; border-top: 1px solid rgba(78,255,78,0.2);">
-    Made with ♥ for Greek music lovers
-  </footer>
-</div>
+        async function loadStations() {
+            try {
+                const response = await fetch('greek_stations.json');
+                allStations = await response.json();
+                renderStations(allStations);
+            } catch (err) {
+                content.innerHTML = `<div style="color:red; padding:20px;">Σφάλμα φόρτωσης αρχείου JSON. Βεβαιωθείτε ότι το αρχείο βρίσκεται στον ίδιο φάκελο.</div>`;
+            }
+        }
 
-<script>
-const player = document.getElementById('player');
-const displayName = document.getElementById('displayName');
-const displayCategory = document.getElementById('displayCategory');
-const signalBars = document.getElementById('signalBars');
-const stationsGrid = document.getElementById('stationsGrid');
-const categoryButtons = document.getElementById('categoryButtons');
-const searchInput = document.getElementById('searchInput');
-const gridTitle = document.getElementById('gridTitle');
-const playBtn = document.getElementById('playBtn');
+        function renderStations(data) {
+            content.innerHTML = '';
+            
+            // Group by category
+            const categories = [...new Set(data.map(s => s.category))];
 
-let allStations = [];
-let filteredStations = [];
-let categories = [];
-let currentCategory = 'all';
-let currentStationIndex = -1;
-let isPlaying = false;
+            categories.forEach(cat => {
+                const catStations = data.filter(s => s.category === cat);
+                if (catStations.length === 0) return;
 
-// Load stations from JSON
-async function loadStations() {
-  try {
-    const response = await fetch('greek_stations.json');
-    if (!response.ok) throw new Error('File not found');
-    const data = await response.json();
-    
-    allStations = data;
-    
-    // Extract unique categories
-    const uniqueCategories = [...new Set(allStations.map(s => s.category))].sort();
-    categories = uniqueCategories;
-    
-    initializeApp();
-  } catch (error) {
-    console.error('Error loading stations:', error);
-    gridTitle.textContent = '❌ Σφάλμα κατά την φόρτωση των σταθμών';
-  }
-}
+                const section = document.createElement('div');
+                section.className = 'category-group';
+                section.innerHTML = `<div class="category-title">${cat}</div>`;
 
-function initializeApp() {
-  renderCategories();
-  updateStationsList();
-  setupEventListeners();
-  animateSignalBars();
-}
+                catStations.forEach(s => {
+                    const row = document.createElement('div');
+                    row.className = 'station-row';
+                    row.innerHTML = `
+                        <div class="play-btn">▶</div>
+                        <div class="name">${s.name}</div>
+                    `;
+                    row.onclick = () => playStation(s, row);
+                    section.appendChild(row);
+                });
 
-function renderCategories() {
-  categoryButtons.innerHTML = '';
-  
-  // Add "All" button
-  const allBtn = document.createElement('button');
-  allBtn.className = 'category-btn active';
-  allBtn.textContent = 'Όλα';
-  allBtn.onclick = () => setCategory('all');
-  categoryButtons.appendChild(allBtn);
+                content.appendChild(section);
+            });
+        }
 
-  // Add category buttons
-  categories.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'category-btn';
-    btn.textContent = cat;
-    btn.dataset.category = cat;
-    btn.title = cat;
-    btn.onclick = () => setCategory(cat);
-    categoryButtons.appendChild(btn);
-  });
-}
+        function playStation(station, element) {
+            // UI Update
+            document.querySelectorAll('.station-row').forEach(r => r.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Audio Update
+            stationLabel.textContent = station.name;
+            player.src = station.streamer;
+            player.play();
+        }
 
-function setCategory(catId) {
-  currentCategory = catId;
-  currentStationIndex = -1;
-  searchInput.value = '';
-  
-  document.querySelectorAll('.category-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  
-  if (catId === 'all') {
-    document.querySelector('.category-btn').classList.add('active');
-  } else {
-    const btn = document.querySelector(`[data-category="${catId}"]`);
-    if (btn) btn.classList.add('active');
-  }
+        function filterStations() {
+            const term = document.getElementById('search').value.toLowerCase();
+            const filtered = allStations.filter(s => 
+                s.name.toLowerCase().includes(term) || 
+                s.category.toLowerCase().includes(term)
+            );
+            renderStations(filtered);
+        }
 
-  updateStationsList();
-}
-
-function updateStationsList() {
-  const query = searchInput.value.toLowerCase();
-  
-  filteredStations = allStations.filter(station => {
-    const matchCategory = currentCategory === 'all' || station.category === currentCategory;
-    const matchSearch = station.name.toLowerCase().includes(query);
-    return matchCategory && matchSearch;
-  });
-
-  renderStationsGrid();
-  gridTitle.textContent = `${filteredStations.length} Σταθμοί`;
-}
-
-function renderStationsGrid() {
-  stationsGrid.innerHTML = '';
-  filteredStations.forEach((station, index) => {
-    const card = document.createElement('div');
-    card.className = 'station-card';
-    card.innerHTML = `<div class="station-card-name">${station.name}</div>`;
-    card.title = station.name;
-    card.onclick = () => playStation(index);
-    stationsGrid.appendChild(card);
-  });
-}
-
-function playStation(index) {
-  currentStationIndex = index;
-  const station = filteredStations[index];
-  
-  player.src = station.streamer;
-  player.play()
-    .then(() => {
-      isPlaying = true;
-      displayName.textContent = station.name;
-      displayCategory.textContent = station.category;
-      playBtn.textContent = '⏸';
-      updateCardHighlight();
-      animateSignalBars();
-    })
-    .catch(() => {
-      // Try HTTP fallback
-      const httpStream = station.streamer.replace('https://', 'http://');
-      if (httpStream !== station.streamer) {
-        player.src = httpStream;
-        player.play().then(() => {
-          isPlaying = true;
-          displayName.textContent = station.name;
-          displayCategory.textContent = station.category;
-          playBtn.textContent = '⏸';
-          updateCardHighlight();
-          animateSignalBars();
-        }).catch(() => onPlayFail(station));
-      } else {
-        onPlayFail(station);
-      }
-    });
-}
-
-function onPlayFail(station) {
-  console.error('Failed to play:', station.name);
-  alert('⚠ Δεν ήταν δυνατή η αναπαραγωγή του σταθμού: ' + station.name);
-}
-
-function togglePlay() {
-  if (currentStationIndex === -1) return;
-  
-  if (isPlaying) {
-    player.pause();
-    playBtn.textContent = '▶';
-    isPlaying = false;
-  } else {
-    player.play();
-    playBtn.textContent = '⏸';
-    isPlaying = true;
-  }
-}
-
-function stopStation() {
-  player.pause();
-  player.src = '';
-  isPlaying = false;
-  currentStationIndex = -1;
-  displayName.textContent = 'SELECT STATION';
-  displayCategory.textContent = '---';
-  playBtn.textContent = '▶';
-  updateCardHighlight();
-}
-
-function nextStation() {
-  if (filteredStations.length === 0) return;
-  const next = (currentStationIndex + 1) % filteredStations.length;
-  playStation(next);
-}
-
-function previousStation() {
-  if (filteredStations.length === 0) return;
-  const prev = (currentStationIndex - 1 + filteredStations.length) % filteredStations.length;
-  playStation(prev);
-}
-
-function updateCardHighlight() {
-  document.querySelectorAll('.station-card').forEach(card => {
-    card.classList.remove('playing');
-  });
-  if (currentStationIndex !== -1) {
-    const cards = document.querySelectorAll('.station-card');
-    if (cards[currentStationIndex]) {
-      cards[currentStationIndex].classList.add('playing');
-    }
-  }
-}
-
-function setupEventListeners() {
-  searchInput.addEventListener('input', updateStationsList);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') stopStation();
-    if (e.key === ' ') { e.preventDefault(); togglePlay(); }
-    if (e.key === 'ArrowRight') nextStation();
-    if (e.key === 'ArrowLeft') previousStation();
-  });
-}
-
-function animateSignalBars() {
-  setInterval(() => {
-    if (isPlaying) {
-      document.querySelectorAll('.signal-bar').forEach(bar => {
-        bar.classList.toggle('active', Math.random() > 0.3);
-      });
-    }
-  }, 150);
-}
-
-// Initialize
-loadStations();
-</script>
+        loadStations();
+    </script>
 </body>
 </html>
