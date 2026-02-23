@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <title>Radio Purple Pro v13</title>
+    <title>Radio Purple Pro v15</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -47,11 +46,9 @@
         }
 
         #now-playing-text {
-            font-size: 0.75rem; color: var(--accent); flex: 1; 
+            font-size: 0.85rem; color: var(--accent); flex: 1; 
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold;
         }
-        
-        #security-indicator { font-size: 0.55rem; opacity: 0.5; display: block; }
 
         .play-toggle {
             background: var(--accent); border: none; color: black;
@@ -101,20 +98,14 @@
     </div>
     <input type="text" class="search-box" id="search" placeholder="Search..." oninput="filter()">
     <div class="mini-player">
-        <div style="flex: 1; overflow: hidden; margin-right: 5px;">
-            <span id="now-playing-text">OFFLINE</span>
-            <span id="security-indicator"></span>
-        </div>
+        <span id="now-playing-text">OFFLINE</span>
         <button class="play-toggle" id="btn-play" onclick="togglePlay()">PLAY</button>
         <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.7" oninput="setVol(this.value)">
     </div>
 </header>
 
 <div id="cat-bar"></div>
-
-<div id="content">
-    <div id="main-grid-container"></div>
-</div>
+<div id="content"><div id="main-grid-container"></div></div>
 
 <audio id="audio-engine"></audio>
 
@@ -122,8 +113,6 @@
     const audio = document.getElementById('audio-engine');
     const display = document.getElementById('now-playing-text');
     const playBtn = document.getElementById('btn-play');
-    const secInd = document.getElementById('security-indicator');
-    const catBar = document.getElementById('cat-bar');
     const mainContainer = document.getElementById('main-grid-container');
     
     let stations = [];
@@ -140,37 +129,46 @@
             const r = await fetch('./greek_stations.json?v=' + Date.now());
             const raw = await r.json();
             
-            stations = raw.map((s, index) => ({
-                id: s.sid || `gen-${index}`,
-                name: cleanStr(s.name),
-                streamer: s.streamer.trim(),
-                category: cleanStr(s.category || "Άλλα")
-            })).sort((a, b) => a.name.localeCompare(b.name, 'el'));
+            // Deduplicate stations by ID while loading
+            const seen = new Set();
+            stations = raw
+                .map((s, index) => ({
+                    id: s.sid || `gen-${index}`,
+                    name: cleanStr(s.name),
+                    streamer: s.streamer.trim(),
+                    category: cleanStr(s.category || "Άλλα")
+                }))
+                .filter(s => {
+                    const isDuplicate = seen.has(s.id);
+                    seen.add(s.id);
+                    return !isDuplicate;
+                })
+                .sort((a, b) => a.name.localeCompare(b.name, 'el'));
 
             buildCategoryBar();
             render();
             
             const lastId = localStorage.getItem('radio_last_id');
             if (lastId) {
-                const lastStation = stations.find(s => s.id.toString() === lastId.toString());
-                if (lastStation) prepareStation(lastStation);
+                const s = stations.find(x => x.id.toString() === lastId.toString());
+                if (s) prepareStation(s);
             }
-        } catch(e) {
-            mainContainer.innerHTML = `<div style="color:red;text-align:center;padding:20px;">Σφάλμα JSON</div>`;
-        }
+        } catch(e) { console.error("Error loading JSON:", e); }
     }
 
     function buildCategoryBar() {
         const baseCats = [...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
         const cats = ['ALL', '⭐ ΑΓΑΠΗΜΕΝΑ', ...baseCats];
-        catBar.innerHTML = cats.map(c => `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
+        document.getElementById('cat-bar').innerHTML = cats.map(c => 
+            `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`
+        ).join('');
     }
 
     function setCategory(cat) {
         currentCategory = cat;
         buildCategoryBar();
         render();
-        mainContainer.scrollTop = 0;
+        document.getElementById('content').scrollTop = 0;
     }
 
     function toggleFav(e, name) {
@@ -182,14 +180,10 @@
 
     function getFilteredList() {
         const q = document.getElementById('search').value.toLowerCase().trim();
-        let list;
-        if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
-            list = stations.filter(s => favorites.includes(s.name));
-        } else if (currentCategory === 'ALL') {
-            list = stations;
-        } else {
-            list = stations.filter(s => s.category === currentCategory);
-        }
+        let list = (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') ? 
+            stations.filter(s => favorites.includes(s.name)) :
+            (currentCategory === 'ALL' ? stations : stations.filter(s => s.category === currentCategory));
+        
         return q ? list.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)) : list;
     }
 
@@ -198,21 +192,18 @@
         mainContainer.innerHTML = '';
 
         if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
-            // Στην κατηγορία Αγαπημένα, δείχνουμε μόνο τη λίστα χωρίς κατηγορίες
+            // No category grouping for Favorites
             renderGroup("⭐ ΤΑ ΑΓΑΠΗΜΕΝΑ ΜΟΥ", filtered);
         } else {
-            // Στις άλλες κατηγορίες, ομαδοποιούμε κανονικά
             const groups = filtered.reduce((acc, s) => { 
                 (acc[s.category] = acc[s.category] || []).push(s); 
                 return acc; 
             }, {});
             
             const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2 };
-            const sortedCats = Object.keys(groups).sort((a, b) => 
+            Object.keys(groups).sort((a, b) => 
                 (categoryPriority[a] || 999) - (categoryPriority[b] || 999) || a.localeCompare(b, 'el')
-            );
-
-            sortedCats.forEach(cat => renderGroup(cat, groups[cat]));
+            ).forEach(cat => renderGroup(cat, groups[cat]));
         }
     }
 
@@ -223,12 +214,12 @@
         sec.innerHTML = `<div class="cat-header">${title} (${list.length})</div>`;
         const grid = document.createElement('div');
         grid.className = 'grid';
+        
         list.forEach(s => {
-            const isFav = favorites.includes(s.name);
             const div = document.createElement('div');
             div.className = `station-card ${localStorage.getItem('radio_last_id') == s.id ? 'active' : ''}`;
             div.setAttribute('data-id', s.id); 
-            div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${isFav ? 'active' : ''}">★</span>`;
+            div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${favorites.includes(s.name)?'active':''}">★</span>`;
             div.querySelector('.fav-btn').onclick = (e) => toggleFav(e, s.name);
             div.onclick = () => playStation(s);
             grid.appendChild(div);
@@ -237,38 +228,24 @@
         mainContainer.appendChild(sec);
     }
 
-    function updateSecurityLabel(url) {
-        if (url.startsWith('https')) {
-            secInd.innerText = "SECURE";
-            secInd.style.color = "var(--accent)";
-        } else {
-            secInd.innerText = "NOT SECURE";
-            secInd.style.color = "var(--error)";
-        }
-    }
-
     function prepareStation(s) {
         display.classList.remove('offline');
         display.innerText = s.name;
         audio.src = s.streamer;
         updateActiveUI(s.id);
-        updateSecurityLabel(s.streamer);
     }
 
     function playStation(s) {
         display.classList.remove('offline');
         display.innerText = "LOADING..."; 
-        updateSecurityLabel(s.streamer);
-        setTimeout(() => { display.innerText = s.name; }, 50);
         audio.src = s.streamer;
         localStorage.setItem('radio_last_id', s.id);
         audio.play().then(() => { 
             playBtn.innerText = "PAUSE"; 
-            display.classList.remove('offline'); 
-        })
-        .catch(() => { 
+            display.innerText = s.name;
+        }).catch(() => { 
             display.innerText = "STREAM OFFLINE"; 
-            display.classList.add('offline'); 
+            display.classList.add('offline');
             playBtn.innerText = "PLAY";
         });
         updateActiveUI(s.id);
