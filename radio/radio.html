@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v4</title>
+    <title>Radio Purple Pro v5</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -50,13 +50,11 @@
         }
         #vol-slider { width: 50px; accent-color: var(--accent); cursor: pointer; }
 
-        /* Categories Bar */
         #cat-bar {
             background: #000; padding: 8px 12px; border-bottom: 1px solid var(--border);
             display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;
         }
         #cat-bar::-webkit-scrollbar { height: 3px; }
-        #cat-bar::-webkit-scrollbar-thumb { background: var(--accent-dim); }
         .cat-chip {
             background: var(--surface); border: 1px solid var(--border);
             padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; cursor: pointer; color: #777;
@@ -73,21 +71,17 @@
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
         
-        /* Station Card */
         .station-card {
             background: var(--surface); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
-            padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: 0.1s;
+            padding: 6px 10px; border-radius: 4px; cursor: pointer;
         }
         .station-card:hover { border-color: var(--accent-dim); background: #111; }
         .station-card.active { border-color: var(--accent); background: #1a1525; }
         .st-name { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         
         .fav-btn { color: #333; font-size: 1.1rem; margin-left: 8px; transition: 0.2s; padding: 0 4px; }
-        .fav-btn:hover { color: var(--text); }
         .fav-btn.active { color: var(--fav); }
-
-        #favorites-section { border-bottom: 1px solid var(--accent-dim); padding-bottom: 15px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -97,7 +91,7 @@
         <button class="nav-btn" onclick="prevNext(-1)">SEARCH &lt;&lt;</button>
         <button class="nav-btn" onclick="prevNext(1)">SEARCH &gt;&gt;</button>
     </div>
-    <input type="text" class="search-box" id="search" placeholder="Αναζήτηση σταθμού..." oninput="filter()">
+    <input type="text" class="search-box" id="search" placeholder="Αναζήτηση..." oninput="filter()">
     <div class="mini-player">
         <span id="now-playing-text">OFFLINE</span>
         <button class="play-toggle" id="btn-play" onclick="togglePlay()">PLAY</button>
@@ -108,10 +102,6 @@
 <div id="cat-bar"></div>
 
 <div id="content">
-    <div id="favorites-section" style="display:none;">
-        <div class="cat-header">⭐ ΑΓΑΠΗΜΕΝΑ</div>
-        <div class="grid" id="fav-grid"></div>
-    </div>
     <div id="main-grid-container"></div>
 </div>
 
@@ -123,21 +113,22 @@
     const playBtn = document.getElementById('btn-play');
     const catBar = document.getElementById('cat-bar');
     const mainContainer = document.getElementById('main-grid-container');
-    const favSection = document.getElementById('favorites-section');
-    const favGrid = document.getElementById('fav-grid');
     
     let stations = [];
     let currentCategory = 'ALL';
     let currentStationIndex = -1;
     let favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
 
-    // Navigation logic
     function prevNext(dir) {
         const activeList = getFilteredList();
         if (activeList.length === 0) return;
         
-        currentStationIndex = (currentStationIndex + dir + activeList.length) % activeList.length;
-        playStation(activeList[currentStationIndex]);
+        // Find current station in the current list to start seeking from there
+        let idx = activeList.findIndex(s => s.streamer === audio.src);
+        if (idx === -1) idx = 0;
+        else idx = (idx + dir + activeList.length) % activeList.length;
+        
+        playStation(activeList[idx]);
     }
 
     async function loadData() {
@@ -153,12 +144,13 @@
             buildCategoryBar();
             render();
         } catch(e) {
-            mainContainer.innerHTML = `<div style="color:red;text-align:center;padding:20px;">Σφάλμα φόρτωσης greek_stations.json</div>`;
+            mainContainer.innerHTML = `<div style="color:red;text-align:center;padding:20px;">Σφάλμα JSON</div>`;
         }
     }
 
     function buildCategoryBar() {
-        const cats = ['ALL', ...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
+        const baseCats = [...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
+        const cats = ['ALL', '⭐ ΑΓΑΠΗΜΕΝΑ', ...baseCats];
         catBar.innerHTML = cats.map(c => `
             <div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">
                 ${c}
@@ -169,7 +161,7 @@
         currentCategory = cat;
         buildCategoryBar();
         render();
-        mainContainer.scrollTop = 0; // Reset scroll when changing cat
+        mainContainer.scrollTop = 0;
     }
 
     function toggleFav(e, name) {
@@ -180,55 +172,69 @@
             favorites.push(name);
         }
         localStorage.setItem('radio_favs', JSON.stringify(favorites));
+        // If we are in Favorites category and remove one, it should disappear immediately
         render();
     }
 
     function getFilteredList() {
         const q = document.getElementById('search').value.toLowerCase().trim();
-        return stations.filter(s => {
-            const matchSearch = s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
-            const matchCat = currentCategory === 'ALL' || s.category === currentCategory;
-            return matchSearch && matchCat;
-        });
+        let list = stations;
+        
+        if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
+            list = stations.filter(s => favorites.includes(s.name));
+        } else if (currentCategory !== 'ALL') {
+            list = stations.filter(s => s.category === currentCategory);
+        }
+
+        if (q) {
+            list = list.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
+        }
+        return list;
     }
 
     function render() {
         const filtered = getFilteredList();
         mainContainer.innerHTML = '';
         
-        // Favorites Section
-        const favStations = stations.filter(s => favorites.includes(s.name));
-        if (favStations.length > 0) {
-            favSection.style.display = 'block';
-            favGrid.innerHTML = '';
-            favStations.forEach(s => favGrid.appendChild(createStationCard(s)));
-        } else {
-            favSection.style.display = 'none';
-        }
-
-        // Stations Grouping
         const groups = filtered.reduce((acc, s) => {
+            // For 'ALL' view, we can still show them grouped, but we'll prioritize favorite status
             acc[s.category] = acc[s.category] || [];
             acc[s.category].push(s);
             return acc;
         }, {});
 
-        const sortedCats = Object.keys(groups).sort((a,b) => a.localeCompare(b,'el'));
+        // Custom Sort Logic
+        const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2 };
         
-        if (sortedCats.length === 0) {
-            mainContainer.innerHTML = `<div style="padding:40px;text-align:center;opacity:0.3;">Δεν βρέθηκαν σταθμοί</div>`;
+        const sortedCats = Object.keys(groups).sort((a, b) => {
+            const pA = categoryPriority[a] || 999;
+            const pB = categoryPriority[b] || 999;
+            if (pA !== pB) return pA - pB;
+            return a.localeCompare(b, 'el');
+        });
+
+        // Specific handling if we only want to see Favorites section first in 'ALL'
+        if (currentCategory === 'ALL' && favorites.length > 0) {
+            const favsInAll = stations.filter(s => favorites.includes(s.name));
+            if (favsInAll.length > 0) {
+                renderGroup("⭐ ΑΓΑΠΗΜΕΝΑ", favsInAll);
+            }
         }
 
         sortedCats.forEach(cat => {
-            const sec = document.createElement('div');
-            sec.className = 'category-section';
-            sec.innerHTML = `<div class="cat-header">${cat} (${groups[cat].length})</div>`;
-            const grid = document.createElement('div');
-            grid.className = 'grid';
-            groups[cat].forEach(s => grid.appendChild(createStationCard(s)));
-            sec.appendChild(grid);
-            mainContainer.appendChild(sec);
+            renderGroup(cat, groups[cat]);
         });
+    }
+
+    function renderGroup(title, list) {
+        const sec = document.createElement('div');
+        sec.className = 'category-section';
+        sec.innerHTML = `<div class="cat-header">${title} (${list.length})</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        list.forEach(s => grid.appendChild(createStationCard(s)));
+        sec.appendChild(grid);
+        mainContainer.appendChild(sec);
     }
 
     function createStationCard(s) {
@@ -239,7 +245,7 @@
         
         div.innerHTML = `
             <span class="st-name">${s.name}</span>
-            <span class="fav-btn ${isFav?'active':''}" title="Προσθήκη στα Αγαπημένα">★</span>
+            <span class="fav-btn ${isFav?'active':''}">★</span>
         `;
         
         div.querySelector('.fav-btn').onclick = (e) => toggleFav(e, s.name);
@@ -248,9 +254,6 @@
     }
 
     function playStation(s) {
-        const activeList = getFilteredList();
-        currentStationIndex = activeList.findIndex(st => st.name === s.name);
-        
         display.classList.remove('offline');
         display.innerText = s.name;
         audio.src = s.streamer;
@@ -268,9 +271,8 @@
             display.classList.add('offline');
         });
         
-        // Refresh cards to update 'active' class
-        const cards = document.querySelectorAll('.station-card');
-        cards.forEach(c => {
+        // Update UI state
+        document.querySelectorAll('.station-card').forEach(c => {
             c.classList.remove('active');
             if(c.querySelector('.st-name').innerText === s.name) c.classList.add('active');
         });
@@ -278,13 +280,8 @@
 
     function togglePlay() {
         if (!audio.src) return;
-        if (audio.paused) { 
-            audio.play().catch(() => {}); 
-            playBtn.innerText = "PAUSE"; 
-        } else { 
-            audio.pause(); 
-            playBtn.innerText = "PLAY"; 
-        }
+        if (audio.paused) { audio.play().catch(()=>{}); playBtn.innerText = "PAUSE"; }
+        else { audio.pause(); playBtn.innerText = "PLAY"; }
     }
 
     function setVol(v) { audio.volume = v; }
