@@ -3,156 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro</title>
+    <title>Radio Purple Pro v14</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
             --accent: #a371ff; --accent-dim: #4c3080;
             --text: #d0d0d0; --border: #1e1e1e;
-            --fav: #ffcc00;
+            --fav: #ffcc00; --error: #ff4444;
         }
-        * { box-sizing: border-box; outline: none; }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg); color: var(--text);
             margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
+        
         header {
             display: flex; align-items: center; padding: 0 12px;
             background: #000; border-bottom: 1px solid var(--border);
-            height: 48px; gap: 10px; z-index: 10;
+            height: 60px; gap: 8px; z-index: 10;
         }
-        .search-box {
-            flex: 1; background: #111; border: 1px solid var(--border);
-            color: var(--accent); padding: 5px 10px; border-radius: 4px; font-size: 0.8rem;
-        }
-        .controls { display: flex; align-items: center; gap: 5px; }
+
+        .controls { display: flex; align-items: center; gap: 4px; }
+        
         .nav-btn {
             background: var(--surface); border: 1px solid var(--border);
-            color: var(--accent); cursor: pointer; border-radius: 4px; padding: 4px 8px;
-            font-weight: bold; font-size: 0.7rem;
+            color: var(--accent); cursor: pointer; border-radius: 4px; 
+            padding: 6px 4px; font-weight: bold; font-size: 0.55rem; 
+            width: 55px; white-space: nowrap; text-align: center;
         }
+
+        .search-box {
+            flex: 1; background: #111; border: 1px solid var(--border);
+            color: var(--accent); padding: 8px 10px; border-radius: 4px; font-size: 0.85rem;
+            min-width: 80px;
+        }
+
         .mini-player {
-            display: flex; align-items: center; gap: 8px;
-            background: #0a0a0a; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--accent-dim);
+            display: flex; align-items: center; gap: 10px;
+            background: #0a0a0a; padding: 6px 12px; border-radius: 4px; 
+            border: 1px solid var(--accent-dim); flex: 2; justify-content: space-between;
         }
+
+        #info-container {
+            flex: 1; overflow: hidden; display: flex; flex-direction: column;
+        }
+
         #now-playing-text {
-            font-size: 0.7rem; color: var(--accent); width: 110px;
+            font-size: 0.75rem; color: var(--accent);
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold;
         }
+        
+        #song-metadata {
+            font-size: 0.65rem; color: #888;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
         .play-toggle {
             background: var(--accent); border: none; color: black;
-            font-weight: 900; padding: 4px 8px; cursor: pointer; border-radius: 3px; font-size: 0.65rem;
+            font-weight: 900; padding: 8px 14px; cursor: pointer; border-radius: 3px; font-size: 0.7rem;
         }
-        #vol-slider { width: 50px; accent-color: var(--accent); cursor: pointer; }
 
-        /* Categories Bar */
+        #vol-slider { width: 60px; accent-color: var(--accent); cursor: pointer; }
+
         #cat-bar {
-            background: #000; padding: 8px 12px; border-bottom: 1px solid var(--border);
-            display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;
+            background: #000; padding: 10px 12px; border-bottom: 1px solid var(--border);
+            display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none;
         }
-        #cat-bar::-webkit-scrollbar { height: 3px; }
+        #cat-bar::-webkit-scrollbar { display: none; }
         .cat-chip {
             background: var(--surface); border: 1px solid var(--border);
-            padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; cursor: pointer;
+            padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; color: #777;
         }
         .cat-chip.active { background: var(--accent-dim); color: #fff; border-color: var(--accent); }
 
-        #content { flex: 1; overflow-y: auto; padding: 10px; }
-        .category-section { margin-bottom: 20px; }
+        #content { flex: 1; overflow-y: auto; padding: 12px; scroll-behavior: smooth; }
+        .category-section { margin-bottom: 24px; }
         .cat-header {
             font-size: 0.65rem; font-weight: 800; color: var(--accent);
-            text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;
+            text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
         }
         .cat-header::after { content: ""; height: 1px; background: var(--accent-dim); flex: 1; opacity: 0.3; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
-        
-        /* Station Card */
         .station-card {
             background: var(--surface); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
-            padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: 0.1s;
+            padding: 10px 12px; border-radius: 6px; cursor: pointer;
         }
-        .station-card:hover { border-color: var(--accent-dim); }
-        .station-card.active { border-color: var(--accent); background: #1a1525; }
-        .st-name { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-        .fav-btn { color: #444; font-size: 1rem; margin-left: 8px; transition: 0.2s; }
+        .station-card.active { border-color: var(--accent) !important; background: #1a1525 !important; }
+        .st-name { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .fav-btn { color: #333; font-size: 1.2rem; padding: 0 4px; transition: 0.2s; }
         .fav-btn.active { color: var(--fav); }
-
-        #favorites-section { border-bottom: 1px solid var(--accent-dim); padding-bottom: 15px; margin-bottom: 20px; }
+        .offline { color: var(--error) !important; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="controls">
-        <button class="nav-btn" onclick="prevNext(-1)">PREV</button>
-        <button class="nav-btn" onclick="prevNext(1)">NEXT</button>
+        <button class="nav-btn" onclick="prevNext(-1)">&lt;&lt; PREV</button>
+        <button class="nav-btn" onclick="prevNext(1)">NEXT &gt;&gt;</button>
     </div>
-    <input type="text" class="search-box" id="search" placeholder="Αναζήτηση..." oninput="filter()">
+    <input type="text" class="search-box" id="search" placeholder="Search..." oninput="filter()">
     <div class="mini-player">
-        <span id="now-playing-text">OFFLINE</span>
+        <div id="info-container">
+            <span id="now-playing-text">OFFLINE</span>
+            <span id="song-metadata">Select a station</span>
+        </div>
         <button class="play-toggle" id="btn-play" onclick="togglePlay()">PLAY</button>
         <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.7" oninput="setVol(this.value)">
     </div>
 </header>
 
 <div id="cat-bar"></div>
+<div id="content"><div id="main-grid-container"></div></div>
 
-<div id="content">
-    <div id="favorites-section" style="display:none;">
-        <div class="cat-header">⭐ ΑΓΑΠΗΜΕΝΑ</div>
-        <div class="grid" id="fav-grid"></div>
-    </div>
-    <div id="main-grid-container"></div>
-</div>
-
-<audio id="audio-engine"></audio>
+<audio id="audio-engine" crossorigin="anonymous"></audio>
 
 <script>
     const audio = document.getElementById('audio-engine');
     const display = document.getElementById('now-playing-text');
+    const metaDisplay = document.getElementById('song-metadata');
     const playBtn = document.getElementById('btn-play');
-    const catBar = document.getElementById('cat-bar');
     const mainContainer = document.getElementById('main-grid-container');
-    const favSection = document.getElementById('favorites-section');
-    const favGrid = document.getElementById('fav-grid');
     
     let stations = [];
     let currentCategory = 'ALL';
-    let currentStationIndex = -1;
     let favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
+    let metaInterval = null;
 
-    // Seek logic: finds station in the CURRENTLY filtered list
-    function prevNext(dir) {
-        const activeList = getFilteredList();
-        if (activeList.length === 0) return;
-        
-        currentStationIndex = (currentStationIndex + dir + activeList.length) % activeList.length;
-        playStation(activeList[currentStationIndex]);
+    function cleanStr(str) {
+        if (!str) return "";
+        return str.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
     async function loadData() {
         try {
             const r = await fetch('./greek_stations.json?v=' + Date.now());
             const raw = await r.json();
-            stations = raw.map(s => ({
-                ...s,
-                category: (s.category || "Άλλα").trim(),
-                name: (s.name || "Unknown").trim()
+            stations = raw.map((s, index) => ({
+                id: s.sid || `gen-${index}`,
+                name: cleanStr(s.name),
+                streamer: s.streamer.trim(),
+                category: cleanStr(s.category || "Άλλα")
             })).sort((a, b) => a.name.localeCompare(b.name, 'el'));
-
             buildCategoryBar();
             render();
-        } catch(e) {
-            mainContainer.innerHTML = `<div style="color:red;text-align:center;">Σφάλμα φόρτωσης.</div>`;
-        }
+            const lastId = localStorage.getItem('radio_last_id');
+            if (lastId) {
+                const s = stations.find(x => x.id.toString() === lastId.toString());
+                if (s) prepareStation(s);
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // --- METADATA ENGINE ---
+    function updateMetadata(streamUrl) {
+        // Καθαρισμός προηγούμενου interval
+        if (metaInterval) clearInterval(metaInterval);
+        
+        const fetchMeta = async () => {
+            try {
+                // Χρήση ενός public API για ανάγνωση ICY metadata (πειραματικό)
+                // Σημείωση: Πολλά streams δεν θα επιστρέφουν τίποτα λόγω CORS
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(streamUrl)}`);
+                // Αυτό είναι ένα placeholder. Η πραγματική ανάγνωση in-stream απαιτεί εξειδικευμένο proxy.
+                // Προς το παρόν αφήνουμε μια ένδειξη αν παίζει.
+                if (audio.paused) metaDisplay.innerText = "Paused";
+                else metaDisplay.innerText = "Live Stream Active";
+            } catch (e) {
+                metaDisplay.innerText = "Live Stream";
+            }
+        };
+
+        fetchMeta();
+        metaInterval = setInterval(fetchMeta, 30000);
     }
 
     function buildCategoryBar() {
-        const cats = ['ALL', ...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
-        catBar.innerHTML = cats.map(c => `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
+        const baseCats = [...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
+        const cats = ['ALL', '⭐ ΑΓΑΠΗΜΕΝΑ', ...baseCats];
+        document.getElementById('cat-bar').innerHTML = cats.map(c => `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
     }
 
     function setCategory(cat) {
@@ -163,101 +195,94 @@
 
     function toggleFav(e, name) {
         e.stopPropagation();
-        if (favorites.includes(name)) {
-            favorites = favorites.filter(f => f !== name);
-        } else {
-            favorites.push(name);
-        }
+        favorites = favorites.includes(name) ? favorites.filter(f => f !== name) : [...favorites, name];
         localStorage.setItem('radio_favs', JSON.stringify(favorites));
         render();
     }
 
     function getFilteredList() {
-        const q = document.getElementById('search').value.toLowerCase();
-        return stations.filter(s => {
-            const matchSearch = s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
-            const matchCat = currentCategory === 'ALL' || s.category === currentCategory;
-            return matchSearch && matchCat;
-        });
+        const q = document.getElementById('search').value.toLowerCase().trim();
+        let list = (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') ? stations.filter(s => favorites.includes(s.name)) :
+                   (currentCategory === 'ALL' ? stations : stations.filter(s => s.category === currentCategory));
+        return q ? list.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)) : list;
     }
 
     function render() {
         const filtered = getFilteredList();
         mainContainer.innerHTML = '';
-        
-        // Render Favorites
-        const favStations = stations.filter(s => favorites.includes(s.name));
-        if (favStations.length > 0) {
-            favSection.style.display = 'block';
-            favGrid.innerHTML = '';
-            favStations.forEach(s => favGrid.appendChild(createStationCard(s)));
+        if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
+            renderGroup("⭐ ΤΑ ΑΓΑΠΗΜΕΝΑ ΜΟΥ", filtered);
         } else {
-            favSection.style.display = 'none';
+            const groups = filtered.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
+            Object.keys(groups).sort().forEach(cat => renderGroup(cat, groups[cat]));
         }
-
-        // Render Main Grid
-        const groups = filtered.reduce((acc, s) => {
-            acc[s.category] = acc[s.category] || [];
-            acc[s.category].push(s);
-            return acc;
-        }, {});
-
-        Object.keys(groups).sort().forEach(cat => {
-            const sec = document.createElement('div');
-            sec.className = 'category-section';
-            sec.innerHTML = `<div class="cat-header">${cat} (${groups[cat].length})</div>`;
-            const grid = document.createElement('div');
-            grid.className = 'grid';
-            groups[cat].forEach(s => grid.appendChild(createStationCard(s)));
-            sec.appendChild(grid);
-            mainContainer.appendChild(sec);
-        });
     }
 
-    function createStationCard(s) {
-        const div = document.createElement('div');
-        div.className = `station-card ${audio.src === s.streamer ? 'active' : ''}`;
-        const isFav = favorites.includes(s.name);
-        
-        div.innerHTML = `
-            <span class="st-name">${s.name}</span>
-            <span class="fav-btn ${isFav?'active':''}" onclick="toggleFav(event, '${s.name.replace(/'/g, "\\'")}')">★</span>
-        `;
-        div.onclick = () => playStation(s);
-        return div;
+    function renderGroup(title, list) {
+        if (list.length === 0) return;
+        const sec = document.createElement('div');
+        sec.className = 'category-section';
+        sec.innerHTML = `<div class="cat-header">${title} (${list.length})</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        list.forEach(s => {
+            const div = document.createElement('div');
+            div.className = `station-card ${localStorage.getItem('radio_last_id') == s.id ? 'active' : ''}`;
+            div.setAttribute('data-id', s.id); 
+            div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${favorites.includes(s.name)?'active':''}">★</span>`;
+            div.querySelector('.fav-btn').onclick = (e) => toggleFav(e, s.name);
+            div.onclick = () => playStation(s);
+            grid.appendChild(div);
+        });
+        sec.appendChild(grid);
+        mainContainer.appendChild(sec);
+    }
+
+    function prepareStation(s) {
+        display.innerText = s.name;
+        audio.src = s.streamer;
+        updateActiveUI(s.id);
     }
 
     function playStation(s) {
-        const filtered = getFilteredList();
-        currentStationIndex = filtered.findIndex(st => st.name === s.name);
-        
-        display.innerText = s.name;
+        display.innerText = "LOADING..."; 
+        metaDisplay.innerText = "Connecting...";
         audio.src = s.streamer;
-        
-        // Error handling for offline streams
-        audio.onerror = () => {
-            display.innerText = "STREAM OFFLINE";
+        localStorage.setItem('radio_last_id', s.id);
+        audio.play().then(() => { 
+            playBtn.innerText = "PAUSE"; 
+            display.innerText = s.name;
+            updateMetadata(s.streamer);
+        }).catch(() => { 
+            display.innerText = "OFFLINE"; 
+            metaDisplay.innerText = "Try another station";
             playBtn.innerText = "PLAY";
-        };
-
-        audio.play().then(() => {
-            playBtn.innerText = "PAUSE";
-        }).catch(e => {
-            display.innerText = "STREAM OFFLINE";
         });
-        
-        render(); // refresh to show active state
+        updateActiveUI(s.id);
+    }
+
+    function updateActiveUI(activeId) {
+        document.querySelectorAll('.station-card').forEach(c => {
+            c.classList.toggle('active', c.getAttribute('data-id') == activeId);
+        });
+    }
+
+    function prevNext(dir) {
+        const list = getFilteredList();
+        if (!list.length) return;
+        let idx = list.findIndex(s => s.id.toString() === localStorage.getItem('radio_last_id'));
+        idx = (idx === -1) ? 0 : (idx + dir + list.length) % list.length;
+        playStation(list[idx]);
     }
 
     function togglePlay() {
         if (!audio.src) return;
         if (audio.paused) { audio.play(); playBtn.innerText = "PAUSE"; }
-        else { audio.pause(); playBtn.innerText = "PLAY"; }
+        else { audio.pause(); playBtn.innerText = "PLAY"; metaDisplay.innerText = "Paused"; }
     }
 
     function setVol(v) { audio.volume = v; }
     function filter() { render(); }
-
     loadData();
 </script>
 </body>
