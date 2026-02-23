@@ -67,7 +67,7 @@
     margin-bottom: 30px;
     box-shadow: 
       inset 0 2px 8px rgba(0,0,0,0.8),
-      0 0 20px rgba(232,168,56,0.2);
+      0 0 20px rgba(78,255,78,0.2);
     position: relative;
     overflow: hidden;
   }
@@ -110,7 +110,7 @@
   }
 
   .station-name {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 900;
     color: #4eff4e;
     text-shadow: 0 0 10px #4eff4e, 0 0 20px rgba(78,255,78,0.5);
@@ -120,13 +120,13 @@
     word-wrap: break-word;
   }
 
-  .station-freq {
-    font-size: 1.1rem;
-    color: #4eff4e;
-    letter-spacing: 3px;
-    opacity: 0.9;
-    font-weight: 700;
+  .station-category {
+    font-size: 0.85rem;
+    color: #88aa88;
+    letter-spacing: 1px;
+    opacity: 0.8;
     margin-bottom: 8px;
+    text-transform: uppercase;
   }
 
   .signal-bars {
@@ -165,6 +165,7 @@
     margin-bottom: 30px;
     position: relative;
     z-index: 2;
+    flex-wrap: wrap;
   }
 
   .control-btn {
@@ -208,27 +209,31 @@
   /* CATEGORY BUTTONS */
   .category-buttons {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
     margin-bottom: 20px;
     position: relative;
     z-index: 2;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px 0;
   }
 
   .category-btn {
-    padding: 12px 16px;
+    padding: 10px 14px;
     border: 2px solid #4a6a5a;
-    border-radius: 8px;
+    border-radius: 6px;
     background: linear-gradient(135deg, rgba(42,74,58,0.6) 0%, rgba(26,58,42,0.6) 100%);
     color: #4eff4e;
     font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.3s;
     text-align: center;
+    white-space: nowrap;
   }
 
   .category-btn:hover {
@@ -294,7 +299,7 @@
 
   .stations-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
   }
 
@@ -302,7 +307,7 @@
     background: linear-gradient(135deg, rgba(42,74,58,0.3) 0%, rgba(26,58,42,0.3) 100%);
     border: 2px solid rgba(78,255,78,0.3);
     border-radius: 8px;
-    padding: 14px;
+    padding: 12px;
     cursor: pointer;
     transition: all 0.3s;
     text-align: center;
@@ -335,31 +340,14 @@
     box-shadow: 0 0 25px rgba(78,255,78,0.5);
   }
 
-  .station-card-emoji {
-    font-size: 2rem;
-    margin-bottom: 8px;
-    display: block;
-  }
-
   .station-card-name {
     font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #4eff4e;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     line-height: 1.3;
-  }
-
-  /* FOOTER */
-  footer {
-    text-align: center;
-    padding: 40px 20px;
-    margin-top: 60px;
-    font-size: 0.75rem;
-    color: #4eff4e;
-    opacity: 0.6;
-    border-top: 1px solid rgba(78,255,78,0.2);
   }
 
   /* RESPONSIVE */
@@ -370,15 +358,15 @@
     }
 
     .station-name {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
     }
 
     .category-buttons {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
     }
 
     .stations-grid {
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     }
 
     .control-btn {
@@ -391,6 +379,13 @@
   audio {
     display: none;
   }
+
+  .loading {
+    text-align: center;
+    color: #4eff4e;
+    font-family: 'Orbitron', monospace;
+    padding: 20px;
+  }
 </style>
 </head>
 <body>
@@ -402,9 +397,9 @@
     <!-- SCREEN -->
     <div class="radio-screen">
       <div class="station-display">
-        <div class="station-label">Ελληνική Μουσική</div>
+        <div class="station-label">Σταθμός</div>
         <div class="station-name" id="displayName">SELECT STATION</div>
-        <div class="station-freq" id="displayFreq">--:--</div>
+        <div class="station-category" id="displayCategory">---</div>
         <div class="signal-bars" id="signalBars">
           <div class="signal-bar"></div>
           <div class="signal-bar"></div>
@@ -424,7 +419,9 @@
     </div>
 
     <!-- CATEGORIES -->
-    <div class="category-buttons" id="categoryButtons"></div>
+    <div id="categoryContainer">
+      <div class="category-buttons" id="categoryButtons"></div>
+    </div>
 
     <!-- SEARCH -->
     <div class="search-box">
@@ -436,10 +433,10 @@
 <!-- GRID VIEW (after phone) -->
 <div class="container">
   <div class="grid-wrapper">
-    <div class="grid-title" id="gridTitle">Διαθέσιμοι Σταθμοί</div>
+    <div class="grid-title" id="gridTitle">Φόρτωση σταθμών...</div>
     <div class="stations-grid" id="stationsGrid"></div>
   </div>
-  <footer>
+  <footer style="text-align: center; padding: 40px 20px; margin-top: 60px; font-size: 0.75rem; color: #4eff4e; opacity: 0.6; border-top: 1px solid rgba(78,255,78,0.2);">
     Made with ♥ for Greek music lovers
   </footer>
 </div>
@@ -447,7 +444,7 @@
 <script>
 const player = document.getElementById('player');
 const displayName = document.getElementById('displayName');
-const displayFreq = document.getElementById('displayFreq');
+const displayCategory = document.getElementById('displayCategory');
 const signalBars = document.getElementById('signalBars');
 const stationsGrid = document.getElementById('stationsGrid');
 const categoryButtons = document.getElementById('categoryButtons');
@@ -457,50 +454,39 @@ const playBtn = document.getElementById('playBtn');
 
 let allStations = [];
 let filteredStations = [];
+let categories = [];
 let currentCategory = 'all';
 let currentStationIndex = -1;
 let isPlaying = false;
 
-// Default stations (fallback)
-const defaultStations = {
-  "categories": [
-    { "id": "greek", "name": "Ελληνικά", "emoji": "🇬🇷" },
-    { "id": "international", "name": "Διεθνής", "emoji": "🌍" },
-    { "id": "rock", "name": "Rock", "emoji": "🎸" },
-    { "id": "classic", "name": "Κλασική", "emoji": "🎼" }
-  ],
-  "stations": [
-    { "name": "Kiss FM 92.9", "emoji": "💋", "category": "greek", "stream": "http://kissfm.live24.gr/kiss2111" },
-    { "name": "Best Radio 92.6", "emoji": "⭐", "category": "greek", "stream": "http://best.live24.gr/best1222" },
-    { "name": "Rock FM 96.9", "emoji": "🤘", "category": "rock", "stream": "https://az10.yesstreaming.net:8060/radio.mp3" },
-    { "name": "En Lefko 87.7", "emoji": "🎶", "category": "international", "stream": "https://stream.radiojar.com/enlefko877" },
-    { "name": "ΕΡΑ Kosmos Jazz", "emoji": "🎷", "category": "classic", "stream": "https://radiostreaming.ert.gr/ert-webjazz" }
-  ]
-};
-
-// Load stations
+// Load stations from JSON
 async function loadStations() {
   try {
     const response = await fetch('greek_stations.json');
     if (!response.ok) throw new Error('File not found');
     const data = await response.json();
-    allStations = data.stations || defaultStations.stations;
-    initializeApp(data.categories || defaultStations.categories);
+    
+    allStations = data;
+    
+    // Extract unique categories
+    const uniqueCategories = [...new Set(allStations.map(s => s.category))].sort();
+    categories = uniqueCategories;
+    
+    initializeApp();
   } catch (error) {
-    console.log('Using default stations:', error.message);
-    allStations = defaultStations.stations;
-    initializeApp(defaultStations.categories);
+    console.error('Error loading stations:', error);
+    gridTitle.textContent = '❌ Σφάλμα κατά την φόρτωση των σταθμών';
   }
 }
 
-function initializeApp(categories) {
-  renderCategories(categories);
+function initializeApp() {
+  renderCategories();
   updateStationsList();
   setupEventListeners();
   animateSignalBars();
 }
 
-function renderCategories(categories) {
+function renderCategories() {
   categoryButtons.innerHTML = '';
   
   // Add "All" button
@@ -514,9 +500,10 @@ function renderCategories(categories) {
   categories.forEach(cat => {
     const btn = document.createElement('button');
     btn.className = 'category-btn';
-    btn.textContent = `${cat.emoji} ${cat.name}`;
-    btn.dataset.category = cat.id;
-    btn.onclick = () => setCategory(cat.id);
+    btn.textContent = cat;
+    btn.dataset.category = cat;
+    btn.title = cat;
+    btn.onclick = () => setCategory(cat);
     categoryButtons.appendChild(btn);
   });
 }
@@ -533,7 +520,8 @@ function setCategory(catId) {
   if (catId === 'all') {
     document.querySelector('.category-btn').classList.add('active');
   } else {
-    document.querySelector(`[data-category="${catId}"]`).classList.add('active');
+    const btn = document.querySelector(`[data-category="${catId}"]`);
+    if (btn) btn.classList.add('active');
   }
 
   updateStationsList();
@@ -557,10 +545,8 @@ function renderStationsGrid() {
   filteredStations.forEach((station, index) => {
     const card = document.createElement('div');
     card.className = 'station-card';
-    card.innerHTML = `
-      <span class="station-card-emoji">${station.emoji}</span>
-      <div class="station-card-name">${station.name}</div>
-    `;
+    card.innerHTML = `<div class="station-card-name">${station.name}</div>`;
+    card.title = station.name;
     card.onclick = () => playStation(index);
     stationsGrid.appendChild(card);
   });
@@ -570,31 +556,38 @@ function playStation(index) {
   currentStationIndex = index;
   const station = filteredStations[index];
   
-  player.src = station.stream;
+  player.src = station.streamer;
   player.play()
     .then(() => {
       isPlaying = true;
       displayName.textContent = station.name;
-      displayFreq.textContent = station.emoji;
+      displayCategory.textContent = station.category;
       playBtn.textContent = '⏸';
       updateCardHighlight();
       animateSignalBars();
     })
     .catch(() => {
       // Try HTTP fallback
-      const httpStream = station.stream.replace('https://', 'http://');
-      if (httpStream !== station.stream) {
+      const httpStream = station.streamer.replace('https://', 'http://');
+      if (httpStream !== station.streamer) {
         player.src = httpStream;
         player.play().then(() => {
           isPlaying = true;
           displayName.textContent = station.name;
-          displayFreq.textContent = station.emoji;
+          displayCategory.textContent = station.category;
           playBtn.textContent = '⏸';
           updateCardHighlight();
           animateSignalBars();
-        });
+        }).catch(() => onPlayFail(station));
+      } else {
+        onPlayFail(station);
       }
     });
+}
+
+function onPlayFail(station) {
+  console.error('Failed to play:', station.name);
+  alert('⚠ Δεν ήταν δυνατή η αναπαραγωγή του σταθμού: ' + station.name);
 }
 
 function togglePlay() {
@@ -617,7 +610,7 @@ function stopStation() {
   isPlaying = false;
   currentStationIndex = -1;
   displayName.textContent = 'SELECT STATION';
-  displayFreq.textContent = '--:--';
+  displayCategory.textContent = '---';
   playBtn.textContent = '▶';
   updateCardHighlight();
 }
