@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v19</title>
+    <title>Radio Purple Pro v18</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -26,6 +26,7 @@
         }
 
         .controls { display: flex; align-items: center; gap: 4px; }
+        
         .nav-btn {
             background: var(--surface); border: 1px solid var(--border);
             color: var(--accent); cursor: pointer; border-radius: 4px; 
@@ -39,6 +40,7 @@
             min-width: 80px;
         }
 
+        /* ── Mini Player ── */
         .mini-player {
             display: flex; align-items: center; gap: 10px;
             background: #0a0a0a; padding: 6px 12px; border-radius: 4px; 
@@ -55,12 +57,17 @@
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold;
         }
 
-        #rds-bar { display: flex; align-items: center; gap: 6px; height: 14px; overflow: hidden; }
+        /* RDS metadata row */
+        #rds-bar {
+            display: flex; align-items: center; gap: 6px; height: 14px; overflow: hidden;
+        }
+
         #rds-track {
             font-size: 0.68rem; color: var(--green); white-space: nowrap;
             overflow: hidden; text-overflow: ellipsis; flex: 1;
             transition: opacity 0.4s;
         }
+
         #rds-track.fade { opacity: 0; }
 
         .rds-icon {
@@ -69,6 +76,7 @@
             padding: 1px 4px; border-radius: 3px; white-space: nowrap; flex-shrink: 0;
         }
 
+        /* Loading spinner inside now-playing */
         .spinner {
             display: inline-block; width: 10px; height: 10px;
             border: 2px solid var(--accent-dim); border-top-color: var(--accent);
@@ -110,6 +118,7 @@
             padding: 10px 12px; border-radius: 6px; cursor: pointer;
         }
         .station-card.active { border-color: var(--accent) !important; background: #1a1525 !important; }
+        .station-card.preloading { border-color: #333 !important; }
         .st-name { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .fav-btn { color: #333; font-size: 1.2rem; padding: 0 4px; transition: 0.2s; }
         .fav-btn.active { color: var(--fav); }
@@ -131,7 +140,7 @@
                 <span id="now-playing-text">OFFLINE</span>
             </div>
             <div id="rds-bar" style="display:none;">
-                <span class="rds-icon">RDS</span>
+                <span class="rds-icon" id="rds-source">RDS</span>
                 <span id="rds-track">—</span>
             </div>
         </div>
@@ -143,192 +152,579 @@
 <div id="cat-bar"></div>
 <div id="content"><div id="main-grid-container"></div></div>
 
+<!-- DUAL AUDIO ENGINE for instant switching -->
 <audio id="audio-a"></audio>
 <audio id="audio-b"></audio>
 
 <script>
-    const engines = [document.getElementById('audio-a'), document.getElementById('audio-b')];
-    let activeIdx = 0, preloadIdx = 1, currentStation = null, preloadedStation = null;
-    const display = document.getElementById('now-playing-text'), playBtn = document.getElementById('btn-play');
-    const spinnerEl = document.getElementById('spinner'), rdsBar = document.getElementById('rds-bar'), rdsTrack = document.getElementById('rds-track');
+    // ── DUAL AUDIO ENGINE ──────────────────────────────────────────────
+    // We keep two audio elements and swap between them.
+    // While playing on engine A, we silently preload the NEXT station on engine B.
+    // When user clicks, we instantly swap — perceived latency drops dramatically.
 
-    let rdsInterval = null, stations = [], currentCategory = 'ALL', favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
+    const engines = [
+        document.getElementById('audio-a'),
+        document.getElementById('audio-b')
+    ];
+    let activeIdx = 0;         // which engine is currently playing
+    let preloadIdx = 1;        // which engine is preloading next
+    let currentStation = null;
+    let preloadedStation = null;
 
-    // --- RDS LOGIC ---
-    function setRDS(text) {
-        if (!text || text.length < 3) return;
+    const display = document.getElementById('now-playing-text');
+    const playBtn = document.getElementById('btn-play');
+    const spinnerEl = document.getElementById('spinner');
+    const rdsBar = document.getElementById('rds-bar');
+    const rdsTrack = document.getElementById('rds-track');
+
+    let rdsInterval = null;
+    let stations = [];
+    let currentCategory = 'ALL';
+    let favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
+
+    // ── METADATA ENGINE ────────────────────────────────────────────────
+    // Sources tried in order, first non-null result wins:
+    //
+    //  1. RadioJar        radiojar.com / stream.radiojar.com
+    //  2. AzuraCast       azuracast.* domains  (richest data: artist, title, art)
+    //  3. RCS/Revma       rcs.revma.com
+    //  4. Zeno.fm         zeno.fm streams
+    //  5. Radio.co        stream.radio.co
+    //  6. Icecast         /status-json.xsl  (CORS usually blocks, worth trying)
+    //  7. Shoutcast       /currentsong      (same caveat)
+    //  8. MediaSession    browser reads ICY headers natively on some streams
+
+    const T = (ms) => AbortSignal.timeout(ms);
+
+    function songStr(artist, title, fallback) {
+        const parts = [artist, title].filter(s => s && s.trim() && s.trim() !== '-');
+        return parts.length ? parts.join(' — ') : (fallback || null);
+    }
+
+    // ── 1. RadioJar ───────────────────────────────────────────────────
+    function parseRadioJar(url) {
+        try {
+            const u = new URL(url);
+            // covers: n13.radiojar.com, stream.radiojar.com, n05.radiojar.com …
+            if (u.hostname.includes('radiojar.com')) {
+                const id = u.pathname.split('/').filter(Boolean)[0];
+                return { host: u.origin, id };
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    async function fetchRadioJar({ host, id }) {
+        try {
+            const r = await fetch(`${host}/${id}/now-playing/`, { signal: T(4000) });
+            if (!r.ok) return null;
+            const d = await r.json();
+            const song = d?.song || d?.now_playing?.song;
+            if (song) return songStr(song.artist, song.title);
+            if (d?.title) return d.title;
+        } catch(e) {}
+        return null;
+    }
+
+    // ── 2. AzuraCast ─────────────────────────────────────────────────
+    // Stream URL patterns:
+    //   https://azuracast.streams.ovh/listen/stationslug/radio.mp3
+    //   https://azura.streams.ovh/listen/stationslug/public
+    //   https://azuracast.streams.gr/listen/stationslug/radio.mp3
+    // API: GET /api/nowplaying/stationslug  → JSON
+    function parseAzuraCast(url) {
+        try {
+            const u = new URL(url);
+            if (u.hostname.match(/azura(cast)?\./i)) {
+                // path: /listen/stationslug/mount  OR  /api/nowplaying/stationslug
+                const parts = u.pathname.split('/').filter(Boolean);
+                // parts[0] === 'listen', parts[1] === slug
+                if (parts[0] === 'listen' && parts[1]) {
+                    return { host: u.origin, slug: parts[1] };
+                }
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    async function fetchAzuraCast({ host, slug }) {
+        try {
+            const r = await fetch(`${host}/api/nowplaying/${slug}`, { signal: T(4000) });
+            if (!r.ok) return null;
+            const d = await r.json();
+            const np = d?.now_playing?.song;
+            if (np) return songStr(np.artist, np.title, np.text);
+        } catch(e) {}
+        return null;
+    }
+
+    // ── 3. RCS / Revma ───────────────────────────────────────────────
+    // Stream: https://n42a-eu.rcs.revma.com/hnqr3yvehkcwv
+    // API:    https://n42a-eu.rcs.revma.com/hnqr3yvehkcwv/nowplaying
+    function parseRevma(url) {
+        try {
+            const u = new URL(url);
+            if (u.hostname.includes('revma.com')) {
+                const id = u.pathname.split('/').filter(Boolean)[0];
+                return { host: u.origin, id };
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    async function fetchRevma({ host, id }) {
+        try {
+            const r = await fetch(`${host}/${id}/nowplaying`, { signal: T(4000) });
+            if (!r.ok) return null;
+            const d = await r.json();
+            // Revma returns various shapes; try common ones
+            const np = d?.now_playing || d?.nowplaying || d;
+            const title = np?.title || np?.song?.title || np?.track?.title;
+            const artist = np?.artist || np?.song?.artist || np?.track?.artist;
+            return songStr(artist, title);
+        } catch(e) {}
+        return null;
+    }
+
+    // ── 4. Zeno.fm ───────────────────────────────────────────────────
+    // Stream: https://stream.zeno.fm/pbxkwfmzaitvv
+    // or:     https://stream-19.zeno.fm/58uqx820dnzuv?zs=...
+    // API:    https://api.zeno.fm/mounts/uuid/{mountId}/now-playing
+    // The mountId is the path segment, same as stream path.
+    function parseZeno(url) {
+        try {
+            const u = new URL(url);
+            if (u.hostname.includes('zeno.fm')) {
+                const id = u.pathname.split('/').filter(Boolean)[0];
+                return { id };
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    async function fetchZeno({ id }) {
+        try {
+            const r = await fetch(`https://api.zeno.fm/mounts/uuid/${id}/now-playing`, { signal: T(4000) });
+            if (!r.ok) return null;
+            const d = await r.json();
+            return songStr(d?.artist, d?.title, d?.stream_title);
+        } catch(e) {}
+        return null;
+    }
+
+    // ── 5. Radio.co ──────────────────────────────────────────────────
+    // Stream: https://stream.radio.co/se0c52c265/low
+    // API:    https://public.radio.co/stations/se0c52c265/status
+    function parseRadioCo(url) {
+        try {
+            const u = new URL(url);
+            if (u.hostname.includes('radio.co')) {
+                const id = u.pathname.split('/').filter(Boolean)[0]; // se0c52c265
+                return { id };
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    async function fetchRadioCo({ id }) {
+        try {
+            const r = await fetch(`https://public.radio.co/stations/${id}/status`, { signal: T(4000) });
+            if (!r.ok) return null;
+            const d = await r.json();
+            return d?.current_track?.title || null;
+        } catch(e) {}
+        return null;
+    }
+
+    // ── 6. Icecast status-json.xsl ───────────────────────────────────
+    // Works only if server allows CORS. Many Greek hosts do NOT.
+    // We try the exact origin including non-standard ports.
+    async function fetchIcecast(url) {
+        try {
+            const u = new URL(url);
+            const r = await fetch(`${u.origin}/status-json.xsl`, { signal: T(3000) });
+            if (!r.ok) return null;
+            const d = await r.json();
+            const src = d?.icestats?.source;
+            if (src) {
+                const s = Array.isArray(src) ? src[0] : src;
+                return songStr(s.artist, s.title) || s.server_name || null;
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    // ── 7. Shoutcast /currentsong ─────────────────────────────────────
+    async function fetchShoutcast(url) {
+        try {
+            const u = new URL(url);
+            const r = await fetch(`${u.origin}/currentsong`, { signal: T(3000) });
+            if (!r.ok) return null;
+            const text = await r.text();
+            if (text && text.trim() && !text.includes('<')) return text.trim();
+        } catch(e) {}
+        return null;
+    }
+
+    // ── 8. MediaSession (browser reads ICY natively) ──────────────────
+    function getMediaSessionMeta(stationName) {
+        try {
+            const ms = navigator.mediaSession?.metadata;
+            if (ms && ms.title && ms.title !== stationName) {
+                return songStr(ms.artist, ms.title);
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    // ── Master fetch: tries all sources in priority order ─────────────
+    async function fetchMetadata(station) {
+        const url = station.streamer;
+
+        // 1. RadioJar
+        const rj = parseRadioJar(url);
+        if (rj) {
+            const m = await fetchRadioJar(rj);
+            if (m) return { text: m, source: 'RJ' };
+        }
+
+        // 2. AzuraCast
+        const az = parseAzuraCast(url);
+        if (az) {
+            const m = await fetchAzuraCast(az);
+            if (m) return { text: m, source: 'AZ' };
+        }
+
+        // 3. Revma
+        const rv = parseRevma(url);
+        if (rv) {
+            const m = await fetchRevma(rv);
+            if (m) return { text: m, source: 'RCS' };
+        }
+
+        // 4. Zeno
+        const zn = parseZeno(url);
+        if (zn) {
+            const m = await fetchZeno(zn);
+            if (m) return { text: m, source: 'ZN' };
+        }
+
+        // 5. Radio.co
+        const rc = parseRadioCo(url);
+        if (rc) {
+            const m = await fetchRadioCo(rc);
+            if (m) return { text: m, source: 'RC' };
+        }
+
+        // 6. Icecast
+        const ic = await fetchIcecast(url);
+        if (ic) return { text: ic, source: 'ICY' };
+
+        // 7. Shoutcast
+        const sc = await fetchShoutcast(url);
+        if (sc) return { text: sc, source: 'SC' };
+
+        // 8. MediaSession
+        const ms = getMediaSessionMeta(station.name);
+        if (ms) return { text: ms, source: 'MS' };
+
+        return null;
+    }
+
+    function setRDS(text, source) {
+        if (!text) return;
         rdsBar.style.display = 'flex';
+        // Update source badge
+        const badge = document.getElementById('rds-source');
+        if (badge) badge.textContent = source || 'RDS';
         rdsTrack.classList.add('fade');
-        setTimeout(() => { rdsTrack.textContent = text; rdsTrack.classList.remove('fade'); }, 400);
+        setTimeout(() => {
+            rdsTrack.textContent = text;
+            rdsTrack.classList.remove('fade');
+        }, 400);
+    }
+
+    function clearRDS() {
+        rdsBar.style.display = 'none';
+        rdsTrack.textContent = '—';
     }
 
     async function pollMetadata(station) {
         if (rdsInterval) clearInterval(rdsInterval);
-        rdsBar.style.display = 'none';
-        
-        const fetchMeta = async () => {
+        clearRDS();
+
+        const doFetch = async () => {
             if (currentStation?.id !== station.id) return;
-            let meta = null;
-            try {
-                if (station.streamer.includes('radiojar.com')) {
-                    const id = station.streamer.split('/').pop().split('?')[0];
-                    const r = await fetch(`https://n13.radiojar.com/${id}/now-playing/`);
-                    const d = await r.json();
-                    if (d.song) meta = `${d.song.artist} - ${d.song.title}`;
-                } else if (station.streamer.includes('rdst.win') || station.streamer.includes(':59110')) {
-                    const url = new URL(station.streamer);
-                    const r = await fetch(`${url.origin}/status-json.xsl`);
-                    const d = await r.json();
-                    const src = d.icestats.source;
-                    const s = Array.isArray(src) ? src[0] : src;
-                    if (s.title) meta = s.title;
-                } else if (station.streamer.includes('azuracast')) {
-                    const url = new URL(station.streamer);
-                    const r = await fetch(`${url.origin}/api/nowplaying_static/${url.pathname.split('/').pop()}.json`);
-                    const d = await r.json();
-                    if (d.now_playing?.song?.text) meta = d.now_playing.song.text;
-                }
-            } catch(e) {}
-            if (meta) setRDS(meta);
+            const result = await fetchMetadata(station);
+            if (result && currentStation?.id === station.id) {
+                setRDS(result.text, result.source);
+            }
         };
-        fetchMeta();
-        rdsInterval = setInterval(fetchMeta, 15000);
+
+        doFetch();
+        rdsInterval = setInterval(doFetch, 12000);
     }
 
-    // --- ENGINE LOGIC ---
+    // ── AUDIO ENGINE CORE ──────────────────────────────────────────────
+
     function activeEngine() { return engines[activeIdx]; }
     function preloadEngine() { return engines[preloadIdx]; }
 
+    function setVol(v) {
+        engines.forEach(e => e.volume = parseFloat(v));
+    }
+    setVol(0.7);
+
+    // ICY metadata via MediaSession (browser handles for compatible streams)
+    function setupMediaSession(station) {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({ title: station.name, artist: 'Radio' });
+            navigator.mediaSession.setActionHandler('play', togglePlay);
+            navigator.mediaSession.setActionHandler('pause', togglePlay);
+            navigator.mediaSession.setActionHandler('previoustrack', () => prevNext(-1));
+            navigator.mediaSession.setActionHandler('nexttrack', () => prevNext(1));
+        }
+    }
+
+    function showLoading(name) {
+        display.classList.remove('offline');
+        display.innerText = name;
+        spinnerEl.style.display = 'inline-block';
+        playBtn.innerText = 'PAUSE';
+    }
+
+    function showPlaying(name) {
+        display.innerText = name;
+        spinnerEl.style.display = 'none';
+        playBtn.innerText = 'PAUSE';
+    }
+
+    function showOffline() {
+        display.innerText = 'STREAM OFFLINE';
+        display.classList.add('offline');
+        playBtn.innerText = 'PLAY';
+        spinnerEl.style.display = 'none';
+        clearRDS();
+    }
+
+    // Preload next station silently (no play, just load)
     function preloadStation(station) {
         if (!station || station.id === currentStation?.id) return;
         preloadedStation = station;
-        preloadEngine().src = station.streamer;
-        preloadEngine().load();
+        const eng = preloadEngine();
+        eng.pause();
+        eng.src = station.streamer;
+        eng.load(); // triggers buffering without playing
     }
 
-    function playStation(station) {
+    function playStation(station, skipPreload = false) {
+        // Check if this station is already preloaded on the standby engine
         const isPreloaded = preloadedStation?.id === station.id;
-        activeEngine().pause();
-        activeEngine().src = '';
+
+        // Mute & pause current engine immediately
+        const current = activeEngine();
+        current.pause();
+        current.src = '';
+
+        // Swap engines
         activeIdx = preloadIdx;
-        preloadIdx = 1 - activeIdx;
-        
+        preloadIdx = activeIdx === 0 ? 1 : 0;
+
         const eng = activeEngine();
-        if (!isPreloaded) eng.src = station.streamer;
-        
+
+        if (!isPreloaded || eng.src !== station.streamer) {
+            eng.src = station.streamer;
+        }
+
         currentStation = station;
+        preloadedStation = null;
         localStorage.setItem('radio_last_id', station.id);
         updateActiveUI(station.id);
-        
-        display.classList.remove('offline');
-        display.innerText = station.name;
-        spinnerEl.style.display = 'inline-block';
-        playBtn.innerText = 'PAUSE';
+        showLoading(station.name);
+        setupMediaSession(station);
+
+        // Give the stream 8 seconds max to connect, then fail gracefully
+        let timeout = setTimeout(() => {
+            if (display.innerText !== station.name || display.classList.contains('offline')) return;
+            showOffline();
+        }, 8000);
 
         eng.play().then(() => {
-            spinnerEl.style.display = 'none';
+            clearTimeout(timeout);
+            showPlaying(station.name);
             pollMetadata(station);
-            // Preload Next
+
+            // Preload the next station in background after a brief delay
             const list = getFilteredList();
             const idx = list.findIndex(s => s.id === station.id);
-            if (idx !== -1) setTimeout(() => preloadStation(list[(idx + 1) % list.length]), 3000);
+            if (idx !== -1) {
+                const next = list[(idx + 1) % list.length];
+                setTimeout(() => preloadStation(next), 3000);
+            }
         }).catch(() => {
-            display.innerText = 'OFFLINE';
-            display.classList.add('offline');
-            spinnerEl.style.display = 'none';
+            clearTimeout(timeout);
+            showOffline();
         });
     }
 
     function togglePlay() {
         const eng = activeEngine();
-        if (eng.paused) eng.play(); else eng.pause();
-        playBtn.innerText = eng.paused ? 'PLAY' : 'PAUSE';
+        if (!eng.src && currentStation) { playStation(currentStation); return; }
+        if (!eng.src) return;
+        if (eng.paused) {
+            eng.play().then(() => { playBtn.innerText = 'PAUSE'; spinnerEl.style.display = 'none'; }).catch(()=>{});
+            spinnerEl.style.display = 'inline-block';
+        } else {
+            eng.pause();
+            playBtn.innerText = 'PLAY';
+            spinnerEl.style.display = 'none';
+        }
+    }
+
+    function updateActiveUI(activeId) {
+        document.querySelectorAll('.station-card').forEach(c => {
+            c.classList.toggle('active', c.getAttribute('data-id') == activeId);
+        });
     }
 
     function prevNext(dir) {
         const list = getFilteredList();
-        let idx = list.findIndex(s => s.id == (currentStation?.id || localStorage.getItem('radio_last_id')));
+        if (!list.length) return;
+        let currentId = currentStation?.id || localStorage.getItem('radio_last_id');
+        let idx = list.findIndex(s => s.id?.toString() === currentId?.toString());
         idx = (idx === -1) ? 0 : (idx + dir + list.length) % list.length;
         playStation(list[idx]);
     }
 
-    // --- DATA & RENDER ---
+    // ── DATA LOADING ───────────────────────────────────────────────────
+
+    function cleanStr(str) {
+        if (!str) return "";
+        return str.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
     async function loadData() {
-        const r = await fetch('./greek_stations.json?v=' + Date.now());
-        const raw = await r.json();
-        stations = raw.map((s, i) => ({
-            id: s.sid || `s-${i}`,
-            name: s.name.trim(),
-            streamer: s.streamer.trim(),
-            category: s.category || "Άλλα"
-        })).sort((a,b) => a.name.localeCompare(b.name, 'el'));
+        try {
+            const r = await fetch('./greek_stations.json?v=' + Date.now());
+            const raw = await r.json();
+            
+            stations = raw.map((s, index) => ({
+                id: s.sid || `gen-${index}`,
+                name: cleanStr(s.name),
+                streamer: s.streamer.trim(),
+                category: cleanStr(s.category || "Άλλα")
+            })).sort((a, b) => a.name.localeCompare(b.name, 'el'));
+
+            buildCategoryBar();
+            render();
+            
+            const lastId = localStorage.getItem('radio_last_id');
+            if (lastId) {
+                const s = stations.find(x => x.id.toString() === lastId.toString());
+                if (s) {
+                    currentStation = s;
+                    display.innerText = s.name;
+                    activeEngine().src = s.streamer;
+                    updateActiveUI(s.id);
+                    // Preload silently so first play is instant
+                    preloadStation(s);
+                }
+            }
+        } catch(e) { console.error("Error loading stations:", e); }
+    }
+
+    // ── UI / FILTERING ─────────────────────────────────────────────────
+
+    function buildCategoryBar() {
+        const baseCats = [...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
+        const cats = ['ALL', '⭐ ΑΓΑΠΗΜΕΝΑ', ...baseCats];
+        document.getElementById('cat-bar').innerHTML = cats.map(c => 
+            `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`
+        ).join('');
+    }
+
+    function setCategory(cat) {
+        currentCategory = cat;
         buildCategoryBar();
         render();
-        
-        const last = localStorage.getItem('radio_last_id');
-        if (last) {
-            const s = stations.find(x => x.id == last);
-            if (s) { currentStation = s; display.innerText = s.name; activeEngine().src = s.streamer; updateActiveUI(s.id); }
-        }
+        document.getElementById('content').scrollTop = 0;
+    }
+
+    function toggleFav(e, name) {
+        e.stopPropagation();
+        favorites = favorites.includes(name) ? favorites.filter(f => f !== name) : [...favorites, name];
+        localStorage.setItem('radio_favs', JSON.stringify(favorites));
+        render();
     }
 
     function getFilteredList() {
         const q = document.getElementById('search').value.toLowerCase().trim();
         let list;
+
         if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
             const seen = new Set();
-            list = stations.filter(s => favorites.includes(s.name) && !seen.has(s.name) ? seen.add(s.name) : false);
+            list = stations.filter(s => {
+                if (favorites.includes(s.name) && !seen.has(s.name)) {
+                    seen.add(s.name); return true;
+                }
+                return false;
+            });
+        } else if (currentCategory === 'ALL') {
+            list = stations;
         } else {
-            list = (currentCategory === 'ALL') ? stations : stations.filter(s => s.category === currentCategory);
+            list = stations.filter(s => s.category === currentCategory);
         }
-        return q ? list.filter(s => s.name.toLowerCase().includes(q)) : list;
+        
+        return q ? list.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)) : list;
     }
 
     function render() {
         const filtered = getFilteredList();
-        const container = document.getElementById('main-grid-container');
-        container.innerHTML = '';
+        const mainContainer = document.getElementById('main-grid-container');
+        mainContainer.innerHTML = '';
 
         if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
-            renderGroup("⭐ ΤΑ ΑΓΑΠΗΜΕΝΑ ΜΟΥ", filtered, container);
+            renderGroup("⭐ ΤΑ ΑΓΑΠΗΜΕΝΑ ΜΟΥ", filtered, mainContainer);
         } else {
-            const groups = filtered.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
-            Object.keys(groups).sort((a,b) => a.localeCompare(b, 'el')).forEach(cat => renderGroup(cat, groups[cat], container));
+            const groups = filtered.reduce((acc, s) => { 
+                (acc[s.category] = acc[s.category] || []).push(s); 
+                return acc; 
+            }, {});
+            
+            const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2 };
+            Object.keys(groups).sort((a, b) => 
+                (categoryPriority[a] || 999) - (categoryPriority[b] || 999) || a.localeCompare(b, 'el')
+            ).forEach(cat => renderGroup(cat, groups[cat], mainContainer));
         }
     }
 
     function renderGroup(title, list, container) {
-        if (!list.length) return;
+        if (list.length === 0) return;
         const sec = document.createElement('div');
         sec.className = 'category-section';
         sec.innerHTML = `<div class="cat-header">${title} (${list.length})</div>`;
-        const grid = document.createElement('div'); grid.className = 'grid';
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        
         list.forEach(s => {
             const div = document.createElement('div');
-            div.className = `station-card ${currentStation?.id == s.id ? 'active' : ''}`;
-            div.setAttribute('data-id', s.id);
+            div.className = `station-card ${currentStation?.id == s.id || localStorage.getItem('radio_last_id') == s.id ? 'active' : ''}`;
+            div.setAttribute('data-id', s.id); 
             div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${favorites.includes(s.name)?'active':''}">★</span>`;
+            div.querySelector('.fav-btn').onclick = (e) => toggleFav(e, s.name);
             div.onclick = () => playStation(s);
-            div.querySelector('.fav-btn').onclick = (e) => {
-                e.stopPropagation();
-                favorites = favorites.includes(s.name) ? favorites.filter(f => f !== s.name) : [...favorites, s.name];
-                localStorage.setItem('radio_favs', JSON.stringify(favorites));
-                render();
-            };
-            div.onmouseenter = () => preloadStation(s);
+            // Hover → start preloading silently for faster play
+            div.addEventListener('mouseenter', () => {
+                if (s.id !== currentStation?.id) preloadStation(s);
+            });
             grid.appendChild(div);
         });
         sec.appendChild(grid);
         container.appendChild(sec);
     }
 
-    function buildCategoryBar() {
-        const cats = ['ALL', '⭐ ΑΓΑΠΗΜΕΝΑ', ...new Set(stations.map(s => s.category))];
-        document.getElementById('cat-bar').innerHTML = cats.map(c => `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="currentCategory='${c}';buildCategoryBar();render();">${c}</div>`).join('');
-    }
-
-    function setVol(v) { engines.forEach(e => e.volume = v); }
     function filter() { render(); }
+
     loadData();
 </script>
 </body>
