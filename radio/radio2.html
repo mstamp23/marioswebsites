@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v17</title>
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <title>Radio Purple Pro v12</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
             --accent: #a371ff; --accent-dim: #4c3080;
             --text: #d0d0d0; --border: #1e1e1e;
             --fav: #ffcc00; --error: #ff4444;
-            --green: #44ff88;
         }
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         body {
@@ -19,79 +19,60 @@
             margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
         
+        /* HEADER - Προσαρμογή για μακρύτερη μπάρα */
         header {
             display: flex; align-items: center; padding: 0 12px;
             background: #000; border-bottom: 1px solid var(--border);
-            height: 60px; gap: 8px; z-index: 10; flex-wrap: nowrap;
+            height: 60px; gap: 8px; z-index: 10;
         }
 
         .controls { display: flex; align-items: center; gap: 4px; }
         
+        /* Μικρότερα κουμπιά SEARCH */
         .nav-btn {
             background: var(--surface); border: 1px solid var(--border);
             color: var(--accent); cursor: pointer; border-radius: 4px; 
-            padding: 6px 4px; font-weight: bold; font-size: 0.55rem; 
-            width: 55px; white-space: nowrap; text-align: center;
+            padding: 6px 4px; /* Λιγότερο padding */
+            font-weight: bold; font-size: 0.55rem; /* Μικρότερο font */
+            width: 55px; /* Σταθερό μικρό πλάτος */
+            white-space: nowrap;
+            text-align: center;
         }
 
         .search-box {
             flex: 1; background: #111; border: 1px solid var(--border);
             color: var(--accent); padding: 8px 10px; border-radius: 4px; font-size: 0.85rem;
-            min-width: 80px;
+            min-width: 80px; /* Μικρότερο min-width για να δώσει χώρο στο player */
         }
 
-        /* ── Mini Player ── */
+        /* ΜΑΚΡΥΤΕΡΟΣ MINI PLAYER */
         .mini-player {
             display: flex; align-items: center; gap: 10px;
             background: #0a0a0a; padding: 6px 12px; border-radius: 4px; 
-            border: 1px solid var(--accent-dim); flex: 2; justify-content: space-between;
-            min-width: 0;
-        }
-
-        .now-playing-col {
-            flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+            border: 1px solid var(--accent-dim);
+            flex: 2; /* Παίρνει το διπλάσιο διαθέσιμο χώρο */
+            justify-content: space-between;
         }
 
         #now-playing-text {
-            font-size: 0.85rem; color: var(--accent);
+            font-size: 0.75rem; color: var(--accent); 
+            flex: 1; /* Επιτρέπει στο κείμενο να απλωθεί */
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold;
         }
-
-        /* RDS metadata row */
-        #rds-bar {
-            display: flex; align-items: center; gap: 6px; height: 14px; overflow: hidden;
-        }
-
-        #rds-track {
-            font-size: 0.68rem; color: var(--green); white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis; flex: 1;
-            transition: opacity 0.4s;
-        }
-
-        #rds-track.fade { opacity: 0; }
-
-        .rds-icon {
-            font-size: 0.6rem; color: var(--green); opacity: 0.7;
-            background: #002a0f; border: 1px solid #1a5e30;
-            padding: 1px 4px; border-radius: 3px; white-space: nowrap; flex-shrink: 0;
-        }
-
-        /* Loading spinner inside now-playing */
-        .spinner {
-            display: inline-block; width: 10px; height: 10px;
-            border: 2px solid var(--accent-dim); border-top-color: var(--accent);
-            border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        #security-indicator { font-size: 0.55rem; opacity: 0.5; display: block; }
 
         .play-toggle {
             background: var(--accent); border: none; color: black;
             font-weight: 900; padding: 8px 14px; cursor: pointer; border-radius: 3px; font-size: 0.7rem;
-            flex-shrink: 0;
         }
 
-        #vol-slider { width: 60px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+        #vol-slider { 
+            width: 60px; /* Λίγο μεγαλύτερο slider έντασης */
+            accent-color: var(--accent); cursor: pointer; 
+        }
 
+        /* Υπόλοιπο CSS (ίδιο με πριν) */
         #cat-bar {
             background: #000; padding: 10px 12px; border-bottom: 1px solid var(--border);
             display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none;
@@ -102,7 +83,6 @@
             padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; color: #777;
         }
         .cat-chip.active { background: var(--accent-dim); color: #fff; border-color: var(--accent); }
-
         #content { flex: 1; overflow-y: auto; padding: 12px; scroll-behavior: smooth; }
         .category-section { margin-bottom: 24px; }
         .cat-header {
@@ -111,14 +91,12 @@
         }
         .cat-header::after { content: ""; height: 1px; background: var(--accent-dim); flex: 1; opacity: 0.3; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-        
         .station-card {
             background: var(--surface); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
             padding: 10px 12px; border-radius: 6px; cursor: pointer;
         }
         .station-card.active { border-color: var(--accent) !important; background: #1a1525 !important; }
-        .station-card.preloading { border-color: #333 !important; }
         .st-name { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .fav-btn { color: #333; font-size: 1.2rem; padding: 0 4px; transition: 0.2s; }
         .fav-btn.active { color: var(--fav); }
@@ -132,17 +110,13 @@
         <button class="nav-btn" onclick="prevNext(-1)">&lt;&lt; PREV</button>
         <button class="nav-btn" onclick="prevNext(1)">NEXT &gt;&gt;</button>
     </div>
+    
     <input type="text" class="search-box" id="search" placeholder="Search..." oninput="filter()">
+
     <div class="mini-player">
-        <div class="now-playing-col">
-            <div style="display:flex;align-items:center;gap:6px;">
-                <span id="spinner" class="spinner" style="display:none;"></span>
-                <span id="now-playing-text">OFFLINE</span>
-            </div>
-            <div id="rds-bar" style="display:none;">
-                <span class="rds-icon">RDS</span>
-                <span id="rds-track">—</span>
-            </div>
+        <div style="flex: 1; overflow: hidden; margin-right: 5px;">
+            <span id="now-playing-text">OFFLINE</span>
+            <span id="security-indicator"></span>
         </div>
         <button class="play-toggle" id="btn-play" onclick="togglePlay()">PLAY</button>
         <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.7" oninput="setVol(this.value)">
@@ -150,288 +124,24 @@
 </header>
 
 <div id="cat-bar"></div>
-<div id="content"><div id="main-grid-container"></div></div>
 
-<!-- DUAL AUDIO ENGINE for instant switching -->
-<audio id="audio-a"></audio>
-<audio id="audio-b"></audio>
+<div id="content">
+    <div id="main-grid-container"></div>
+</div>
+
+<audio id="audio-engine"></audio>
 
 <script>
-    // ── DUAL AUDIO ENGINE ──────────────────────────────────────────────
-    // We keep two audio elements and swap between them.
-    // While playing on engine A, we silently preload the NEXT station on engine B.
-    // When user clicks, we instantly swap — perceived latency drops dramatically.
-
-    const engines = [
-        document.getElementById('audio-a'),
-        document.getElementById('audio-b')
-    ];
-    let activeIdx = 0;         // which engine is currently playing
-    let preloadIdx = 1;        // which engine is preloading next
-    let currentStation = null;
-    let preloadedStation = null;
-
+    const audio = document.getElementById('audio-engine');
     const display = document.getElementById('now-playing-text');
     const playBtn = document.getElementById('btn-play');
-    const spinnerEl = document.getElementById('spinner');
-    const rdsBar = document.getElementById('rds-bar');
-    const rdsTrack = document.getElementById('rds-track');
-
-    let rdsInterval = null;
+    const secInd = document.getElementById('security-indicator');
+    const catBar = document.getElementById('cat-bar');
+    const mainContainer = document.getElementById('main-grid-container');
+    
     let stations = [];
     let currentCategory = 'ALL';
     let favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
-
-    // ── METADATA / RDS ─────────────────────────────────────────────────
-    // Strategy 1: RadioJar has a public "now playing" endpoint.
-    //   Stream URL pattern: https://n13.radiojar.com/STATIONID?rj-ttl=...&rj-tok=...
-    //   Metadata API:       https://n13.radiojar.com/STATIONID/now-playing/
-    //
-    // Strategy 2: Many Icecast/Shoutcast streams expose metadata via:
-    //   Icy-MetaData request header + reading ICY-META chunks in the stream.
-    //   Browsers don't allow this directly (CORS), but some stations expose
-    //   a /status-json.xsl or /currentsong endpoint.
-    //
-    // Strategy 3: Audio element fires 'metadata' via MediaMetadata API when
-    //   the stream embeds title in ICY headers (supported in some browsers).
-    //
-    // We implement strategies 1 & 3 here.
-
-    function extractRadioJarId(url) {
-        // e.g. https://n13.radiojar.com/xcdg6yggzfeuv?rj-ttl=...
-        try {
-            const u = new URL(url);
-            if (u.hostname.includes('radiojar.com')) {
-                const parts = u.pathname.split('/').filter(Boolean);
-                return { host: u.origin, id: parts[0] };
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    function extractIcecastBase(url) {
-        // For Icecast streams ending in /stream or /live etc.
-        // Try /status-json.xsl on base domain
-        try {
-            const u = new URL(url);
-            return u.origin;
-        } catch(e) {}
-        return null;
-    }
-
-    async function fetchRadioJarMeta(host, stationId) {
-        // RadioJar public now-playing endpoint (no auth required)
-        const endpoint = `${host}/${stationId}/now-playing/`;
-        try {
-            const r = await fetch(endpoint, { signal: AbortSignal.timeout(4000) });
-            if (!r.ok) return null;
-            const data = await r.json();
-            // RadioJar returns: { song: { title, artist } } or { now_playing: { song: { title } } }
-            const song = data?.song || data?.now_playing?.song;
-            if (song) {
-                const parts = [song.artist, song.title].filter(Boolean);
-                return parts.join(' — ') || null;
-            }
-            // Sometimes it's just a flat object
-            if (data?.title) return data.title;
-        } catch(e) {}
-        return null;
-    }
-
-    async function fetchIcecastMeta(baseUrl) {
-        // Icecast status-json.xsl (same-origin restriction applies, but worth trying)
-        try {
-            const r = await fetch(`${baseUrl}/status-json.xsl`, { signal: AbortSignal.timeout(3000) });
-            if (!r.ok) return null;
-            const data = await r.json();
-            const src = data?.icestats?.source;
-            if (src) {
-                const sources = Array.isArray(src) ? src : [src];
-                const s = sources[0];
-                return [s.artist, s.title].filter(Boolean).join(' — ') || s.server_name || null;
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    function setRDS(text) {
-        if (!text) return;
-        rdsBar.style.display = 'flex';
-        rdsTrack.classList.add('fade');
-        setTimeout(() => {
-            rdsTrack.textContent = text;
-            rdsTrack.classList.remove('fade');
-        }, 400);
-    }
-
-    function clearRDS() {
-        rdsBar.style.display = 'none';
-        rdsTrack.textContent = '—';
-    }
-
-    async function pollMetadata(station) {
-        if (rdsInterval) clearInterval(rdsInterval);
-        clearRDS();
-
-        const rjInfo = extractRadioJarId(station.streamer);
-
-        const doFetch = async () => {
-            if (currentStation?.id !== station.id) return; // station changed, stop
-            let meta = null;
-
-            if (rjInfo) {
-                meta = await fetchRadioJarMeta(rjInfo.host, rjInfo.id);
-            }
-            if (!meta) {
-                const base = extractIcecastBase(station.streamer);
-                if (base) meta = await fetchIcecastMeta(base);
-            }
-            // Strategy 3: Some browsers expose ICY title via MediaSession
-            if (!meta && navigator.mediaSession?.metadata?.title &&
-                navigator.mediaSession.metadata.title !== station.name) {
-                meta = [navigator.mediaSession.metadata.artist, navigator.mediaSession.metadata.title]
-                    .filter(Boolean).join(' — ');
-            }
-
-            if (meta && currentStation?.id === station.id) setRDS(meta);
-        };
-
-        doFetch(); // immediate first fetch
-        rdsInterval = setInterval(doFetch, 12000); // refresh every 12s
-    }
-
-    // ── AUDIO ENGINE CORE ──────────────────────────────────────────────
-
-    function activeEngine() { return engines[activeIdx]; }
-    function preloadEngine() { return engines[preloadIdx]; }
-
-    function setVol(v) {
-        engines.forEach(e => e.volume = parseFloat(v));
-    }
-    setVol(0.7);
-
-    // ICY metadata via MediaSession (browser handles for compatible streams)
-    function setupMediaSession(station) {
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({ title: station.name, artist: 'Radio' });
-            navigator.mediaSession.setActionHandler('play', togglePlay);
-            navigator.mediaSession.setActionHandler('pause', togglePlay);
-            navigator.mediaSession.setActionHandler('previoustrack', () => prevNext(-1));
-            navigator.mediaSession.setActionHandler('nexttrack', () => prevNext(1));
-        }
-    }
-
-    function showLoading(name) {
-        display.classList.remove('offline');
-        display.innerText = name;
-        spinnerEl.style.display = 'inline-block';
-        playBtn.innerText = 'PAUSE';
-    }
-
-    function showPlaying(name) {
-        display.innerText = name;
-        spinnerEl.style.display = 'none';
-        playBtn.innerText = 'PAUSE';
-    }
-
-    function showOffline() {
-        display.innerText = 'STREAM OFFLINE';
-        display.classList.add('offline');
-        playBtn.innerText = 'PLAY';
-        spinnerEl.style.display = 'none';
-        clearRDS();
-    }
-
-    // Preload next station silently (no play, just load)
-    function preloadStation(station) {
-        if (!station || station.id === currentStation?.id) return;
-        preloadedStation = station;
-        const eng = preloadEngine();
-        eng.pause();
-        eng.src = station.streamer;
-        eng.load(); // triggers buffering without playing
-    }
-
-    function playStation(station, skipPreload = false) {
-        // Check if this station is already preloaded on the standby engine
-        const isPreloaded = preloadedStation?.id === station.id;
-
-        // Mute & pause current engine immediately
-        const current = activeEngine();
-        current.pause();
-        current.src = '';
-
-        // Swap engines
-        activeIdx = preloadIdx;
-        preloadIdx = activeIdx === 0 ? 1 : 0;
-
-        const eng = activeEngine();
-
-        if (!isPreloaded || eng.src !== station.streamer) {
-            eng.src = station.streamer;
-        }
-
-        currentStation = station;
-        preloadedStation = null;
-        localStorage.setItem('radio_last_id', station.id);
-        updateActiveUI(station.id);
-        showLoading(station.name);
-        setupMediaSession(station);
-
-        // Give the stream 8 seconds max to connect, then fail gracefully
-        let timeout = setTimeout(() => {
-            if (display.innerText !== station.name || display.classList.contains('offline')) return;
-            showOffline();
-        }, 8000);
-
-        eng.play().then(() => {
-            clearTimeout(timeout);
-            showPlaying(station.name);
-            pollMetadata(station);
-
-            // Preload the next station in background after a brief delay
-            const list = getFilteredList();
-            const idx = list.findIndex(s => s.id === station.id);
-            if (idx !== -1) {
-                const next = list[(idx + 1) % list.length];
-                setTimeout(() => preloadStation(next), 3000);
-            }
-        }).catch(() => {
-            clearTimeout(timeout);
-            showOffline();
-        });
-    }
-
-    function togglePlay() {
-        const eng = activeEngine();
-        if (!eng.src && currentStation) { playStation(currentStation); return; }
-        if (!eng.src) return;
-        if (eng.paused) {
-            eng.play().then(() => { playBtn.innerText = 'PAUSE'; spinnerEl.style.display = 'none'; }).catch(()=>{});
-            spinnerEl.style.display = 'inline-block';
-        } else {
-            eng.pause();
-            playBtn.innerText = 'PLAY';
-            spinnerEl.style.display = 'none';
-        }
-    }
-
-    function updateActiveUI(activeId) {
-        document.querySelectorAll('.station-card').forEach(c => {
-            c.classList.toggle('active', c.getAttribute('data-id') == activeId);
-        });
-    }
-
-    function prevNext(dir) {
-        const list = getFilteredList();
-        if (!list.length) return;
-        let currentId = currentStation?.id || localStorage.getItem('radio_last_id');
-        let idx = list.findIndex(s => s.id?.toString() === currentId?.toString());
-        idx = (idx === -1) ? 0 : (idx + dir + list.length) % list.length;
-        playStation(list[idx]);
-    }
-
-    // ── DATA LOADING ───────────────────────────────────────────────────
 
     function cleanStr(str) {
         if (!str) return "";
@@ -455,34 +165,25 @@
             
             const lastId = localStorage.getItem('radio_last_id');
             if (lastId) {
-                const s = stations.find(x => x.id.toString() === lastId.toString());
-                if (s) {
-                    currentStation = s;
-                    display.innerText = s.name;
-                    activeEngine().src = s.streamer;
-                    updateActiveUI(s.id);
-                    // Preload silently so first play is instant
-                    preloadStation(s);
-                }
+                const lastStation = stations.find(s => s.id.toString() === lastId.toString());
+                if (lastStation) prepareStation(lastStation);
             }
-        } catch(e) { console.error("Error loading stations:", e); }
+        } catch(e) {
+            mainContainer.innerHTML = `<div style="color:red;text-align:center;padding:20px;">Σφάλμα JSON</div>`;
+        }
     }
-
-    // ── UI / FILTERING ─────────────────────────────────────────────────
 
     function buildCategoryBar() {
         const baseCats = [...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b, 'el'));
         const cats = ['ALL', '⭐ ΑΓΑΠΗΜΕΝΑ', ...baseCats];
-        document.getElementById('cat-bar').innerHTML = cats.map(c => 
-            `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`
-        ).join('');
+        catBar.innerHTML = cats.map(c => `<div class="cat-chip ${c===currentCategory?'active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
     }
 
     function setCategory(cat) {
         currentCategory = cat;
         buildCategoryBar();
         render();
-        document.getElementById('content').scrollTop = 0;
+        mainContainer.scrollTop = 0;
     }
 
     function toggleFav(e, name) {
@@ -494,72 +195,107 @@
 
     function getFilteredList() {
         const q = document.getElementById('search').value.toLowerCase().trim();
-        let list;
-
-        if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
-            const seen = new Set();
-            list = stations.filter(s => {
-                if (favorites.includes(s.name) && !seen.has(s.name)) {
-                    seen.add(s.name); return true;
-                }
-                return false;
-            });
-        } else if (currentCategory === 'ALL') {
-            list = stations;
-        } else {
-            list = stations.filter(s => s.category === currentCategory);
-        }
-        
+        let list = (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') ? stations.filter(s => favorites.includes(s.name)) :
+                   (currentCategory === 'ALL' ? stations : stations.filter(s => s.category === currentCategory));
         return q ? list.filter(s => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)) : list;
     }
 
     function render() {
         const filtered = getFilteredList();
-        const mainContainer = document.getElementById('main-grid-container');
         mainContainer.innerHTML = '';
+        const groups = filtered.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
+        const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2 };
+        const sortedCats = Object.keys(groups).sort((a, b) => (categoryPriority[a] || 999) - (categoryPriority[b] || 999) || a.localeCompare(b, 'el'));
 
-        if (currentCategory === '⭐ ΑΓΑΠΗΜΕΝΑ') {
-            renderGroup("⭐ ΤΑ ΑΓΑΠΗΜΕΝΑ ΜΟΥ", filtered, mainContainer);
-        } else {
-            const groups = filtered.reduce((acc, s) => { 
-                (acc[s.category] = acc[s.category] || []).push(s); 
-                return acc; 
-            }, {});
-            
-            const categoryPriority = { "Αθήνα": 1, "Διεθνής μουσική": 2 };
-            Object.keys(groups).sort((a, b) => 
-                (categoryPriority[a] || 999) - (categoryPriority[b] || 999) || a.localeCompare(b, 'el')
-            ).forEach(cat => renderGroup(cat, groups[cat], mainContainer));
+        if (currentCategory === 'ALL' && favorites.length > 0) {
+            renderGroup("⭐ ΑΓΑΠΗΜΕΝΑ", stations.filter(s => favorites.includes(s.name)));
         }
+        sortedCats.forEach(cat => renderGroup(cat, groups[cat]));
     }
 
-    function renderGroup(title, list, container) {
-        if (list.length === 0) return;
+    function renderGroup(title, list) {
         const sec = document.createElement('div');
         sec.className = 'category-section';
         sec.innerHTML = `<div class="cat-header">${title} (${list.length})</div>`;
         const grid = document.createElement('div');
         grid.className = 'grid';
-        
         list.forEach(s => {
             const div = document.createElement('div');
-            div.className = `station-card ${currentStation?.id == s.id || localStorage.getItem('radio_last_id') == s.id ? 'active' : ''}`;
+            div.className = `station-card ${localStorage.getItem('radio_last_id') == s.id ? 'active' : ''}`;
             div.setAttribute('data-id', s.id); 
             div.innerHTML = `<span class="st-name">${s.name}</span><span class="fav-btn ${favorites.includes(s.name)?'active':''}">★</span>`;
             div.querySelector('.fav-btn').onclick = (e) => toggleFav(e, s.name);
             div.onclick = () => playStation(s);
-            // Hover → start preloading silently for faster play
-            div.addEventListener('mouseenter', () => {
-                if (s.id !== currentStation?.id) preloadStation(s);
-            });
             grid.appendChild(div);
         });
         sec.appendChild(grid);
-        container.appendChild(sec);
+        mainContainer.appendChild(sec);
     }
 
-    function filter() { render(); }
+    function updateSecurityLabel(url) {
+        if (url.startsWith('https')) {
+            secInd.innerText = "SECURE";
+            secInd.style.color = "var(--accent)";
+        } else {
+            secInd.innerText = "NOT SECURE";
+            secInd.style.color = "var(--error)";
+        }
+    }
 
+    function prepareStation(s) {
+        display.classList.remove('offline');
+        display.innerText = s.name;
+        audio.src = s.streamer;
+        updateActiveUI(s.id);
+        updateSecurityLabel(s.streamer);
+    }
+
+    function playStation(s) {
+        display.classList.remove('offline');
+        display.innerText = "LOADING..."; 
+        updateSecurityLabel(s.streamer);
+        
+        setTimeout(() => { display.innerText = s.name; }, 50);
+
+        audio.src = s.streamer;
+        localStorage.setItem('radio_last_id', s.id);
+
+        audio.play().then(() => { 
+            playBtn.innerText = "PAUSE"; 
+            display.classList.remove('offline'); 
+        })
+        .catch(() => { 
+            display.innerText = "STREAM OFFLINE"; 
+            display.classList.add('offline'); 
+            playBtn.innerText = "PLAY";
+        });
+
+        updateActiveUI(s.id);
+    }
+
+    function updateActiveUI(activeId) {
+        document.querySelectorAll('.station-card').forEach(c => {
+            c.classList.toggle('active', c.getAttribute('data-id') == activeId);
+        });
+    }
+
+    function prevNext(dir) {
+        const list = getFilteredList();
+        if (!list.length) return;
+        let currentId = localStorage.getItem('radio_last_id');
+        let idx = list.findIndex(s => s.id.toString() === currentId);
+        idx = (idx === -1) ? 0 : (idx + dir + list.length) % list.length;
+        playStation(list[idx]);
+    }
+
+    function togglePlay() {
+        if (!audio.src) return;
+        if (audio.paused) { audio.play().catch(()=>{}); playBtn.innerText = "PAUSE"; }
+        else { audio.pause(); playBtn.innerText = "PLAY"; }
+    }
+
+    function setVol(v) { audio.volume = v; }
+    function filter() { render(); }
     loadData();
 </script>
 </body>
