@@ -36,12 +36,6 @@
         "sid": 3627
     },
     {
-        "name": "DMST Radio",
-        "streamer": "https://stream.radiojar.com/opa-radio?",
-        "category": "Έντεχνα",
-        "sid": 3047
-    },
-    {
         "name": "Freedom Web Radio",
         "streamer": "https://stream.radiojar.com/freedomwebradio",
         "category": "Έντεχνα",
@@ -66,22 +60,10 @@
         "sid": 1643
     },
     {
-        "name": "Picasso 102.7",
-        "streamer": "https://stream.radiojar.com/s87smqqfewzuv",
-        "category": "Έντεχνα",
-        "sid": 1492
-    },
-    {
         "name": "Radio Camel",
         "streamer": "https://cast.streams.ovh/ic/camradio/stream",
         "category": "Έντεχνα",
         "sid": 3278
-    },
-    {
-        "name": "Radio Paris",
-        "streamer": "https://stream.radiojar.com/kddqnna7yxmtv",
-        "category": "Έντεχνα",
-        "sid": 1916
     },
     {
         "name": "Status Radio 94.2",
@@ -100,12 +82,6 @@
         "streamer": "https://sonic.streams.ovh/8030/stream",
         "category": "Έντεχνα",
         "sid": 3329
-    },
-    {
-        "name": "Έμπνευση FM 107",
-        "streamer": "https://stream.radiojar.com/2rsrhmepefq.mp3",
-        "category": "Έντεχνα",
-        "sid": 2217
     },
     {
         "name": "Έντεχνο",
@@ -198,12 +174,6 @@
         "sid": 530
     },
     {
-        "name": "Μίκης Θεοδωράκης Ραδιόφωνο",
-        "streamer": "http://radio.hostchefs.net:8046/stream?1516875847809",
-        "category": "Έντεχνα",
-        "sid": 3106
-    },
-    {
         "name": "Μελωδία FM 106.9",
         "streamer": "https://sh.onweb.gr/8610/stream",
         "category": "Έντεχνα",
@@ -256,12 +226,6 @@
         "streamer": "https://streaming.sbzsystems.com/proxy/radiothiva/stream/",
         "category": "Έντεχνα",
         "sid": 1817
-    },
-    {
-        "name": "Ράδιο Ικαρία 87.6",
-        "streamer": "https://stream.radio-ikaria.gr:8000",
-        "category": "Έντεχνα",
-        "sid": 501
     },
     {
         "name": "Ράδιο Λυχνάρι 91.4",
@@ -354,12 +318,6 @@
         "sid": 1595
     },
     {
-        "name": "Aktina Radio 95.0",
-        "streamer": "http://live.e-streaming.eu:8110/",
-        "category": "Διεθνής Μουσική",
-        "sid": 821
-    },
-    {
         "name": "Albedo 14 Radio",
         "streamer": "https://radio.itdgp.eu/listen/albedo14/radio",
         "category": "Διεθνής Μουσική",
@@ -394,12 +352,6 @@
         "streamer": "https://greeksonic.alphaserver.gr/8008/stream",
         "category": "Διεθνής Μουσική",
         "sid": 1942
-    },
-    {
-        "name": "Anyway Fresh  Radio",
-        "streamer": "https://greeksonic.alphaserver.gr:8012",
-        "category": "Διεθνής Μουσική",
-        "sid": 3518
     },
     {
         "name": "Aqua Radio The 80s",
@@ -468,22 +420,16 @@
         "sid": 1489
     },
     {
+        "name": "BFBS Cyprus 89.7",
+        "streamer": "https://listen-ssvcbfbs.sharp-stream.com/ssvcbfbs8.aac",
+        "category": "Διεθνής Μουσική",
+        "sid": 2737
+    },
+    {
         "name": "Baila Radio",
         "streamer": "https://ic.streams.dot360.io/listen/bailaradio/radio.mp3",
         "category": "Διεθνής Μουσική",
         "sid": 4010
-    },
-    {
-        "name": "Bangee Radio",
-        "streamer": "http://solid33.streamupsolutions.com:33042/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 2822
-    },
-    {
-        "name": "Bayrak Radyosu 102.0",
-        "streamer": "http://sc.brtk.net:8000/;",
-        "category": "Διεθνής Μουσική",
-        "sid": 2916
     },
     {
         "name": "Be Radio",
@@ -534,22 +480,10 @@
         "sid": 3656
     },
     {
-        "name": "Camara Radio",
-        "streamer": "https://stream.radiojar.com:443/252ry9dgytzuv",
-        "category": "Διεθνής Μουσική",
-        "sid": 3643
-    },
-    {
         "name": "Capital FM 107",
         "streamer": "https://neos.win:59350/stream",
         "category": "Διεθνής Μουσική",
         "sid": 1649
-    },
-    {
-        "name": "Capital Radio 90.7",
-        "streamer": "https://hotsoft.net.gr:9100",
-        "category": "Διεθνής Μουσική",
-        "sid": 1210
     },
     {
         "name": "Capital 104.8",
@@ -598,12 +532,6 @@
         "streamer": "https://tls-chrome.live24.gr/613?http://84.254.32.49:9200/",
         "category": "Διεθνής Μουσική",
         "sid": 613
-    },
-    {
-        "name": "Classic Old Time Radio",
-        "streamer": "http://stream.zeno.fm/b6v6nu8uhnruv",
-        "category": "Διεθνής Μουσική",
-        "sid": 4008
     },
     {
         "name": "Classic-99",
@@ -696,12 +624,6 @@
         "sid": 1251
     },
     {
-        "name": "Dance waves",
-        "streamer": "http://stream2.dancewave.online:8080/dance.mp3",
-        "category": "Διεθνής Μουσική",
-        "sid": 1673
-    },
-    {
         "name": "DeeJay Corfu 97.5",
         "streamer": "https://sh.onweb.gr:7083/stream?type=http&nocache=35812",
         "category": "Διεθνής Μουσική",
@@ -732,12 +654,6 @@
         "sid": 2644
     },
     {
-        "name": "Disco 80s Radio",
-        "streamer": "http://streaming.radionomy.com:80/80-s--Disco?lang=el-GR%2cel%3bq%3d0.8",
-        "category": "Διεθνής Μουσική",
-        "sid": 1593
-    },
-    {
         "name": "Disco Cafe",
         "streamer": "https://azuracast.streams.ovh:8260/radio.mp3",
         "category": "Διεθνής Μουσική",
@@ -754,24 +670,6 @@
         "streamer": "https://stream1.468.gr/8004/stream",
         "category": "Διεθνής Μουσική",
         "sid": 3524
-    },
-    {
-        "name": "Discomania",
-        "streamer": "http://radio2.discomaniaradio.com:7000/live",
-        "category": "Διεθνής Μουσική",
-        "sid": 1410
-    },
-    {
-        "name": "Diva FM 91.6",
-        "streamer": "http://176.31.120.166:6404/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 996
-    },
-    {
-        "name": "Dj Yanni Radio",
-        "streamer": "https://usa15.fastcast4u.com/proxy/djyanniradio?mp=/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 2212
     },
     {
         "name": "Dj Λαμία 91.2",
@@ -798,12 +696,6 @@
         "sid": 1978
     },
     {
-        "name": "ENERGY 93.4",
-        "streamer": "https://i3.streams.ovh:12218",
-        "category": "Διεθνής Μουσική",
-        "sid": 1436
-    },
-    {
         "name": "Easy 105.3",
         "streamer": "https://sh.onweb.gr:7073/;",
         "category": "Διεθνής Μουσική",
@@ -814,12 +706,6 @@
         "streamer": "https://solid48.streamupsolutions.com/proxy/lhlamody?mp=/stream",
         "category": "Διεθνής Μουσική",
         "sid": 1861
-    },
-    {
-        "name": "Eclectic Radio",
-        "streamer": "http://netradio.live24.gr:80/bootleg",
-        "category": "Διεθνής Μουσική",
-        "sid": 2240
     },
     {
         "name": "EcoBeat Gr",
@@ -852,22 +738,10 @@
         "sid": 2756
     },
     {
-        "name": "Energy 101.5",
-        "streamer": "https://stream.radiojar.com/apb4wybq36duv.mp3?",
-        "category": "Διεθνής Μουσική",
-        "sid": 3431
-    },
-    {
         "name": "Envy Radio",
         "streamer": "https://i6.streams.ovh:2200/ssl/envyradi?mp=/stream",
         "category": "Διεθνής Μουσική",
         "sid": 3236
-    },
-    {
-        "name": "Escapula Radio",
-        "streamer": "http://radio.myaegean.gr:8000/escapula.mp3",
-        "category": "Διεθνής Μουσική",
-        "sid": 3238
     },
     {
         "name": "Essential Mix Radio",
@@ -930,12 +804,6 @@
         "sid": 839
     },
     {
-        "name": "Fly 104",
-        "streamer": "https://imagine2.radioca.st",
-        "category": "Διεθνής Μουσική",
-        "sid": 299
-    },
-    {
         "name": "Forever 96.3",
         "streamer": "https://lofos.win:59630/stream",
         "category": "Διεθνής Μουσική",
@@ -948,28 +816,10 @@
         "sid": 2784
     },
     {
-        "name": "Fresh 92.9",
-        "streamer": "http://178.33.135.244:3062/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 1000
-    },
-    {
         "name": "Fun Radio 104.3",
         "streamer": "https://solid9.streamupsolutions.com/proxy/wpgqrttp/stream",
         "category": "Διεθνής Μουσική",
         "sid": 4001
-    },
-    {
-        "name": "GLOBAL MUSIC RADIO",
-        "streamer": "https://i2.streams.ovh:9470",
-        "category": "Διεθνής Μουσική",
-        "sid": 4205
-    },
-    {
-        "name": "GRD Terra Radio",
-        "streamer": "http://play.streams.gr:22072/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 3754
     },
     {
         "name": "GTonair",
@@ -1000,12 +850,6 @@
         "streamer": "https://usa2.fastcast4u.com/proxy/greekota?mp=/1&1694696338450",
         "category": "Διεθνής Μουσική",
         "sid": 2803
-    },
-    {
-        "name": "Greek Web Radio",
-        "streamer": "http://gwr.no-ip.biz:8000/;",
-        "category": "Διεθνής Μουσική",
-        "sid": 2616
     },
     {
         "name": "Groove Radio",
@@ -1078,6 +922,12 @@
         "streamer": "https://play.ifeelradio.gr/stream/ifeelradio",
         "category": "Διεθνής Μουσική",
         "sid": 1786
+    },
+    {
+        "name": "Ianos Radio",
+        "streamer": "https://radio.streamings.gr/proxy/feelmusic2021?mp=/stream",
+        "category": "Διεθνής Μουσική",
+        "sid": 2890
     },
     {
         "name": "Imaret Radio",
@@ -1272,12 +1122,6 @@
         "sid": 790
     },
     {
-        "name": "Light Radio Net",
-        "streamer": "http://solid33.streamupsolutions.com:30021/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 1691
-    },
-    {
         "name": "Loud 88.8",
         "streamer": "https://sh.onweb.gr/8888/;",
         "category": "Διεθνής Μουσική",
@@ -1296,12 +1140,6 @@
         "sid": 1364
     },
     {
-        "name": "Loutraki FM 96.9",
-        "streamer": "https://sp3.streams.ovh:8044",
-        "category": "Διεθνής Μουσική",
-        "sid": 1705
-    },
-    {
         "name": "Love Box",
         "streamer": "https://s6.onweb.gr/8100/stream",
         "category": "Διεθνής Μουσική",
@@ -1314,16 +1152,16 @@
         "sid": 39
     },
     {
+        "name": "Mad Radio 107",
+        "streamer": "https://i4.streams.ovh/sc/madradio/stream",
+        "category": "Διεθνής Μουσική",
+        "sid": 604
+    },
+    {
         "name": "Magic FM 98.2",
         "streamer": "https://netradio.live24.gr/magic982",
         "category": "Διεθνής Μουσική",
         "sid": 1254
-    },
-    {
-        "name": "Magicstar Radio Greece",
-        "streamer": "http://stream-40.zeno.fm/qhk6q6tudg0uv?zs=cWwM7aZIRf6ryEwHTYXuGQ",
-        "category": "Διεθνής Μουσική",
-        "sid": 2845
     },
     {
         "name": "ManCode Radio",
@@ -1374,6 +1212,12 @@
         "sid": 1127
     },
     {
+        "name": "Mikel Radio - Caffeine zone",
+        "streamer": "https://i4.streams.ovh/sc/kpaliotz/;stream.mp3?_=2",
+        "category": "Διεθνής Μουσική",
+        "sid": 2606
+    },
+    {
         "name": "Mikel Radio - DeCaffeine zone",
         "streamer": "https://i6.streams.ovh/sc/jitechdj/;stream.mp3?_=1",
         "category": "Διεθνής Μουσική",
@@ -1392,40 +1236,16 @@
         "sid": 2723
     },
     {
-        "name": "Molonoti Radio",
-        "streamer": "http://molonotiradio.gr:8000/molonoti-radio-stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 3800
-    },
-    {
-        "name": "Monkey Bros Radio",
-        "streamer": "https://stream.radiojar.com/5tyqrwpgpfeuv",
-        "category": "Διεθνής Μουσική",
-        "sid": 1646
-    },
-    {
         "name": "Mood Radio",
         "streamer": "https://us1new.listen2myradio.com:2199/listen.php?port=10034&type=s2&mount=/stream",
         "category": "Διεθνής Μουσική",
         "sid": 1929
     },
     {
-        "name": "Moove Radio",
-        "streamer": "http://streaming.radionomy.com:80/MooveRadio",
-        "category": "Διεθνής Μουσική",
-        "sid": 3261
-    },
-    {
         "name": "More 103",
         "streamer": "https://eco.onestreaming.com/proxy/moreradio/stream",
         "category": "Διεθνής Μουσική",
         "sid": 2254
-    },
-    {
-        "name": "Mozart Radio",
-        "streamer": "http://streaming.radionomy.com:80/Mozart?lang=el-GR%2cel%3bq%3d0.8",
-        "category": "Διεθνής Μουσική",
-        "sid": 2818
     },
     {
         "name": "Music Art club",
@@ -1530,22 +1350,10 @@
         "sid": 3117
     },
     {
-        "name": "OJO Radio",
-        "streamer": "http://eco.onestreaming.com:8642/;",
-        "category": "Διεθνής Μουσική",
-        "sid": 2719
-    },
-    {
         "name": "OK Web Radio",
         "streamer": "https://cast.magicstreams.gr/ic/dcjzapew/stream?1676369881692",
         "category": "Διεθνής Μουσική",
         "sid": 2380
-    },
-    {
-        "name": "Oldies web radio",
-        "streamer": "http://europa.shoutca.st:8721/",
-        "category": "Διεθνής Μουσική",
-        "sid": 3411
     },
     {
         "name": "On Memories Radio",
@@ -1558,18 +1366,6 @@
         "streamer": "https://netradio.live24.gr/orange883kavala",
         "category": "Διεθνής Μουσική",
         "sid": 3914
-    },
-    {
-        "name": "Original 94.4",
-        "streamer": "http://eu10.fastcast4u.com:8990/;",
-        "category": "Διεθνής Μουσική",
-        "sid": 1477
-    },
-    {
-        "name": "Owl Radio",
-        "streamer": "https://stream.radiojar.com/hm4w9ap5wv8uv",
-        "category": "Διεθνής Μουσική",
-        "sid": 3647
     },
     {
         "name": "Paidaki 97.5",
@@ -1594,12 +1390,6 @@
         "streamer": "https://paranoisewebcast.radioca.st/stream",
         "category": "Διεθνής Μουσική",
         "sid": 2777
-    },
-    {
-        "name": "Peripou Web Radio",
-        "streamer": "http://streaming.radionomy.com:80/PERIPOU-web-radio",
-        "category": "Διεθνής Μουσική",
-        "sid": 2202
     },
     {
         "name": "Pirate Radio GR - Mood Vibes",
@@ -1680,24 +1470,6 @@
         "sid": 4164
     },
     {
-        "name": "Pucca Radio",
-        "streamer": "https://n13.radiojar.com/mecdkyuevp8uv?rj-ttl=5&rj-tok=AAABhlmUvuIAPAZL9nnfGd9LGQ",
-        "category": "Διεθνής Μουσική",
-        "sid": 3847
-    },
-    {
-        "name": "Purple Radio Athens",
-        "streamer": "https://stream.radiojar.com/weqykpegsm5tv?",
-        "category": "Διεθνής Μουσική",
-        "sid": 3150
-    },
-    {
-        "name": "Pylos Live Radio",
-        "streamer": "http://s4.myradiostream.com:14374",
-        "category": "Διεθνής Μουσική",
-        "sid": 1969
-    },
-    {
         "name": "RIK 2 91.2",
         "streamer": "https://r1.cloudskep.com/cybcr/cybc2/icecast.audio",
         "category": "Διεθνής Μουσική",
@@ -1732,12 +1504,6 @@
         "streamer": "https://streamyourdream.org:8050/radioactive",
         "category": "Διεθνής Μουσική",
         "sid": 453
-    },
-    {
-        "name": "Radio Art",
-        "streamer": "http://live.radioart.com:80/fStress_relief.mp3?dlid=",
-        "category": "Διεθνής Μουσική",
-        "sid": 1385
     },
     {
         "name": "Radio Boss",
@@ -1794,12 +1560,6 @@
         "sid": 4090
     },
     {
-        "name": "Radio Fusion",
-        "streamer": "http://stream1.nexusradio.fm:80/nexusdance.mp3",
-        "category": "Διεθνής Μουσική",
-        "sid": 1895
-    },
-    {
         "name": "Radio Galaxy 99",
         "streamer": "https://solid1.streamupsolutions.com/proxy/tfcgioyq?mp=/stream",
         "category": "Διεθνής Μουσική",
@@ -1810,12 +1570,6 @@
         "streamer": "https://ice02.fluidstream.net/fluid02_8350.aac?FLID=1&type=.aac",
         "category": "Διεθνής Μουσική",
         "sid": 2216
-    },
-    {
-        "name": "Radio Marconi 96.1",
-        "streamer": "http://webradio.e-volos.gr:8000/;?type=http&nocache=32",
-        "category": "Διεθνής Μουσική",
-        "sid": 1901
     },
     {
         "name": "Radio Melody",
@@ -1866,12 +1620,6 @@
         "sid": 2993
     },
     {
-        "name": "Radio bird",
-        "streamer": "https://stream.radiojar.com/6uqfysrasm0uv",
-        "category": "Διεθνής Μουσική",
-        "sid": 3750
-    },
-    {
         "name": "Rat FM",
         "streamer": "https://entasistream.tuc.gr:8020/rat320.mp3",
         "category": "Διεθνής Μουσική",
@@ -1896,40 +1644,16 @@
         "sid": 3802
     },
     {
-        "name": "Reggaevibes Radio",
-        "streamer": "https://n11.radiojar.com/qtv562rrs1duv?rj-ttl=5&rj-tok=AAABhm6Os7IAxq0jWJ6EJeuaDg",
-        "category": "Διεθνής Μουσική",
-        "sid": 2373
-    },
-    {
         "name": "Rewind Radio",
         "streamer": "https://solid55.streamupsolutions.com/proxy/zcpyirtp/320mp3",
         "category": "Διεθνής Μουσική",
         "sid": 3435
     },
     {
-        "name": "Rock and Blues Radio",
-        "streamer": "http://78.129.132.7:35663/",
-        "category": "Διεθνής Μουσική",
-        "sid": 3253
-    },
-    {
-        "name": "S Radio",
-        "streamer": "http://dione.shoutca.st:8014/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 2656
-    },
-    {
         "name": "SHOOK 104.4",
         "streamer": "https://sh.onweb.gr/8812/;/chillout.mp3?type=http&nocache=377274",
         "category": "Διεθνής Μουσική",
         "sid": 300
-    },
-    {
-        "name": "Sancine Club Dance",
-        "streamer": "http://streaming.radionomy.com/JamendoLounge?lang=el-GR%2cel%3bq%3d0.9",
-        "category": "Διεθνής Μουσική",
-        "sid": 2078
     },
     {
         "name": "Santorini Jazz Radio",
@@ -1962,22 +1686,16 @@
         "sid": 1363
     },
     {
+        "name": "Smooth Radio",
+        "streamer": "https://solid9.streamupsolutions.com/proxy/lrazisyb?mp=/live",
+        "category": "Διεθνής Μουσική",
+        "sid": 1614
+    },
+    {
         "name": "Soul Radio",
         "streamer": "https://cast4.magicstreams.gr:10053/stream",
         "category": "Διεθνής Μουσική",
         "sid": 1745
-    },
-    {
-        "name": "Special Radio",
-        "streamer": "http://s3.onweb.gr:8522/;",
-        "category": "Διεθνής Μουσική",
-        "sid": 2670
-    },
-    {
-        "name": "Spirto FM 104.7",
-        "streamer": "http://212.134.44.108:8095/",
-        "category": "Διεθνής Μουσική",
-        "sid": 2497
     },
     {
         "name": "Spirto Web Radio",
@@ -2016,12 +1734,6 @@
         "sid": 3852
     },
     {
-        "name": "Super 90.4",
-        "streamer": "https://super904-spirosb.radioca.st/",
-        "category": "Διεθνής Μουσική",
-        "sid": 1131
-    },
-    {
         "name": "TOC Radio",
         "streamer": "https://ec5.yesstreaming.net:1245/stream",
         "category": "Διεθνής Μουσική",
@@ -2058,12 +1770,6 @@
         "sid": 4067
     },
     {
-        "name": "To Pikap Radio",
-        "streamer": "http://comet.shoutca.st:8430/live?1513679743968",
-        "category": "Διεθνής Μουσική",
-        "sid": 3064
-    },
-    {
         "name": "Top FM 106.5",
         "streamer": "https://sc2.streamwithq.com:2000/stream/TopFm1065",
         "category": "Διεθνής Μουσική",
@@ -2082,58 +1788,10 @@
         "sid": 479
     },
     {
-        "name": "Traffic FM 91.8",
-        "streamer": "http://s5.onweb.gr:8506/;type=mp3",
-        "category": "Διεθνής Μουσική",
-        "sid": 1136
-    },
-    {
-        "name": "Trap Radio",
-        "streamer": "http://streaming.radionomy.com:80/ClubHits?lang=el-GR%2cel%3bq%3d0.8",
-        "category": "Διεθνής Μουσική",
-        "sid": 1915
-    },
-    {
-        "name": "Trap Radio Greece",
-        "streamer": "http://streaming.radionomy.com:80/FreQ313RadiO",
-        "category": "Διεθνής Μουσική",
-        "sid": 2770
-    },
-    {
-        "name": "Tritonous",
-        "streamer": "http://noc.ezhellas.com:30570/tritonous",
-        "category": "Διεθνής Μουσική",
-        "sid": 3796
-    },
-    {
-        "name": "True Story 102.8",
-        "streamer": "https://sp1.19cloudsnetwork.gr/8040/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 4017
-    },
-    {
-        "name": "Tsotyli Plus Radio",
-        "streamer": "http://streaming.radionomy.com:80/tsotiliplus?",
-        "category": "Διεθνής Μουσική",
-        "sid": 3275
-    },
-    {
-        "name": "Tuning Radio",
-        "streamer": "http://streaming.radionomy.com:80/TuningRadioGR",
-        "category": "Διεθνής Μουσική",
-        "sid": 1509
-    },
-    {
         "name": "UP FM 103.7",
         "streamer": "https://upfmradioserver.upatras.gr:8000/source",
         "category": "Διεθνής Μουσική",
         "sid": 1494
-    },
-    {
-        "name": "Uncut Radio",
-        "streamer": "http://stream.radiojar.com/s2kb0626cm8uv",
-        "category": "Διεθνής Μουσική",
-        "sid": 3967
     },
     {
         "name": "Vanilla  Radio || Fresh Flavors",
@@ -2238,12 +1896,6 @@
         "sid": 2753
     },
     {
-        "name": "Yes! 91.2",
-        "streamer": "https://ams-pioneer02.dedicateware.com:1060",
-        "category": "Διεθνής Μουσική",
-        "sid": 2475
-    },
-    {
         "name": "Yolo Radio 102.1",
         "streamer": "https://netradio.live24.gr/yoloradio",
         "category": "Διεθνής Μουσική",
@@ -2316,12 +1968,6 @@
         "sid": 77
     },
     {
-        "name": "Αιγαίο Live 95.8",
-        "streamer": "https://stream.radiojar.com/nkqh9th47vzuv",
-        "category": "Διεθνής Μουσική",
-        "sid": 460
-    },
-    {
         "name": "Ακτίνα FM 104.7",
         "streamer": "https://sc2.streamwithq.com:2000/stream/Aktina1047?_=1",
         "category": "Διεθνής Μουσική",
@@ -2356,18 +2002,6 @@
         "streamer": "https://sc2.streamwithq.com:2000/stream/GavdosFm",
         "category": "Διεθνής Μουσική",
         "sid": 1230
-    },
-    {
-        "name": "Ε.Α.Π. Ράδιο",
-        "streamer": "https://n09.radiojar.com/avstsqrbay8uv?rj-ttl=5&rj-tok=AAABhoLY_zEAGpkiY4x462sP3g",
-        "category": "Διεθνής Μουσική",
-        "sid": 2856
-    },
-    {
-        "name": "Ε.Ο.Ε Web Radio",
-        "streamer": "http://radio.streamings.gr:8085/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 2955
     },
     {
         "name": "ΕΡΤ Κοζάνης 100.2",
@@ -2406,22 +2040,10 @@
         "sid": 447
     },
     {
-        "name": "Κρήτη Ράδιο",
-        "streamer": "http://usa19.fastcast4u.com:9170/;?",
-        "category": "Διεθνής Μουσική",
-        "sid": 3842
-    },
-    {
         "name": "Μεθόριος 96.0",
         "streamer": "https://sc2.streamwithq.com:2000/stream/radiomethorios/stream",
         "category": "Διεθνής Μουσική",
         "sid": 20
-    },
-    {
-        "name": "Μεσόγειος 105.4",
-        "streamer": "https://stream.radiojar.com/g6eg7gpa6k5tv",
-        "category": "Διεθνής Μουσική",
-        "sid": 473
     },
     {
         "name": "Μουσικό Κανάλι 105.1",
@@ -2442,12 +2064,6 @@
         "sid": 3449
     },
     {
-        "name": "Ράδιο  Άποψη",
-        "streamer": "https://stream.radiojar.com/radio-apopsi",
-        "category": "Διεθνής Μουσική",
-        "sid": 1776
-    },
-    {
         "name": "Ράδιο  Πειρατής",
         "streamer": "https://eu10.fastcast4u.com:11245/stream",
         "category": "Διεθνής Μουσική",
@@ -2464,12 +2080,6 @@
         "streamer": "https://streamer.out.gr/8006/stream",
         "category": "Διεθνής Μουσική",
         "sid": 3258
-    },
-    {
-        "name": "Ράδιο Άποψη -",
-        "streamer": "https://n01.radiojar.com/radio-apopsi?",
-        "category": "Διεθνής Μουσική",
-        "sid": 303
     },
     {
         "name": "Ράδιο Ένωση 97.3",
@@ -2490,12 +2100,6 @@
         "sid": 1495
     },
     {
-        "name": "Ράδιο Δράμα 99.1",
-        "streamer": "http://pstnet6.shoutcastnet.com:60160/stream",
-        "category": "Διεθνής Μουσική",
-        "sid": 901
-    },
-    {
         "name": "Ράδιο Ελληνικά Ακούσματα",
         "streamer": "https://s2.e-resellers.gr/proxy/kviwebradio/stream",
         "category": "Διεθνής Μουσική",
@@ -2506,12 +2110,6 @@
         "streamer": "https://www.gointernet.gr:9034/live?1677414458691",
         "category": "Διεθνής Μουσική",
         "sid": 195
-    },
-    {
-        "name": "Ράδιο Κατάρα",
-        "streamer": "http://www.katrafm.net:9000/live",
-        "category": "Διεθνής Μουσική",
-        "sid": 3044
     },
     {
         "name": "Ράδιο Κύκλος",
@@ -2542,12 +2140,6 @@
         "streamer": "https://sp1.32bit.gr/8010/stream",
         "category": "Διεθνής Μουσική",
         "sid": 168
-    },
-    {
-        "name": "Σαλονικιός Ράδιο",
-        "streamer": "http://streaming.radionomy.com/buddha-bar",
-        "category": "Διεθνής Μουσική",
-        "sid": 2980
     },
     {
         "name": "Σκορπιός Athens Radio",
@@ -2658,12 +2250,6 @@
         "sid": 939
     },
     {
-        "name": "B-Side Radio",
-        "streamer": "https://stream.radiojar.com/t9s29c2d33bwv",
-        "category": "Ελληνικά",
-        "sid": 4124
-    },
-    {
         "name": "Barack Radio",
         "streamer": "https://ams-pioneer02.dedicateware.com:1955/stream",
         "category": "Ελληνικά",
@@ -2688,12 +2274,6 @@
         "sid": 2732
     },
     {
-        "name": "Brake FM 100.8",
-        "streamer": "http://proradio.gr:8004/brake",
-        "category": "Ελληνικά",
-        "sid": 829
-    },
-    {
         "name": "Bravo FM 89.6",
         "streamer": "https://sp3.streams.ovh/8046/stream",
         "category": "Ελληνικά",
@@ -2712,18 +2292,6 @@
         "sid": 2830
     },
     {
-        "name": "Cosmos Radio 93.0",
-        "streamer": "http://cast5.magicstreams.gr:8132/;;",
-        "category": "Ελληνικά",
-        "sid": 1943
-    },
-    {
-        "name": "Creta Planet Radio",
-        "streamer": "http://s3.onweb.gr:8522/;",
-        "category": "Ελληνικά",
-        "sid": 2671
-    },
-    {
         "name": "Cretaone 102.3",
         "streamer": "https://netradio.live24.gr/radio1023crete",
         "category": "Ελληνικά",
@@ -2734,12 +2302,6 @@
         "streamer": "https://rdst.win:48140/stream",
         "category": "Ελληνικά",
         "sid": 2996
-    },
-    {
-        "name": "Derti 105.7",
-        "streamer": "https://n06.radiojar.com/tzcb5k453quvv?",
-        "category": "Ελληνικά",
-        "sid": 1766
     },
     {
         "name": "Dream FM 90.7",
@@ -2790,22 +2352,10 @@
         "sid": 468
     },
     {
-        "name": "FM 100",
-        "streamer": "https://radio.limnosfm100.gr:9998",
-        "category": "Ελληνικά",
-        "sid": 1686
-    },
-    {
         "name": "Filadelfeia Radio",
         "streamer": "https://s2.e-resellers.gr/proxy/radiofiladelfeia/stream",
         "category": "Ελληνικά",
         "sid": 3950
-    },
-    {
-        "name": "Flight 889 Iκαρία",
-        "streamer": "http://flightfm.webhop.net:8000/rapi.mp3",
-        "category": "Ελληνικά",
-        "sid": 3768
     },
     {
         "name": "Focus FM 103.6",
@@ -2946,22 +2496,10 @@
         "sid": 3657
     },
     {
-        "name": "Katerinigas",
-        "streamer": "http://radio.katerinigas.gr:8000/;",
-        "category": "Ελληνικά",
-        "sid": 3839
-    },
-    {
         "name": "Kliktv Radio",
         "streamer": "https://everest.streams.ovh:1730/stream?ver=105924",
         "category": "Ελληνικά",
         "sid": 3901
-    },
-    {
-        "name": "LGR Cyprus -",
-        "streamer": "http://live3.istoikona.net:8141/stream",
-        "category": "Ελληνικά",
-        "sid": 3510
     },
     {
         "name": "Lamia Live Radio",
@@ -2980,18 +2518,6 @@
         "streamer": "https://stream-68.zeno.fm/e0cbypaxvchvv?zs=aiIBO8a_QOmbguEFADc8NA",
         "category": "Ελληνικά",
         "sid": 3959
-    },
-    {
-        "name": "London Greek Radio 103.3",
-        "streamer": "http://live3.istoikona.net:8203/stream",
-        "category": "Ελληνικά",
-        "sid": 1615
-    },
-    {
-        "name": "Loubog Radio",
-        "streamer": "http://radio.loubogradio.gr:15002/;",
-        "category": "Ελληνικά",
-        "sid": 4160
     },
     {
         "name": "Love Radio 88.2",
@@ -3042,28 +2568,10 @@
         "sid": 157
     },
     {
-        "name": "Mikri Arktos Radio",
-        "streamer": "http://stream.radiojar.com/v8c2xa4g672vv",
-        "category": "Ελληνικά",
-        "sid": 4079
-    },
-    {
         "name": "Music FM 103.3",
         "streamer": "https://i6.streams.ovh/ic/musicfm/stream",
         "category": "Ελληνικά",
         "sid": 3872
-    },
-    {
-        "name": "Music Ward Radio",
-        "streamer": "https://stream.radiojar.com/opa-radio?",
-        "category": "Ελληνικά",
-        "sid": 3156
-    },
-    {
-        "name": "Musix Channel Radio",
-        "streamer": "http://i4.streams.ovh:8059/stream",
-        "category": "Ελληνικά",
-        "sid": 3360
     },
     {
         "name": "My-Radio Σήμερα",
@@ -3082,12 +2590,6 @@
         "streamer": "https://sh.onweb.gr:7036/;",
         "category": "Ελληνικά",
         "sid": 891
-    },
-    {
-        "name": "Nemea Radio 107.6",
-        "streamer": "http://stream.sy3dud.com:8000/stream/6/?type=http",
-        "category": "Ελληνικά",
-        "sid": 836
     },
     {
         "name": "No name",
@@ -3138,18 +2640,6 @@
         "sid": 4189
     },
     {
-        "name": "Pasatempo Radio",
-        "streamer": "https://sh.onweb.gr:7133",
-        "category": "Ελληνικά",
-        "sid": 4071
-    },
-    {
-        "name": "Phoenix Radio",
-        "streamer": "http://eu4.fastcast4u.com:5906/;?1497274970958",
-        "category": "Ελληνικά",
-        "sid": 1389
-    },
-    {
         "name": "Pikap Radio",
         "streamer": "https://pikapradio-tommyf.radioca.st/;",
         "category": "Ελληνικά",
@@ -3178,12 +2668,6 @@
         "streamer": "https://s6.e-resellers.gr/8062/stream",
         "category": "Ελληνικά",
         "sid": 3883
-    },
-    {
-        "name": "PolisView",
-        "streamer": "http://stream.radiojar.com/gzr6836ty7zuv",
-        "category": "Ελληνικά",
-        "sid": 4009
     },
     {
         "name": "Polis 102.6",
@@ -3240,12 +2724,6 @@
         "sid": 1783
     },
     {
-        "name": "Radio Graceland",
-        "streamer": "http://s1.nexuscast.com:8133/;",
-        "category": "Ελληνικά",
-        "sid": 3300
-    },
-    {
         "name": "Radio Kos 98",
         "streamer": "https://play.streams.gr:22082/stream",
         "category": "Ελληνικά",
@@ -3274,18 +2752,6 @@
         "streamer": "https://xat-group.gr:8010/radio.mp3",
         "category": "Ελληνικά",
         "sid": 4057
-    },
-    {
-        "name": "Radio RS",
-        "streamer": "http://radio.streamings.gr:8095/stream",
-        "category": "Ελληνικά",
-        "sid": 3562
-    },
-    {
-        "name": "Radio Yasoo",
-        "streamer": "http://radio-yasoo.ath.cx:7500/;",
-        "category": "Ελληνικά",
-        "sid": 2731
     },
     {
         "name": "Radio-Yellow",
@@ -3328,18 +2794,6 @@
         "streamer": "https://solid67.streamupsolutions.com/proxy/lqomhdjk?mp=//stream",
         "category": "Ελληνικά",
         "sid": 1934
-    },
-    {
-        "name": "Sky FM 100.7",
-        "streamer": "http://sc2.streamwithq.com:8060/;",
-        "category": "Ελληνικά",
-        "sid": 1531
-    },
-    {
-        "name": "Sky FM 91.3",
-        "streamer": "http://cressida.shoutca.st:9158/stream?type=http&nocache=61",
-        "category": "Ελληνικά",
-        "sid": 1211
     },
     {
         "name": "Sky FM 99.7",
@@ -3444,12 +2898,6 @@
         "sid": 74
     },
     {
-        "name": "Team FM 102",
-        "streamer": "https://hotsoft.net.gr:9105",
-        "category": "Ελληνικά",
-        "sid": 1220
-    },
-    {
         "name": "The Greek radio station of Australia",
         "streamer": "https://radio.plegma.host/radio/8000/greekradio.mp3",
         "category": "Ελληνικά",
@@ -3514,12 +2962,6 @@
         "streamer": "https://streams.enjoyfm.gr:48502/emfasis.mp3",
         "category": "Ελληνικά",
         "sid": 856
-    },
-    {
-        "name": "Έρωτας 92",
-        "streamer": "https://eco.onestreaming.com/proxy/kastoriafmlive/;",
-        "category": "Ελληνικά",
-        "sid": 931
     },
     {
         "name": "Ήχος FM 94.2",
@@ -3648,22 +3090,10 @@
         "sid": 728
     },
     {
-        "name": "Ελεύθερο Ραδιόφωνο 99.0",
-        "streamer": "http://hyades.shoutca.st:8770/stream",
-        "category": "Ελληνικά",
-        "sid": 3151
-    },
-    {
         "name": "Ελλάδα FM 104",
         "streamer": "https://eco.onestreaming.com/proxy/elladafm/stream",
         "category": "Ελληνικά",
         "sid": 4123
-    },
-    {
-        "name": "Ελληνική Ραδιοφωνία Βανκούβερ",
-        "streamer": "http://us3.internet-radio.com:8090/live",
-        "category": "Ελληνικά",
-        "sid": 3061
     },
     {
         "name": "Ελληνικός FM",
@@ -3756,12 +3186,6 @@
         "sid": 2703
     },
     {
-        "name": "Κανάλι 7 98.4",
-        "streamer": "http://live.kanali7.com:4012/;stream.mp3",
-        "category": "Ελληνικά",
-        "sid": 2712
-    },
-    {
         "name": "Κρήτη FM 98.9",
         "streamer": "https://i9.streams.ovh:2200/sc/kritifm989/stream",
         "category": "Ελληνικά",
@@ -3808,12 +3232,6 @@
         "streamer": "https://i4.streams.ovh:2200/ssl/minore?mp=/stream",
         "category": "Ελληνικά",
         "sid": 3231
-    },
-    {
-        "name": "Μουσικός Παλμός 94.5",
-        "streamer": "http://solid2.streamupsolutions.com:24977/stream?type=http&nocache=86928",
-        "category": "Ελληνικά",
-        "sid": 1526
     },
     {
         "name": "Νησί 93.9",
@@ -3892,12 +3310,6 @@
         "streamer": "https://sh.onweb.gr:7048/;",
         "category": "Ελληνικά",
         "sid": 302
-    },
-    {
-        "name": "Πρώτο FM 99",
-        "streamer": "http://s1.onweb.gr:8052/;",
-        "category": "Ελληνικά",
-        "sid": 1577
     },
     {
         "name": "ΡΑΔΙΟ ΕΛΕΥΘΕΡΟΣ",
@@ -4008,18 +3420,6 @@
         "sid": 2504
     },
     {
-        "name": "Ράδιο Βαποράκι",
-        "streamer": "http://bluford.torontocast.com:8096/stream",
-        "category": "Ελληνικά",
-        "sid": 3405
-    },
-    {
-        "name": "Ράδιο Βετεράνος",
-        "streamer": "http://s33.myradiostream.com:6482/;?1633097841057",
-        "category": "Ελληνικά",
-        "sid": 3822
-    },
-    {
         "name": "Ράδιο Γαλαξίας 92.1",
         "streamer": "https://tls-chrome.live24.gr/4072?http://cast.streams.ovh:12059/stream/",
         "category": "Ελληνικά",
@@ -4062,12 +3462,6 @@
         "sid": 272
     },
     {
-        "name": "Ράδιο Ιόνιο 99.9",
-        "streamer": "http://167.114.131.90:5192/;listen.pls",
-        "category": "Ελληνικά",
-        "sid": 2105
-    },
-    {
         "name": "Ράδιο Κέρκυρα 100.1",
         "streamer": "https://live.cast-control.eu:2000/stream/startmediaradio?1679653109213",
         "category": "Ελληνικά",
@@ -4108,12 +3502,6 @@
         "streamer": "https://sh.onweb.gr:7084/;",
         "category": "Ελληνικά",
         "sid": 1102
-    },
-    {
-        "name": "Ράδιο Λαμία",
-        "streamer": "http://centova32.instainternet.com:8091/stream?type=http&nocache=59",
-        "category": "Ελληνικά",
-        "sid": 3491
     },
     {
         "name": "Ράδιο Λευκίμμη 105.5",
@@ -4164,12 +3552,6 @@
         "sid": 3207
     },
     {
-        "name": "Ράδιο Νοσταλγία",
-        "streamer": "http://radionostalgiagr.dyndns.org:2314/",
-        "category": "Ελληνικά",
-        "sid": 1648
-    },
-    {
         "name": "Ράδιο Νότες 106",
         "streamer": "https://solid33.streamupsolutions.com/proxy/evllufwn?mp=//stream",
         "category": "Ελληνικά",
@@ -4182,22 +3564,10 @@
         "sid": 580
     },
     {
-        "name": "Ράδιο Πάντειον Live",
-        "streamer": "https://n08.radiojar.com/ybz2g5nh5ehvv?rj-ttl=5&rj-tok=AAABjO385nAA3hwq8vva_xCj2A",
-        "category": "Ελληνικά",
-        "sid": 4045
-    },
-    {
         "name": "Ράδιο Παλαιόχωρα 89.3",
         "streamer": "https://s6.onweb.gr/8068/stream/1/",
         "category": "Ελληνικά",
         "sid": 1229
-    },
-    {
-        "name": "Ράδιο Πανικός",
-        "streamer": "http://cast6.my-control-panel.com:7936/stream?",
-        "category": "Ελληνικά",
-        "sid": 2039
     },
     {
         "name": "Ράδιο Παράνομος",
@@ -4266,22 +3636,10 @@
         "sid": 4091
     },
     {
-        "name": "Ράδιο Τοξότης 96.3",
-        "streamer": "http://eco.onestreaming.com:8240/;listen.pls",
-        "category": "Ελληνικά",
-        "sid": 1033
-    },
-    {
         "name": "Ράδιο Τύρναβος 103.8",
         "streamer": "https://sh.onweb.gr:7063/;",
         "category": "Ελληνικά",
         "sid": 175
-    },
-    {
-        "name": "Ράδιο Φλόγα",
-        "streamer": "http://protostar.shoutca.st:8066/;",
-        "category": "Ελληνικά",
-        "sid": 2908
     },
     {
         "name": "Ράδιο Χαλκιδική 98.8",
@@ -4318,12 +3676,6 @@
         "streamer": "https://solid2.streamupsolutions.com/proxy/yawmzklx?mp=%2Fstream",
         "category": "Ελληνικά",
         "sid": 113
-    },
-    {
-        "name": "Ρυθμός Greek Radio",
-        "streamer": "https://n04.radiojar.com/80ywsf43knuvv.mp3?rj-ttl=5&rj-tok=AAABinU9fm4ApOtcLATXdolMFQ",
-        "category": "Ελληνικά",
-        "sid": 2800
     },
     {
         "name": "Ρυθμός Αχαΐας 94.9",
@@ -4392,12 +3744,6 @@
         "sid": 2487
     },
     {
-        "name": "Στόχος FM 99",
-        "streamer": "http://s3.onweb.gr:8016",
-        "category": "Ελληνικά",
-        "sid": 968
-    },
-    {
         "name": "Σφαίρα Θεσσαλίας 101.6",
         "streamer": "https://tls-chrome.live24.gr/171?http://cast3.radiohost.ovh:8280/stream",
         "category": "Ελληνικά",
@@ -4426,6 +3772,12 @@
         "streamer": "https://netradio.live24.gr/synora922kilkis",
         "category": "Ελληνικά",
         "sid": 989
+    },
+    {
+        "name": "Τσιρίγο FM 105.6",
+        "streamer": "https://tls-chrome.live24.gr/1527?http://s2.onweb.gr:8622/",
+        "category": "Ελληνικά",
+        "sid": 1527
     },
     {
         "name": "Υδρόγειος 106.9",
@@ -4543,12 +3895,6 @@
     },
     {
         "name": "Ble.FM 93.3",
-        "streamer": "http://radio.lancom.gr:8004/stream3?1547809557220",
-        "category": "Ελληνική Mainstream",
-        "sid": 998
-    },
-    {
-        "name": "Ble.FM 93.3",
         "streamer": "https://tls-chrome.live24.gr/2459?http://radio.lancom.gr:8004/stream3?1547817975160",
         "category": "Ελληνική Mainstream",
         "sid": 2459
@@ -4564,12 +3910,6 @@
         "streamer": "https://cosmoradio.gr/stream1",
         "category": "Ελληνική Mainstream",
         "sid": 274
-    },
-    {
-        "name": "Cosmos 103.8",
-        "streamer": "https://stream.radiojar.com/duh3nm1v6hhvv",
-        "category": "Ελληνική Mainstream",
-        "sid": 1060
     },
     {
         "name": "Diva FM 106.1",
@@ -4588,12 +3928,6 @@
         "streamer": "https://fasmafm.radioca.st/stream?type=http&nocache=83",
         "category": "Ελληνική Mainstream",
         "sid": 767
-    },
-    {
-        "name": "Fly Radio 95.9",
-        "streamer": "http://sc2.streamwithq.com:8040/stream/;",
-        "category": "Ελληνική Mainstream",
-        "sid": 1215
     },
     {
         "name": "Focus 88.9",
@@ -4632,18 +3966,6 @@
         "sid": 3946
     },
     {
-        "name": "Lefkatas 90.5",
-        "streamer": "https://n13.radiojar.com/kdf46t0c1quvv?rj-ttl=5&rj-tok=AAABiNzss3AAFLmwj_bJEwnSQw",
-        "category": "Ελληνική Mainstream",
-        "sid": 3225
-    },
-    {
-        "name": "Life 106.3",
-        "streamer": "http://cast.streams.ovh:9130/live",
-        "category": "Ελληνική Mainstream",
-        "sid": 1583
-    },
-    {
         "name": "Live FM Radio 97.8",
         "streamer": "https://s2.e-resellers.gr/proxy/live978/stream",
         "category": "Ελληνική Mainstream",
@@ -4668,22 +3990,10 @@
         "sid": 1221
     },
     {
-        "name": "Max FM 93.4",
-        "streamer": "https://stream.radiojar.com/qt9gf4hhdwzuv",
-        "category": "Ελληνική Mainstream",
-        "sid": 1490
-    },
-    {
         "name": "Melody FM 104.5",
         "streamer": "https://cast.radiohost.ovh/melodyfm?mp=/stream",
         "category": "Ελληνική Mainstream",
         "sid": 3290
-    },
-    {
-        "name": "Mix Greek Radio",
-        "streamer": "http://eco.onestreaming.com:8644/;",
-        "category": "Ελληνική Mainstream",
-        "sid": 2700
     },
     {
         "name": "Mix Mania Radio",
@@ -4758,12 +4068,6 @@
         "sid": 1178
     },
     {
-        "name": "Sfera 96.6",
-        "streamer": "https://stream.radiojar.com/mg2vq26eewzuv",
-        "category": "Ελληνική Mainstream",
-        "sid": 1491
-    },
-    {
         "name": "Sfera 96.8",
         "streamer": "https://securestreams3.autopo.st:1417/sfera",
         "category": "Ελληνική Mainstream",
@@ -4786,12 +4090,6 @@
         "streamer": "https://24streams.gr:8071/stream",
         "category": "Ελληνική Mainstream",
         "sid": 2017
-    },
-    {
-        "name": "Star FM 93.3",
-        "streamer": "http://proradio.gr:8004/star933",
-        "category": "Ελληνική Mainstream",
-        "sid": 881
     },
     {
         "name": "Star FM 93.5",
@@ -4894,12 +4192,6 @@
         "streamer": "https://live3.istoikona.net:9836/stream",
         "category": "Ελληνική Mainstream",
         "sid": 2689
-    },
-    {
-        "name": "Ηλέκτρα 98.8",
-        "streamer": "http://stream.sy3dud.com:8000/stream/3/;",
-        "category": "Ελληνική Mainstream",
-        "sid": 827
     },
     {
         "name": "Καστοριά FM 91.5",
@@ -5010,12 +4302,6 @@
         "sid": 287
     },
     {
-        "name": "Ράδιο Αλέξανδρος 106.3",
-        "streamer": "http://proxima.shoutca.st:9012/;",
-        "category": "Ελληνική Mainstream",
-        "sid": 1062
-    },
-    {
         "name": "Ράδιο Αμόρε 87.5",
         "streamer": "https://sh.onweb.gr:7072/;",
         "category": "Ελληνική Mainstream",
@@ -5100,12 +4386,6 @@
         "sid": 1889
     },
     {
-        "name": "Ρυθμός Κομοτηνής 103.1",
-        "streamer": "http://stream.radiojar.com/v1hkvv4gk72vv",
-        "category": "Ελληνική Mainstream",
-        "sid": 3104
-    },
-    {
         "name": "Ρυθμός 101.9",
         "streamer": "https://i3.streams.ovh:12214/;",
         "category": "Ελληνική Mainstream",
@@ -5154,12 +4434,6 @@
         "sid": 3365
     },
     {
-        "name": "Σταθμός 99.5",
-        "streamer": "https://s7.myradiostream.com:10432",
-        "category": "Ελληνική Mainstream",
-        "sid": 1551
-    },
-    {
         "name": "Στυλίδα FM 94.1",
         "streamer": "https://aphrodite.freespirits.gr:8110/radio.mp3",
         "category": "Ελληνική Mainstream",
@@ -5202,12 +4476,6 @@
         "sid": 2038
     },
     {
-        "name": "99FM/ράδιο1 99",
-        "streamer": "https://n05.radiojar.com/t0x7dyqmsuhvv?rj-ttl=5&rj-tok=AAABgWvjH-AA1gmaJtZHQKCQTQ",
-        "category": "Λαϊκά",
-        "sid": 2310
-    },
-    {
         "name": "A48FM",
         "streamer": "https://kepler.shoutca.st/proxy/a48fm?mp=/stream",
         "category": "Λαϊκά",
@@ -5232,18 +4500,6 @@
         "sid": 3193
     },
     {
-        "name": "C.H.I.R. Greek Radio Station",
-        "streamer": "http://s6.yesstreaming.net:7032/stream",
-        "category": "Λαϊκά",
-        "sid": 2815
-    },
-    {
-        "name": "Cosmos Radio NY",
-        "streamer": "http://162.244.80.118:5814/stream",
-        "category": "Λαϊκά",
-        "sid": 2672
-    },
-    {
         "name": "Derti -",
         "streamer": "https://sh.onweb.gr/9050/stream",
         "category": "Λαϊκά",
@@ -5254,12 +4510,6 @@
         "streamer": "https://i5.streams.ovh:2200/sc/web101/stream",
         "category": "Λαϊκά",
         "sid": 1899
-    },
-    {
-        "name": "Eλληνική Ραδιοφωνία Καλαμάτας 101.5",
-        "streamer": "http://i3.streams.ovh:12095/stream",
-        "category": "Λαϊκά",
-        "sid": 3853
     },
     {
         "name": "Fahrenheit Radio Greece",
@@ -5328,12 +4578,6 @@
         "sid": 2065
     },
     {
-        "name": "Navagia Internet Radio",
-        "streamer": "http://159.69.26.161:9996/;stream.mp3",
-        "category": "Λαϊκά",
-        "sid": 2372
-    },
-    {
         "name": "Nterti Radio",
         "streamer": "https://cast1.asurahosting.com/proxy/ntertir1/stream",
         "category": "Λαϊκά",
@@ -5368,12 +4612,6 @@
         "streamer": "https://c36.radioboss.fm:8106/stream",
         "category": "Λαϊκά",
         "sid": 2669
-    },
-    {
-        "name": "Point-Radio",
-        "streamer": "http://radio.streamings.gr:8029/stream",
-        "category": "Λαϊκά",
-        "sid": 4033
     },
     {
         "name": "Pylia Radio",
@@ -5472,12 +4710,6 @@
         "sid": 4177
     },
     {
-        "name": "Radio Pianica",
-        "streamer": "https://mpc1.mediacp.eu/stream/djmackrandy/;stream",
-        "category": "Λαϊκά",
-        "sid": 3776
-    },
-    {
         "name": "Radio Play 91.5",
         "streamer": "https://tls-chrome.live24.gr/1731?http://s6.onweb.gr:8058/stream?type=http&nocache=131990",
         "category": "Λαϊκά",
@@ -5494,12 +4726,6 @@
         "streamer": "https://webinternetradio.eu:48160",
         "category": "Λαϊκά",
         "sid": 4068
-    },
-    {
-        "name": "Radio Symban",
-        "streamer": "http://s1.onweb.gr:8430/;",
-        "category": "Λαϊκά",
-        "sid": 2772
     },
     {
         "name": "Radio Thespies",
@@ -5586,22 +4812,10 @@
         "sid": 3664
     },
     {
-        "name": "WPSO - Greek Radio",
-        "streamer": "http://wpso.com:8000/;stream.mp3",
-        "category": "Λαϊκά",
-        "sid": 2680
-    },
-    {
         "name": "Άνεμος 92",
         "streamer": "https://sh.onweb.gr/8842/;",
         "category": "Λαϊκά",
         "sid": 2204
-    },
-    {
-        "name": "Άρωμα FM",
-        "streamer": "http://s2.free-shoutcast.com:18008/;stream.mp3",
-        "category": "Λαϊκά",
-        "sid": 2582
     },
     {
         "name": "Άστρα FM 92.8",
@@ -5620,12 +4834,6 @@
         "streamer": "https://netradio.live24.gr/orama1017",
         "category": "Λαϊκά",
         "sid": 4119
-    },
-    {
-        "name": "Αμαρτία FM",
-        "streamer": "http://cast.innviweb.com:9030/",
-        "category": "Λαϊκά",
-        "sid": 1884
     },
     {
         "name": "Αρμονία 103.2",
@@ -5658,12 +4866,6 @@
         "sid": 3955
     },
     {
-        "name": "Ελληνική Ραδιοφωνία Μάνα Ελλάδα",
-        "streamer": "http://cast.radiohost.ovh:9066",
-        "category": "Λαϊκά",
-        "sid": 1885
-    },
-    {
         "name": "Ελληνικό Φαινόμενο",
         "streamer": "https://rdst.win:59888/live",
         "category": "Λαϊκά",
@@ -5674,12 +4876,6 @@
         "streamer": "https://solid33.streamupsolutions.com/proxy/kiytkkjz/stream",
         "category": "Λαϊκά",
         "sid": 2755
-    },
-    {
-        "name": "Θαλασσόλυκος FM 102.1",
-        "streamer": "http://sc2.streamwithq.com:8130/;",
-        "category": "Λαϊκά",
-        "sid": 3029
     },
     {
         "name": "Κίμωλος FM 106",
@@ -5778,12 +4974,6 @@
         "sid": 3879
     },
     {
-        "name": "Μουσικό Κανάλι 13 101.3",
-        "streamer": "https://hotsoft.net.gr:9102",
-        "category": "Λαϊκά",
-        "sid": 1372
-    },
-    {
         "name": "Μουσικό Σαλόνι",
         "streamer": "https://sp3.streams.ovh/8118/stream",
         "category": "Λαϊκά",
@@ -5842,12 +5032,6 @@
         "streamer": "https://rdst.win:48030/live",
         "category": "Λαϊκά",
         "sid": 1933
-    },
-    {
-        "name": "Ράδιο 13",
-        "streamer": "http://radio.streamings.gr:8023/stream",
-        "category": "Λαϊκά",
-        "sid": 4112
     },
     {
         "name": "Ράδιο 322",
@@ -5970,12 +5154,6 @@
         "sid": 3813
     },
     {
-        "name": "Ράδιο Κόρινθος -",
-        "streamer": "http://cast.radiohost.ovh:9004/stream?1501748611584.mp3",
-        "category": "Λαϊκά",
-        "sid": 2547
-    },
-    {
         "name": "Ράδιο Λάμψη",
         "streamer": "https://i6.streams.ovh/sc/radiolampsi/stream",
         "category": "Λαϊκά",
@@ -6084,12 +5262,6 @@
         "sid": 4184
     },
     {
-        "name": "Σκύλος FM 90.0",
-        "streamer": "https://n0f.radiojar.com/819r8wupdrruv?1668885399=&rj-tok=AAABhJFbcHoAKR7LzIRXHjiKGw&rj-ttl=5",
-        "category": "Λαϊκά",
-        "sid": 3501
-    },
-    {
         "name": "Σκύλος69",
         "streamer": "https://i6.streams.ovh/ic/skylos69/stream",
         "category": "Λαϊκά",
@@ -6102,12 +5274,6 @@
         "sid": 2679
     },
     {
-        "name": "Τάλως FM 88.6",
-        "streamer": "http://eco.onestreaming.com:8840/stream",
-        "category": "Λαϊκά",
-        "sid": 1206
-    },
-    {
         "name": "Υπάρχω FM 101.4",
         "streamer": "https://cast4.magicstreams.gr:2200/ssl/sc_gr40c?mp=/stream",
         "category": "Λαϊκά",
@@ -6118,12 +5284,6 @@
         "streamer": "https://streams.enjoyfm.gr:48502/xroma.mp3",
         "category": "Λαϊκά",
         "sid": 772
-    },
-    {
-        "name": "101 ROCK",
-        "streamer": "http://sh.onweb.gr:9110/stream",
-        "category": "Ροκ",
-        "sid": 4046
     },
     {
         "name": "1055 Rock 105.5",
@@ -6144,12 +5304,6 @@
         "sid": 2320
     },
     {
-        "name": "89 Rainbow 89",
-        "streamer": "https://n11.radiojar.com/083wqknmsuhvv?rj-ttl=5&rj-tok=AAABgWviQlIAWI1_YuULWWvoOw",
-        "category": "Ροκ",
-        "sid": 254
-    },
-    {
         "name": "905 ROCK 90.5",
         "streamer": "https://sh.onweb.gr:8905/stream?type=http&nocache=13",
         "category": "Ροκ",
@@ -6160,12 +5314,6 @@
         "streamer": "https://stream.radio.co/s038d07e75/listen",
         "category": "Ροκ",
         "sid": 3349
-    },
-    {
-        "name": "Black Duck Radio",
-        "streamer": "https://stream.radiojar.com/2p937t2kb.m4a?",
-        "category": "Ροκ",
-        "sid": 2410
     },
     {
         "name": "Blues Radio Athens",
@@ -6186,12 +5334,6 @@
         "sid": 3867
     },
     {
-        "name": "D Radio",
-        "streamer": "http://s10.myradiostream.com:11198/",
-        "category": "Ροκ",
-        "sid": 1727
-    },
-    {
         "name": "Dim Radio",
         "streamer": "https://aphrodite.freespirits.gr:8010/radio.mp3",
         "category": "Ροκ",
@@ -6204,28 +5346,22 @@
         "sid": 3263
     },
     {
-        "name": "Dust Radio",
-        "streamer": "http://eu10.fastcast4u.com:15950/;?type=http&nocache=1752601819",
-        "category": "Ροκ",
-        "sid": 3581
-    },
-    {
         "name": "Evolution Radio",
         "streamer": "https://i3.streams.ovh:12000/live",
         "category": "Ροκ",
         "sid": 1874
     },
     {
-        "name": "Freakout Radio",
-        "streamer": "http://192.99.14.191:8004/stream",
-        "category": "Ροκ",
-        "sid": 3138
-    },
-    {
         "name": "Imagine 89.7",
         "streamer": "https://imagine897.radioca.st/stream",
         "category": "Ροκ",
         "sid": 1396
+    },
+    {
+        "name": "JAM 66 Radio",
+        "streamer": "https://stream.miradio.pro/jam66",
+        "category": "Ροκ",
+        "sid": 4007
     },
     {
         "name": "Kasseta Radio",
@@ -6324,12 +5460,6 @@
         "sid": 1751
     },
     {
-        "name": "Radiophone",
-        "streamer": "http://s1.onweb.gr:8400/;",
-        "category": "Ροκ",
-        "sid": 2922
-    },
-    {
         "name": "Republic Radio -",
         "streamer": "https://netradio.live24.gr/republicthess",
         "category": "Ροκ",
@@ -6372,18 +5502,6 @@
         "sid": 301
     },
     {
-        "name": "Rock Station",
-        "streamer": "http://89.163.217.252:9898/stream?type=http&nocache=8",
-        "category": "Ροκ",
-        "sid": 2193
-    },
-    {
-        "name": "Rock therapy",
-        "streamer": "http://ice.streams.ovh:1790/stream",
-        "category": "Ροκ",
-        "sid": 4039
-    },
-    {
         "name": "RockRadioStation",
         "streamer": "https://i8.streams.ovh/sc/rockrad1/stream",
         "category": "Ροκ",
@@ -6394,12 +5512,6 @@
         "streamer": "https://hotsoft.net.gr:9103/stream",
         "category": "Ροκ",
         "sid": 3857
-    },
-    {
-        "name": "Roxx Radio",
-        "streamer": "https://stream.radiojar.com/aay95tkmb?",
-        "category": "Ροκ",
-        "sid": 2957
     },
     {
         "name": "Salt Radio",
@@ -6450,12 +5562,6 @@
         "sid": 1441
     },
     {
-        "name": "Wild Radio",
-        "streamer": "http://sip.wildradio.gr:8037/;",
-        "category": "Ροκ",
-        "sid": 1838
-    },
-    {
         "name": "Αίγιο Voice",
         "streamer": "https://cast1.asurahosting.com/proxy/aigiovoiceradio/live?1697798500710",
         "category": "Ροκ",
@@ -6466,12 +5572,6 @@
         "streamer": "https://premium.streams.gr:8010/stream",
         "category": "Ροκ",
         "sid": 4096
-    },
-    {
-        "name": "Κύματα Online",
-        "streamer": "https://stream.radiojar.com/y6s9qfvmk72vv",
-        "category": "Ροκ",
-        "sid": 3838
     },
     {
         "name": "Ράδιο Ναυάγιο",
@@ -6582,12 +5682,6 @@
         "sid": 1349
     },
     {
-        "name": "Dromos FM 89.8",
-        "streamer": "http://netradio.live24.gr/dromos2",
-        "category": "Αθήνα",
-        "sid": 1397
-    },
-    {
         "name": "ERTnews Radio 105.8",
         "streamer": "https://radiostreaming.ert.gr/ert-proto",
         "category": "Αθήνα",
@@ -6604,12 +5698,6 @@
         "streamer": "https://stream.rcs.revma.com/trm75ret4c3vv",
         "category": "Αθήνα",
         "sid": 1308
-    },
-    {
-        "name": "Ertopen 106.7",
-        "streamer": "http://netradio.live24.gr:80/erasport",
-        "category": "Αθήνα",
-        "sid": 2269
     },
     {
         "name": "Galaxy 92",
