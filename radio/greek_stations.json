@@ -2088,7 +2088,7 @@
         "sid": 825
     },
     {
-        "name": "Ράδιο Αρμονία 96.9",
+        "name": "Ράδιο Αρμονία ",
         "streamer": "https://loki.mental-media.gr/proxy/armonia?mp=/stream",
         "category": "Διεθνής Μουσική",
         "sid": 643
@@ -2310,7 +2310,7 @@
         "sid": 1134
     },
     {
-        "name": "Dream 96.9",
+        "name": "Dream ",
         "streamer": "https://netradio.live24.gr/topfm969xanthi",
         "category": "Ελληνικά",
         "sid": 90
@@ -5821,7 +5821,7 @@
     },
     {
         "name": "Rock FM 96.9",
-        "streamer": "https://n25a-eu.rcs.revma.com/sm9b1svehkcwv?rj-ttl=5&rj-tok=AAABnJ1AZNUAIRfRjfd9_1Aghg",
+        "streamer": "https://stream.rcs.revma.com/sm9b1svehkcwv",
         "category": "Αθήνα",
         "sid": 1326
     },
