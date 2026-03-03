@@ -1,131 +1,337 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radio Purple Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--bg:#050505;
+--surface:#111;
+--accent:#a371ff;
+--accent-dim:#2d1d5c;
+--text:#cfcfcf;
+--border:#1f1f1f;
+--fav:#ffcc00;
+--error:#ff4444;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+font-family:'IBM Plex Sans',sans-serif;
+background:var(--bg);
+color:var(--text);
+height:100vh;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+}
+
+/* HEADER */
+header{
+display:flex;
+gap:10px;
+align-items:center;
+padding:10px;
+background:#000;
+border-bottom:1px solid var(--border);
+}
+
+#search{
+flex:1;
+background:#111;
+border:1px solid var(--border);
+color:var(--text);
+padding:6px 10px;
+border-radius:4px;
+}
+
+#search:focus{border-color:var(--accent)}
+
+.player{
+display:flex;
+align-items:center;
+gap:10px;
+background:#111;
+padding:6px 10px;
+border-radius:6px;
+border:1px solid var(--accent-dim);
+min-width:260px;
+}
+
+#now{
+font-size:0.85rem;
+font-weight:600;
+color:var(--accent);
+flex:1;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+
+button{
+background:var(--accent);
+border:none;
+padding:5px 10px;
+border-radius:3px;
+cursor:pointer;
+font-weight:600;
+}
+
+button:active{transform:scale(.95)}
+
+#volume{
+width:70px;
+}
+
+#catbar{
+display:flex;
+gap:6px;
+padding:8px;
+overflow-x:auto;
+border-bottom:1px solid var(--border);
+}
+
+.cat{
+padding:5px 12px;
+background:#111;
+border:1px solid var(--border);
+border-radius:20px;
+font-size:0.75rem;
+cursor:pointer;
+white-space:nowrap;
+}
+
+.cat.active{
+background:var(--accent-dim);
+border-color:var(--accent);
+color:#fff;
+}
+
+#content{
+flex:1;
+overflow-y:auto;
+padding:10px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+gap:8px;
+}
+
+.card{
+background:#111;
+border:1px solid var(--border);
+padding:8px 10px;
+border-radius:5px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+cursor:pointer;
+transition:.15s;
+}
+
+.card:hover{border-color:#333}
+
+.card.active{
+border-color:var(--accent);
+background:#1b1333;
+}
+
+.fav{
+color:#333;
+cursor:pointer;
+}
+
+.fav.on{color:var(--fav)}
+
+.error{
+color:var(--error);
+}
+</style>
+</head>
+<body>
+
+<header>
+<input type="search" id="search" placeholder="Search stations...">
+
+<div class="player">
+<div id="now">OFFLINE</div>
+<button id="play">PLAY</button>
+<input type="range" id="volume" min="0" max="1" step="0.02" value="0.7">
+</div>
+</header>
+
+<div id="catbar"></div>
+<div id="content"></div>
+
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════════
-   SIMPLE MODERN AUDIO CORE
-═══════════════════════════════════════════════ */
-
 const audio = new Audio();
-audio.preload = "none";
-audio.crossOrigin = "anonymous";
+audio.preload="none";
+audio.crossOrigin="anonymous";
+audio.volume=0.7;
 
-let currentStation = null;
-let retryTimer = null;
-let retryCount = 0;
-const MAX_RETRY = 4;
+let stations=[];
+let current=null;
+let category="ALL";
+let favorites=JSON.parse(localStorage.getItem("radio_favs")||"[]");
+let retry=0;
+let retryTimer=null;
 
-const nowName   = document.getElementById('now-name');
-const spinner   = document.getElementById('spinner');
-const playBtn   = document.getElementById('btn-play');
-const miniPlayer = document.getElementById('mini-player');
+const nowEl=document.getElementById("now");
+const playBtn=document.getElementById("play");
+const vol=document.getElementById("volume");
+const search=document.getElementById("search");
+const catbar=document.getElementById("catbar");
+const content=document.getElementById("content");
 
-function uiLoading(name){
-    nowName.textContent = name;
-    spinner.style.display = 'inline-block';
-    playBtn.textContent = 'PAUSE';
-    miniPlayer.classList.add('playing');
+/* LOAD DATA */
+async function load(){
+try{
+const r=await fetch("./greek_stations.json");
+stations=await r.json();
+stations.sort((a,b)=>a.name.localeCompare(b.name,"el"));
+buildCategories();
+render();
+}catch(e){
+nowEl.textContent="Could not load stations";
+}
 }
 
-function uiPlaying(name){
-    spinner.style.display = 'none';
-    nowName.textContent = name;
+/* UI */
+function buildCategories(){
+const cats=["ALL","⭐ ΑΓΑΠΗΜΕΝΑ",...new Set(stations.map(s=>s.category||"Άλλα"))];
+catbar.innerHTML="";
+cats.forEach(c=>{
+const div=document.createElement("div");
+div.className="cat"+(c===category?" active":"");
+div.textContent=c;
+div.onclick=()=>{category=c;buildCategories();render()};
+catbar.appendChild(div);
+});
 }
 
-function uiOffline(msg){
-    spinner.style.display = 'none';
-    playBtn.textContent = 'PLAY';
-    miniPlayer.classList.remove('playing');
-    nowName.textContent = "✕ " + msg;
+function render(){
+let list=stations;
+
+if(category==="⭐ ΑΓΑΠΗΜΕΝΑ"){
+list=stations.filter(s=>favorites.includes(s.name));
+}else if(category!=="ALL"){
+list=stations.filter(s=>s.category===category);
 }
 
+const q=search.value.toLowerCase();
+if(q) list=list.filter(s=>s.name.toLowerCase().includes(q));
+
+content.innerHTML="";
+const grid=document.createElement("div");
+grid.className="grid";
+
+list.forEach(s=>{
+const card=document.createElement("div");
+card.className="card"+(current?.name===s.name?" active":"");
+card.onclick=()=>playStation(s);
+
+const name=document.createElement("span");
+name.textContent=s.name;
+
+const fav=document.createElement("span");
+fav.className="fav"+(favorites.includes(s.name)?" on":"");
+fav.textContent="★";
+fav.onclick=(e)=>{
+e.stopPropagation();
+toggleFav(s.name);
+};
+
+card.appendChild(name);
+card.appendChild(fav);
+grid.appendChild(card);
+});
+
+content.appendChild(grid);
+}
+
+/* FAVORITES */
+function toggleFav(name){
+if(favorites.includes(name))
+favorites=favorites.filter(f=>f!==name);
+else
+favorites.push(name);
+
+localStorage.setItem("radio_favs",JSON.stringify(favorites));
+render();
+}
+
+/* PLAY */
+function playStation(station){
+stopRetry();
+current=station;
+retry=0;
+
+audio.pause();
+audio.src=station.streamer;
+audio.load();
+
+nowEl.textContent="Loading "+station.name;
+
+audio.play()
+.then(()=>{
+nowEl.textContent=station.name;
+playBtn.textContent="PAUSE";
+render();
+})
+.catch(()=>scheduleRetry());
+}
+
+function togglePlay(){
+if(!audio.src) return;
+
+if(audio.paused){
+audio.play();
+playBtn.textContent="PAUSE";
+}else{
+audio.pause();
+playBtn.textContent="PLAY";
+}
+}
+
+/* RETRY */
 function stopRetry(){
-    if(retryTimer) clearTimeout(retryTimer);
-    retryTimer = null;
-    retryCount = 0;
+if(retryTimer) clearTimeout(retryTimer);
+retryTimer=null;
+retry=0;
 }
 
 function scheduleRetry(){
-    if(retryCount >= MAX_RETRY){
-        uiOffline("Stream unavailable");
-        return;
-    }
-
-    retryCount++;
-    const delay = 2000 * retryCount;
-
-    retryTimer = setTimeout(()=>{
-        if(currentStation){
-            audio.src = currentStation.streamer;
-            audio.play().catch(()=>scheduleRetry());
-        }
-    }, delay);
+if(retry>=4){
+nowEl.textContent="Stream unavailable";
+nowEl.classList.add("error");
+return;
+}
+retry++;
+retryTimer=setTimeout(()=>{
+if(current) playStation(current);
+},2000*retry);
 }
 
-/* ═══════════════════════════════════════════════
-   PLAY STATION
-═══════════════════════════════════════════════ */
+/* EVENTS */
+audio.addEventListener("error",scheduleRetry);
+audio.addEventListener("stalled",scheduleRetry);
+audio.addEventListener("ended",scheduleRetry);
 
-function playStation(station){
-    stopRetry();
-    currentStation = station;
-    retryCount = 0;
+playBtn.onclick=togglePlay;
+vol.oninput=e=>audio.volume=e.target.value;
+search.oninput=render;
 
-    uiLoading(station.name);
-
-    audio.pause();
-    audio.src = station.streamer;
-    audio.load();
-
-    audio.play()
-        .then(()=>uiPlaying(station.name))
-        .catch(()=>scheduleRetry());
-}
-
-/* ═══════════════════════════════════════════════
-   EVENTS
-═══════════════════════════════════════════════ */
-
-audio.addEventListener('playing', ()=>{
-    uiPlaying(currentStation?.name || "");
-});
-
-audio.addEventListener('error', ()=>{
-    scheduleRetry();
-});
-
-audio.addEventListener('stalled', ()=>{
-    scheduleRetry();
-});
-
-audio.addEventListener('ended', ()=>{
-    scheduleRetry();
-});
-
-/* ═══════════════════════════════════════════════
-   CONTROLS
-═══════════════════════════════════════════════ */
-
-function togglePlay(){
-    if(!audio.src) return;
-
-    if(audio.paused){
-        audio.play();
-        playBtn.textContent = "PAUSE";
-        miniPlayer.classList.add('playing');
-    }else{
-        audio.pause();
-        playBtn.textContent = "PLAY";
-        miniPlayer.classList.remove('playing');
-    }
-}
-
-function setVol(v){
-    audio.volume = parseFloat(v);
-}
-
-/* expose globally */
-window.playStation = playStation;
-window.togglePlay  = togglePlay;
-window.setVol      = setVol;
-
+load();
 </script>
+
+</body>
+</html>
