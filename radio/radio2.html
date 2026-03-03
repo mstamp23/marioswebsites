@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Purple Pro v18</title>
+    <title>Radio Purple Pro v17</title>
     <style>
         :root {
             --bg: #050505; --surface: #0f0f0f;
@@ -140,7 +140,7 @@
                 <span id="now-playing-text">OFFLINE</span>
             </div>
             <div id="rds-bar" style="display:none;">
-                <span class="rds-icon" id="rds-source">RDS</span>
+                <span class="rds-icon">RDS</span>
                 <span id="rds-track">—</span>
             </div>
         </div>
@@ -182,261 +182,81 @@
     let currentCategory = 'ALL';
     let favorites = JSON.parse(localStorage.getItem('radio_favs')) || [];
 
-    // ── METADATA ENGINE ────────────────────────────────────────────────
-    // Sources tried in order, first non-null result wins:
+    // ── METADATA / RDS ─────────────────────────────────────────────────
+    // Strategy 1: RadioJar has a public "now playing" endpoint.
+    //   Stream URL pattern: https://n13.radiojar.com/STATIONID?rj-ttl=...&rj-tok=...
+    //   Metadata API:       https://n13.radiojar.com/STATIONID/now-playing/
     //
-    //  1. RadioJar        radiojar.com / stream.radiojar.com
-    //  2. AzuraCast       azuracast.* domains  (richest data: artist, title, art)
-    //  3. RCS/Revma       rcs.revma.com
-    //  4. Zeno.fm         zeno.fm streams
-    //  5. Radio.co        stream.radio.co
-    //  6. Icecast         /status-json.xsl  (CORS usually blocks, worth trying)
-    //  7. Shoutcast       /currentsong      (same caveat)
-    //  8. MediaSession    browser reads ICY headers natively on some streams
+    // Strategy 2: Many Icecast/Shoutcast streams expose metadata via:
+    //   Icy-MetaData request header + reading ICY-META chunks in the stream.
+    //   Browsers don't allow this directly (CORS), but some stations expose
+    //   a /status-json.xsl or /currentsong endpoint.
+    //
+    // Strategy 3: Audio element fires 'metadata' via MediaMetadata API when
+    //   the stream embeds title in ICY headers (supported in some browsers).
+    //
+    // We implement strategies 1 & 3 here.
 
-    const T = (ms) => AbortSignal.timeout(ms);
-
-    function songStr(artist, title, fallback) {
-        const parts = [artist, title].filter(s => s && s.trim() && s.trim() !== '-');
-        return parts.length ? parts.join(' — ') : (fallback || null);
-    }
-
-    // ── 1. RadioJar ───────────────────────────────────────────────────
-    function parseRadioJar(url) {
+    function extractRadioJarId(url) {
+        // e.g. https://n13.radiojar.com/xcdg6yggzfeuv?rj-ttl=...
         try {
             const u = new URL(url);
-            // covers: n13.radiojar.com, stream.radiojar.com, n05.radiojar.com …
             if (u.hostname.includes('radiojar.com')) {
-                const id = u.pathname.split('/').filter(Boolean)[0];
-                return { host: u.origin, id };
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    async function fetchRadioJar({ host, id }) {
-        try {
-            const r = await fetch(`${host}/${id}/now-playing/`, { signal: T(4000) });
-            if (!r.ok) return null;
-            const d = await r.json();
-            const song = d?.song || d?.now_playing?.song;
-            if (song) return songStr(song.artist, song.title);
-            if (d?.title) return d.title;
-        } catch(e) {}
-        return null;
-    }
-
-    // ── 2. AzuraCast ─────────────────────────────────────────────────
-    // Stream URL patterns:
-    //   https://azuracast.streams.ovh/listen/stationslug/radio.mp3
-    //   https://azura.streams.ovh/listen/stationslug/public
-    //   https://azuracast.streams.gr/listen/stationslug/radio.mp3
-    // API: GET /api/nowplaying/stationslug  → JSON
-    function parseAzuraCast(url) {
-        try {
-            const u = new URL(url);
-            if (u.hostname.match(/azura(cast)?\./i)) {
-                // path: /listen/stationslug/mount  OR  /api/nowplaying/stationslug
                 const parts = u.pathname.split('/').filter(Boolean);
-                // parts[0] === 'listen', parts[1] === slug
-                if (parts[0] === 'listen' && parts[1]) {
-                    return { host: u.origin, slug: parts[1] };
-                }
+                return { host: u.origin, id: parts[0] };
             }
         } catch(e) {}
         return null;
     }
 
-    async function fetchAzuraCast({ host, slug }) {
+    function extractIcecastBase(url) {
+        // For Icecast streams ending in /stream or /live etc.
+        // Try /status-json.xsl on base domain
         try {
-            const r = await fetch(`${host}/api/nowplaying/${slug}`, { signal: T(4000) });
-            if (!r.ok) return null;
-            const d = await r.json();
-            const np = d?.now_playing?.song;
-            if (np) return songStr(np.artist, np.title, np.text);
+            const u = new URL(url);
+            return u.origin;
         } catch(e) {}
         return null;
     }
 
-    // ── 3. RCS / Revma ───────────────────────────────────────────────
-    // Stream: https://n42a-eu.rcs.revma.com/hnqr3yvehkcwv
-    // API:    https://n42a-eu.rcs.revma.com/hnqr3yvehkcwv/nowplaying
-    function parseRevma(url) {
+    async function fetchRadioJarMeta(host, stationId) {
+        // RadioJar public now-playing endpoint (no auth required)
+        const endpoint = `${host}/${stationId}/now-playing/`;
         try {
-            const u = new URL(url);
-            if (u.hostname.includes('revma.com')) {
-                const id = u.pathname.split('/').filter(Boolean)[0];
-                return { host: u.origin, id };
+            const r = await fetch(endpoint, { signal: AbortSignal.timeout(4000) });
+            if (!r.ok) return null;
+            const data = await r.json();
+            // RadioJar returns: { song: { title, artist } } or { now_playing: { song: { title } } }
+            const song = data?.song || data?.now_playing?.song;
+            if (song) {
+                const parts = [song.artist, song.title].filter(Boolean);
+                return parts.join(' — ') || null;
             }
+            // Sometimes it's just a flat object
+            if (data?.title) return data.title;
         } catch(e) {}
         return null;
     }
 
-    async function fetchRevma({ host, id }) {
+    async function fetchIcecastMeta(baseUrl) {
+        // Icecast status-json.xsl (same-origin restriction applies, but worth trying)
         try {
-            const r = await fetch(`${host}/${id}/nowplaying`, { signal: T(4000) });
+            const r = await fetch(`${baseUrl}/status-json.xsl`, { signal: AbortSignal.timeout(3000) });
             if (!r.ok) return null;
-            const d = await r.json();
-            // Revma returns various shapes; try common ones
-            const np = d?.now_playing || d?.nowplaying || d;
-            const title = np?.title || np?.song?.title || np?.track?.title;
-            const artist = np?.artist || np?.song?.artist || np?.track?.artist;
-            return songStr(artist, title);
-        } catch(e) {}
-        return null;
-    }
-
-    // ── 4. Zeno.fm ───────────────────────────────────────────────────
-    // Stream: https://stream.zeno.fm/pbxkwfmzaitvv
-    // or:     https://stream-19.zeno.fm/58uqx820dnzuv?zs=...
-    // API:    https://api.zeno.fm/mounts/uuid/{mountId}/now-playing
-    // The mountId is the path segment, same as stream path.
-    function parseZeno(url) {
-        try {
-            const u = new URL(url);
-            if (u.hostname.includes('zeno.fm')) {
-                const id = u.pathname.split('/').filter(Boolean)[0];
-                return { id };
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    async function fetchZeno({ id }) {
-        try {
-            const r = await fetch(`https://api.zeno.fm/mounts/uuid/${id}/now-playing`, { signal: T(4000) });
-            if (!r.ok) return null;
-            const d = await r.json();
-            return songStr(d?.artist, d?.title, d?.stream_title);
-        } catch(e) {}
-        return null;
-    }
-
-    // ── 5. Radio.co ──────────────────────────────────────────────────
-    // Stream: https://stream.radio.co/se0c52c265/low
-    // API:    https://public.radio.co/stations/se0c52c265/status
-    function parseRadioCo(url) {
-        try {
-            const u = new URL(url);
-            if (u.hostname.includes('radio.co')) {
-                const id = u.pathname.split('/').filter(Boolean)[0]; // se0c52c265
-                return { id };
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    async function fetchRadioCo({ id }) {
-        try {
-            const r = await fetch(`https://public.radio.co/stations/${id}/status`, { signal: T(4000) });
-            if (!r.ok) return null;
-            const d = await r.json();
-            return d?.current_track?.title || null;
-        } catch(e) {}
-        return null;
-    }
-
-    // ── 6. Icecast status-json.xsl ───────────────────────────────────
-    // Works only if server allows CORS. Many Greek hosts do NOT.
-    // We try the exact origin including non-standard ports.
-    async function fetchIcecast(url) {
-        try {
-            const u = new URL(url);
-            const r = await fetch(`${u.origin}/status-json.xsl`, { signal: T(3000) });
-            if (!r.ok) return null;
-            const d = await r.json();
-            const src = d?.icestats?.source;
+            const data = await r.json();
+            const src = data?.icestats?.source;
             if (src) {
-                const s = Array.isArray(src) ? src[0] : src;
-                return songStr(s.artist, s.title) || s.server_name || null;
+                const sources = Array.isArray(src) ? src : [src];
+                const s = sources[0];
+                return [s.artist, s.title].filter(Boolean).join(' — ') || s.server_name || null;
             }
         } catch(e) {}
         return null;
     }
 
-    // ── 7. Shoutcast /currentsong ─────────────────────────────────────
-    async function fetchShoutcast(url) {
-        try {
-            const u = new URL(url);
-            const r = await fetch(`${u.origin}/currentsong`, { signal: T(3000) });
-            if (!r.ok) return null;
-            const text = await r.text();
-            if (text && text.trim() && !text.includes('<')) return text.trim();
-        } catch(e) {}
-        return null;
-    }
-
-    // ── 8. MediaSession (browser reads ICY natively) ──────────────────
-    function getMediaSessionMeta(stationName) {
-        try {
-            const ms = navigator.mediaSession?.metadata;
-            if (ms && ms.title && ms.title !== stationName) {
-                return songStr(ms.artist, ms.title);
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    // ── Master fetch: tries all sources in priority order ─────────────
-    async function fetchMetadata(station) {
-        const url = station.streamer;
-
-        // 1. RadioJar
-        const rj = parseRadioJar(url);
-        if (rj) {
-            const m = await fetchRadioJar(rj);
-            if (m) return { text: m, source: 'RJ' };
-        }
-
-        // 2. AzuraCast
-        const az = parseAzuraCast(url);
-        if (az) {
-            const m = await fetchAzuraCast(az);
-            if (m) return { text: m, source: 'AZ' };
-        }
-
-        // 3. Revma
-        const rv = parseRevma(url);
-        if (rv) {
-            const m = await fetchRevma(rv);
-            if (m) return { text: m, source: 'RCS' };
-        }
-
-        // 4. Zeno
-        const zn = parseZeno(url);
-        if (zn) {
-            const m = await fetchZeno(zn);
-            if (m) return { text: m, source: 'ZN' };
-        }
-
-        // 5. Radio.co
-        const rc = parseRadioCo(url);
-        if (rc) {
-            const m = await fetchRadioCo(rc);
-            if (m) return { text: m, source: 'RC' };
-        }
-
-        // 6. Icecast
-        const ic = await fetchIcecast(url);
-        if (ic) return { text: ic, source: 'ICY' };
-
-        // 7. Shoutcast
-        const sc = await fetchShoutcast(url);
-        if (sc) return { text: sc, source: 'SC' };
-
-        // 8. MediaSession
-        const ms = getMediaSessionMeta(station.name);
-        if (ms) return { text: ms, source: 'MS' };
-
-        return null;
-    }
-
-    function setRDS(text, source) {
+    function setRDS(text) {
         if (!text) return;
         rdsBar.style.display = 'flex';
-        // Update source badge
-        const badge = document.getElementById('rds-source');
-        if (badge) badge.textContent = source || 'RDS';
         rdsTrack.classList.add('fade');
         setTimeout(() => {
             rdsTrack.textContent = text;
@@ -453,16 +273,31 @@
         if (rdsInterval) clearInterval(rdsInterval);
         clearRDS();
 
+        const rjInfo = extractRadioJarId(station.streamer);
+
         const doFetch = async () => {
-            if (currentStation?.id !== station.id) return;
-            const result = await fetchMetadata(station);
-            if (result && currentStation?.id === station.id) {
-                setRDS(result.text, result.source);
+            if (currentStation?.id !== station.id) return; // station changed, stop
+            let meta = null;
+
+            if (rjInfo) {
+                meta = await fetchRadioJarMeta(rjInfo.host, rjInfo.id);
             }
+            if (!meta) {
+                const base = extractIcecastBase(station.streamer);
+                if (base) meta = await fetchIcecastMeta(base);
+            }
+            // Strategy 3: Some browsers expose ICY title via MediaSession
+            if (!meta && navigator.mediaSession?.metadata?.title &&
+                navigator.mediaSession.metadata.title !== station.name) {
+                meta = [navigator.mediaSession.metadata.artist, navigator.mediaSession.metadata.title]
+                    .filter(Boolean).join(' — ');
+            }
+
+            if (meta && currentStation?.id === station.id) setRDS(meta);
         };
 
-        doFetch();
-        rdsInterval = setInterval(doFetch, 12000);
+        doFetch(); // immediate first fetch
+        rdsInterval = setInterval(doFetch, 12000); // refresh every 12s
     }
 
     // ── AUDIO ENGINE CORE ──────────────────────────────────────────────
