@@ -233,25 +233,33 @@ function swapEngines() {
 }
 
 // ── Volume via GainNode for smoother control ──
-let audioCtx, gainNode;
+let audioCtx = null, gainNode = null, audioCtxReady = false;
 function initAudioCtx() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    gainNode = audioCtx.createGain();
-    gainNode.connect(audioCtx.destination);
-    engines.forEach(eng => {
-        const src = audioCtx.createMediaElementSource(eng);
-        src.connect(gainNode);
-    });
+    if (audioCtxReady) {
+        if (audioCtx?.state === 'suspended') audioCtx.resume();
+        return;
+    }
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = parseFloat(document.getElementById('vol-slider').value);
+        gainNode.connect(audioCtx.destination);
+        engines.forEach(eng => {
+            const src = audioCtx.createMediaElementSource(eng);
+            src.connect(gainNode);
+        });
+        audioCtxReady = true;
+    } catch(e) {
+        audioCtxReady = false;
+    }
 }
 
 function setVol(v) {
     const f = parseFloat(v);
-    if (gainNode) {
+    if (gainNode && audioCtxReady) {
         gainNode.gain.setTargetAtTime(f, audioCtx.currentTime, 0.05);
-    } else {
-        engines.forEach(e => e.volume = f);
     }
+    engines.forEach(e => e.volume = f);
 }
 
 // ── State ──
@@ -637,9 +645,14 @@ function buildCatBar() {
         ...[...new Set(stations.map(s => s.category))].sort((a,b) => a.localeCompare(b,'el'))
     ];
     const bar = document.getElementById('cat-bar');
-    bar.innerHTML = cats.map(c =>
-        `<div class="cat-chip${c===currentCategory?' active':''}" onclick="setCategory(${JSON.stringify(c)})">${c}</div>`
-    ).join('');
+    bar.innerHTML = '';
+    cats.forEach(c => {
+        const chip = document.createElement('div');
+        chip.className = 'cat-chip' + (c === currentCategory ? ' active' : '');
+        chip.textContent = c;
+        chip.addEventListener('click', () => setCategory(c));
+        bar.appendChild(chip);
+    });
 }
 
 function setCategory(cat) {
