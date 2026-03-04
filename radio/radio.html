@@ -189,7 +189,7 @@ header{
         <span id="rds-text">—</span>
       </div>
     </div>
-    <button id="play-btn">PLAY</button>
+    <button id="play-btn" onclick="togglePlay()">PLAY</button>
     <input type="range" id="volume" min="0" max="1" step="0.02" value="0.7">
   </div>
 </header>
@@ -414,21 +414,28 @@ function playStation(station) {
 
 /* ── TOGGLE PLAY ── */
 function togglePlay() {
-  if (!audio.src || !current) return;
+  if (!current) return;
   if (audio.paused) {
+    // If no src set yet, reload the stream
+    if (!audio.src || audio.src === window.location.href) {
+      audio.src = current.streamer;
+      audio.load();
+    }
+    uiLoading(current.name);
     audio.play()
       .then(function(){
-        playBtn.textContent = 'PAUSE';
-        playerBar.classList.add('playing');
-        nowEl.className = '';
-        nowEl.textContent = current.name;
+        uiPlaying(current.name);
+        startPolling(current);
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
       })
       .catch(function(){});
   } else {
     audio.pause();
+    stopPolling();
     uiStopped();
     nowEl.textContent = current.name;
     nowEl.className = '';
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
   }
 }
 
