@@ -203,11 +203,21 @@ header{
 <script>
 'use strict';
 
-/* ── THE PLAYER ENGINE (from the working simple version) ── */
+/* ── THE PLAYER ENGINE ── */
 const audio = new Audio();
 audio.preload = 'none';
 audio.crossOrigin = 'anonymous';
 audio.volume = 0.7;
+
+/* ── PREFETCH ENGINE ── */
+const prefetchAudio = new Audio();
+prefetchAudio.muted = true;
+
+function warmUpStream(url) {
+  if (!url || prefetchAudio.src === url || audio.src === url) return;
+  prefetchAudio.src = url;
+  prefetchAudio.load(); 
+}
 
 /* ── STATE ── */
 let stations = [];
@@ -287,7 +297,6 @@ function startPolling(station) {
   clearRDS();
   function poll() {
     if (!current || current.name !== station.name || document.hidden) return;
-    // RadioJar metadata
     try {
       var u = new URL(station.streamer);
       if (u.hostname.indexOf('radiojar.com') !== -1) {
@@ -307,7 +316,6 @@ function startPolling(station) {
         }
       }
     } catch(_) {}
-    // MediaSession fallback
     var ms = navigator.mediaSession && navigator.mediaSession.metadata;
     if (ms && ms.title && ms.title !== station.name) {
       setRDS([ms.artist, ms.title].filter(Boolean).join(' — '));
@@ -328,7 +336,7 @@ function setupMediaSession(station) {
   try { navigator.mediaSession.setActionHandler('nexttrack', function(){ prevNext(1); }); } catch(_) {}
 }
 
-/* ── RETRY (from simple version) ── */
+/* ── RETRY ── */
 function stopRetry() {
   clearTimeout(retryTimer);
   retryTimer = null;
@@ -355,12 +363,12 @@ function setCardState(name, cls) {
   });
 }
 
-/* ── AUDIO EVENTS (from simple version) ── */
+/* ── AUDIO EVENTS ── */
 audio.addEventListener('error', scheduleRetry);
 audio.addEventListener('stalled', scheduleRetry);
 audio.addEventListener('ended', scheduleRetry);
 
-/* ── PLAY STATION (simple version engine) ── */
+/* ── PLAY STATION ── */
 function playStation(station) {
   stopRetry();
   stopPolling();
@@ -381,11 +389,20 @@ function playStation(station) {
     .then(function(){
       uiPlaying(station.name);
       startPolling(station);
-      render(); // refresh card highlights
+      render();
+      
+      // Post-play Prefetch: warm up the "Next" station in current view after 2.5s
+      setTimeout(function() {
+        const list = getFilteredList();
+        const idx = list.findIndex(x => x.name === station.name);
+        if (idx !== -1) {
+          const nextS = list[(idx + 1) % list.length];
+          warmUpStream(nextS.streamer);
+        }
+      }, 2500);
     })
     .catch(function(err){
       if (err && err.name === 'NotAllowedError') {
-        // autoplay blocked — just show the name ready to play
         uiStopped();
         nowEl.textContent = station.name;
         nowEl.className = '';
@@ -456,7 +473,6 @@ async function load() {
     stations.sort(function(a,b){ return a.name.localeCompare(b.name,'el'); });
     buildCategories();
     render();
-    // Restore last played (highlight only)
     var last = null;
     try { last = localStorage.getItem('radio_last'); } catch(_) {}
     if (last) {
@@ -526,7 +542,6 @@ function render() {
     return;
   }
 
-  // Group by category
   var groups = {};
   list.forEach(function(s){
     (groups[s.category] = groups[s.category] || []).push(s);
@@ -558,6 +573,10 @@ function appendSection(title, list) {
     card.className = 'card' + (current && current.name === s.name ? ' active' : '');
     card.dataset.name = s.name;
 
+    // PREFETCH LISTENERS
+    card.addEventListener('mouseenter', function() { warmUpStream(s.streamer); });
+    card.addEventListener('touchstart', function() { warmUpStream(s.streamer); }, {passive: true});
+
     var name = document.createElement('span');
     name.className = 'st-name';
     name.textContent = s.name;
@@ -578,7 +597,6 @@ function appendSection(title, list) {
 }
 
 searchEl.oninput = render;
-
 load();
 </script>
 </body>
