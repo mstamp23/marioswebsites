@@ -3,33 +3,13 @@ sudo systemctl set-default graphical.target   
 reboot
 
 
-sudo dnf install -y \
-@xfce-desktop-environment \
-gnome-keyring \
-firefox \
-chromium \
-ffmpeg \
-gstreamer1-plugins-{base,good,bad-free,bad-freeworld,ugly} \
-gstreamer1-libav \
-pulseaudio \
-pulseaudio-utils \
-alsa-plugins-pulseaudio \
-libdvdcss \
-rpmfusion-free-release \
-rpmfusion-nonfree-release \
-vlc \
-wget \
-curl \
-unrar \
-p7zip \
-fonts-freetype \
-fonts-dejavu \
-libvpx \
-libx264 \
-mesa-dri-drivers \
-mesa-vulkan-drivers \
-mesa-libGL \
-mesa-libGLU \
-xorg-x11-drv-{intel,nouveau,vesa} \
-NetworkManager-tui \
-nano
+
+# Enable RPM Fusion repos for codecs
+sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm \
+https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm
+
+# Install Firefox, Mousepad, multimedia codecs, graphics/audio drivers, and clipboard
+sudo dnf install -y firefox mousepad \
+ffmpeg gstreamer1-plugins-{bad-free,good,libav} \
+libva libvdpau mesa-dri-drivers mesa-vdpau-drivers \
+spice-vdagent pulseaudio-utils alsa-utils
