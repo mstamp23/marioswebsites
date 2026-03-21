@@ -40,3 +40,9 @@ sudo apt purge --autoremove -y \
   mintwelcome mintreport \
   gnome-calendar gnome-calculator xreader \
   && sudo apt clean
+
+disable from Autostart
+for f in blueman geoclue-demo-agent nvidia-prime nvidia-settings-autostart onboard-autostart orca-autostart org.gnome.Evolution-alarm-notify print-applet light-locker xiccd; do
+  cp /etc/xdg/autostart/${f}.desktop ~/.config/autostart/
+  echo "Hidden=true" >> ~/.config/autostart/${f}.desktop
+done
