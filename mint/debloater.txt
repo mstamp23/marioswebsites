@@ -17,3 +17,7 @@ for f in blueman geoclue-demo-agent nvidia-prime nvidia-settings-autostart onboa
   cp /etc/xdg/autostart/${f}.desktop ~/.config/autostart/
   echo "Hidden=true" >> ~/.config/autostart/${f}.desktop
 done
+
+Keyboard_shortcut
+f1
+xfce4-terminal --tab
