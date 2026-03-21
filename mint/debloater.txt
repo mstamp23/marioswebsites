@@ -2,35 +2,6 @@ sudo apt purge --autoremove -y \
   celluloid hypnotix rhythmbox \
   libreoffice-core libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer \
   libreoffice-base-core libreoffice-common \
-  gnome-dictionary \
-  zim \
-  evince \
-  nheko \
-  transmission-gtk transmission-common \
-  thunderbird thunderbird-locale-* \
-  webapp-manager \
-  simple-scan \
-  drawing \
-  pix eog xviewer \
-  mintwelcome \
-  mintreport \
-  && sudo apt autoremove --purge -y \
-  && sudo apt clean
-
-sudo apt purge --autoremove -y \
-  gnome-calendar \
-  gnome-calculator \
-  xreader \
-  && sudo apt autoremove --purge -y \
-  && sudo apt clean
-
-sudo apt update && sudo apt upgrade -y && sudo apt autoremove --purge -y && sudo apt clean
-
-or 
-sudo apt purge --autoremove -y \
-  celluloid hypnotix rhythmbox \
-  libreoffice-core libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer \
-  libreoffice-base-core libreoffice-common \
   gnome-dictionary xfce4-dict \
   zim evince nheko \
   transmission-gtk transmission-common \
