@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Archontis Giannakidis — Data Science & Deep Learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f4f1eb;
+    --accent: #c0392b;
+    --accent2: #1a3a5c;
+    --muted: #7a7570;
+    --rule: #ddd8ce;
+    --code-bg: #1a1a2e;
+    --code-text: #7ec8e3;
+    --tag-bg: #e8e2d5;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── GRAIN OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 3rem;
+    background: rgba(244, 241, 235, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .nav-logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5rem 4rem 5rem 5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 2rem;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .hero-title-small {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.2rem, 2.5vw, 2rem);
+    font-weight: 400;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    font-style: italic;
+  }
+
+  .hero-bio {
+    max-width: 480px;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 2.5rem;
+    margin-bottom: 3rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--rule);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--ink);
+  }
+
+  .hero-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 4rem;
+    position: relative;
+  }
+
+  .hero-visual {
+    position: relative;
+    width: 380px;
+    height: 480px;
+  }
+
+  .hero-photo-frame {
+    width: 100%;
+    height: 100%;
+    background: var(--accent2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-photo-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a3a5c 0%, #0a1628 100%);
+  }
+
+  .hero-photo-initials {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 8rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.08);
+    letter-spacing: -0.05em;
+    user-select: none;
+  }
+
+  .hero-photo-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2rem;
+    background: linear-gradient(to top, rgba(10,22,40,0.95) 0%, transparent 100%);
+  }
+
+  .hero-photo-info p {
+    color: rgba(255,255,255,0.9);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+
+  .hero-photo-info p span {
+    color: var(--code-text);
+  }
+
+  .hero-visual-accent {
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    width: 140px;
+    height: 140px;
+    border: 2px solid var(--accent);
+    z-index: -1;
+  }
+
+  .hero-visual-accent2 {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 80px;
+    height: 80px;
+    border: 1px solid var(--rule);
+    z-index: -1;
+  }
+
+  /* ── SECTION COMMON ── */
+  section {
+    padding: 6rem 5rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  /* ── RESEARCH AREAS ── */
+  .research-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .research-card {
+    padding: 2rem;
+    border: 1px solid var(--rule);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+
+  .research-card:hover {
+    border-color: var(--ink);
+    transform: translateY(-3px);
+  }
+
+  .research-card::before {
+    content: attr(data-num);
+    position: absolute;
+    top: -0.5rem;
+    right: 1.5rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 5rem;
+    font-weight: 900;
+    color: rgba(0,0,0,0.04);
+    line-height: 1;
+  }
+
+  .research-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--ink);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .research-icon svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    stroke: var(--paper);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .research-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .research-card p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* ── PUBLICATIONS ── */
+  #publications {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  #publications .section-num { color: var(--code-text); }
+  #publications h2 { color: var(--paper); }
+
+  .pub-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+  }
+
+  .filter-btn {
+    padding: 0.4rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--code-text);
+    border-color: var(--code-text);
+    color: var(--ink);
+  }
+
+  .pub-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pub-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    align-items: start;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.2s;
+  }
+
+  .pub-item:hover { background: rgba(255,255,255,0.02); }
+  .pub-item:last-child { border-bottom: none; }
+
+  .pub-year {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--code-text);
+    padding-top: 0.25rem;
+    min-width: 2.5rem;
+  }
+
+  .pub-content { flex: 1; }
+
+  .pub-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--paper);
+    margin-bottom: 0.35rem;
+    line-height: 1.4;
+  }
+
+  .pub-authors {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+
+  .pub-journal {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.05em;
+  }
+
+  .pub-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+  }
+
+  .pub-tag {
+    padding: 0.2rem 0.6rem;
+    background: rgba(126,200,227,0.12);
+    border: 1px solid rgba(126,200,227,0.25);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: var(--code-text);
+    text-transform: uppercase;
+  }
+
+  .pub-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: flex-end;
+    min-width: 80px;
+  }
+
+  /* ── CODE SNIPPET SECTION ── */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 0;
+    padding: 2rem;
+    overflow-x: auto;
+    position: relative;
+    border-left: 3px solid var(--code-text);
+    margin-top: 1rem;
+  }
+
+  .code-block::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(126,200,227,0.5);
+  }
+
+  .code-block pre {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #abb2bf;
+    white-space: pre;
+    margin: 0;
+  }
+
+  .code-block .kw { color: #c678dd; }
+  .code-block .fn { color: #61afef; }
+  .code-block .str { color: #98c379; }
+  .code-block .cm { color: #5c6370; font-style: italic; }
+  .code-block .num { color: #d19a66; }
+  .code-block .cls { color: #e5c07b; }
+
+  .copy-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 4rem;
+    padding: 0.25rem 0.6rem;
+    background: rgba(126,200,227,0.1);
+    border: 1px solid rgba(126,200,227,0.2);
+    color: var(--code-text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover {
+    background: rgba(126,200,227,0.2);
+  }
+
+  /* ── CODE + PUBS SECTION ── */
+  #code {
+    background: #13131f;
+    color: var(--paper);
+    padding: 6rem 5rem;
+    border-top: none;
+  }
+
+  #code .section-num { color: #98c379; }
+  #code h2 { color: var(--paper); }
+
+  .code-pub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .code-pub-card {
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 2rem;
+  }
+
+  .code-pub-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    color: var(--paper);
+    margin-bottom: 0.5rem;
+  }
+
+  .code-pub-card p {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+  }
+
+  .gh-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #98c379;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(152,195,121,0.3);
+    padding-bottom: 0.1rem;
+    transition: border-color 0.2s;
+  }
+
+  .gh-link:hover { border-color: #98c379; }
+
+  /* ── CAREER ── */
+  .timeline {
+    position: relative;
+    padding-left: 2.5rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    bottom: 0;
+    width: 1px;
+    background: var(--rule);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 2.5rem;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2.5rem;
+    top: 0.55rem;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translateX(-3.5px);
+  }
+
+  .timeline-period {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .timeline-role {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+  }
+
+  .timeline-org {
+    font-size: 0.88rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 520px;
+  }
+
+  /* ── CONTACT ── */
+  #contact {
+    background: var(--accent2);
+    color: white;
+  }
+
+  #contact .section-num { color: var(--code-text); }
+  #contact h2 { color: white; }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .contact-info p {
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+  }
+
+  .contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .contact-detail {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .contact-detail-icon {
+    width: 2rem;
+    height: 2rem;
+    background: rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .contact-detail-icon svg {
+    width: 1rem;
+    height: 1rem;
+    stroke: var(--code-text);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .contact-detail-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.05em;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .ext-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.5rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    text-decoration: none;
+    transition: all 0.2s;
+    color: white;
+  }
+
+  .ext-link:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.3);
+  }
+
+  .ext-link-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .ext-link-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+  }
+
+  .ext-link-arrow {
+    font-size: 1rem;
+    color: var(--code-text);
+    transition: transform 0.2s;
+  }
+
+  .ext-link:hover .ext-link-arrow { transform: translateX(4px); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 2rem 5rem;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-eyebrow { animation: fadeInUp 0.6s ease 0.1s both; }
+  h1 { animation: fadeInUp 0.6s ease 0.2s both; }
+  .hero-title-small { animation: fadeInUp 0.6s ease 0.3s both; }
+  .hero-bio { animation: fadeInUp 0.6s ease 0.4s both; }
+  .hero-stats { animation: fadeInUp 0.6s ease 0.5s both; }
+  .hero-cta { animation: fadeInUp 0.6s ease 0.6s both; }
+  .hero-right { animation: fadeInUp 0.7s ease 0.4s both; }
+
+  /* ── HIDDEN PUBS (filter) ── */
+  .pub-item.hidden { display: none; }
+
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1.5rem; }
+    .hero { grid-template-columns: 1fr; padding-top: 6rem; }
+    .hero-left { padding: 3rem 1.5rem; }
+    .hero-right { display: none; }
+    section { padding: 4rem 1.5rem; }
+    #publications, #code, #contact { padding: 4rem 1.5rem; }
+    .contact-grid, .code-pub-grid { grid-template-columns: 1fr; gap: 2rem; }
+    footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">A. Giannakidis</span>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#research">Research</a></li>
+    <li><a href="#publications">Publications</a></li>
+    <li><a href="#code">Code</a></li>
+    <li><a href="#career">Career</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="about" style="border:none; padding:0;">
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Assistant Professor · NTU Nottingham</div>
+      <h1>Archontis<br>Giannakidis</h1>
+      <p class="hero-title-small">Data Science & Deep Learning</p>
+      <p class="hero-bio">Working on the mathematical foundations of machine learning with a special focus on Responsible AI. Research spans intelligent processing of biomedical data, Cardiovascular MRI analysis, and learning efficient data representations from complex systems.</p>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-num">47+</div>
+          <div class="stat-label">Publications</div>
+        </div>
+        <div>
+          <div class="stat-num">457+</div>
+          <div class="stat-label">Citations</div>
+        </div>
+        <div>
+          <div class="stat-num">15+</div>
+          <div class="stat-label">Years Research</div>
+        </div>
+        <div>
+          <div class="stat-num">1</div>
+          <div class="stat-label">Int. Patent</div>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <a href="#publications" class="btn btn-primary">View Publications →</a>
+        <a href="#contact" class="btn btn-outline">Get in Touch</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-visual">
+        <div class="hero-photo-frame">
+          <div class="hero-photo-initials">AG</div>
+          <div class="hero-photo-info">
+            <p>School of Science &amp; Technology</p>
+            <p>Nottingham Trent University</p>
+            <p><span>▸</span> Deep Learning · Responsible AI</p>
+            <p><span>▸</span> Cardiac MRI Analysis</p>
+            <p><span>▸</span> Computer Vision</p>
+          </div>
+        </div>
+        <div class="hero-visual-accent"></div>
+        <div class="hero-visual-accent2"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESEARCH AREAS -->
+<section id="research">
+  <div class="section-header">
+    <span class="section-num">01 — Research Areas</span>
+    <h2>Areas of Focus</h2>
+  </div>
+  <div class="research-grid">
+    <div class="research-card" data-num="01">
+      <div class="research-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>Responsible AI</h3>
+      <p>Mathematical underpinnings of fairness, accountability and transparency in machine learning systems. Reviewer and panel member for Portuguese FCT Scientific Research calls on AI, Data Science and Cybersecurity.</p>
+    </div>
+    <div class="research-card" data-num="02">
+      <div class="research-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h3>AI for Health</h3>
+      <p>Deep learning for cardiovascular MRI analysis, right ventricular quantification using 2D echocardiography, ACL tear diagnosis, aortic distensibility. International patent co-inventor for RV analysis technique.</p>
+    </div>
+    <div class="research-card" data-num="03">
+      <div class="research-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 12h3m14 0h3M12 2v3m0 14v3"/></svg>
+      </div>
+      <h3>Machine Learning Foundations</h3>
+      <p>Learning efficient data representations, revealing hidden patterns, optimising decision-making under uncertainty. Member of the Alan Turing Institute "Machine Learning and Dynamical Systems" SIG.</p>
+    </div>
+    <div class="research-card" data-num="04">
+      <div class="research-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+      </div>
+      <h3>Computer Vision</h3>
+      <p>Diffusion tensor imaging, cardiac microstructure analysis, automated image segmentation using multi-scale 3D convolutional neural networks. Applications in radiology and clinical diagnostics.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PUBLICATIONS -->
+<section id="publications" style="padding:6rem 5rem;">
+  <div class="section-header">
+    <span class="section-num">02 — Publications</span>
+    <h2>Selected Works</h2>
+  </div>
+
+  <div class="pub-filters">
+    <button class="filter-btn active" onclick="filterPubs('all', this)">All</button>
+    <button class="filter-btn" onclick="filterPubs('deep-learning', this)">Deep Learning</button>
+    <button class="filter-btn" onclick="filterPubs('cardiac', this)">Cardiac MRI</button>
+    <button class="filter-btn" onclick="filterPubs('mri', this)">MRI Analysis</button>
+    <button class="filter-btn" onclick="filterPubs('responsible-ai', this)">Responsible AI</button>
+  </div>
+
+  <div class="pub-list">
+
+    <div class="pub-item" data-tags="deep-learning mri">
+      <div class="pub-year">2024</div>
+      <div class="pub-content">
+        <div class="pub-title">Economical Hybrid Novelty Detection Leveraging Global Aleatoric Semantic Uncertainty for Enhanced MRI-Based ACL Tear Diagnosis</div>
+        <div class="pub-authors">Siouras A., Moustakidis S., Chalatsis G., Bohoran T.A., Hantes M., Vlychou M., Tasoulis S., Giannakidis A., Tsaopoulos D.</div>
+        <div class="pub-journal">Computer Methods and Programs in Biomedicine · Vol. 117, 102424</div>
+        <div class="pub-tags">
+          <span class="pub-tag">novelty detection</span>
+          <span class="pub-tag">MRI</span>
+          <span class="pub-tag">deep learning</span>
+        </div>
+      </div>
+      <div class="pub-actions">
+        <a href="https://doi.org/10.1016/j.compmedimag.2024.102424" target="_blank" class="btn btn-outline" style="font-size:0.62rem; padding:0.4rem 0.8rem; color:var(--paper); border-color:rgba(255,255,255,0.2);">DOI →</a>
+      </div>
+    </div>
+
+    <div class="pub-item" data-tags="deep-learning cardiac">
+      <div class="pub-year">2024</div>
+      <div class="pub-content">
+        <div class="pub-title">An Attention-Based Deep Learning Method for Right Ventricular Quantification Using 2D Echocardiography: Feasibility and Accuracy</div>
+        <div class="pub-authors">Kampaktsis P.N., Bohoran T.A., Lebehn M., McLaughlin L., Leb J., Liu Z., Moustakidis S., Siouras A., Singh A., Hahn R.T., McCann G.P., Giannakidis A.</div>
+        <div class="pub-journal">Journal of the American Society of Echocardiography · PMID: 38126261</div>
+        <div class="pub-tags">
+          <span class="pub-tag">attention</span>
+          <span class="pub-tag">echocardiography</span>
+          <span class="pub-tag">cardiac</span>
+        </div>
+      </div>
+      <div class="pub-actions">
+        <a href="https://pubmed.ncbi.nlm.nih.gov/38126261/" target="_blank" class="btn btn-outline" style="font-size:0.62rem; padding:0.4rem 0.8rem; color:var(--paper); border-color:rgba(255,255,255,0.2);">PubMed →</a>
+      </div>
+    </div>
+
+    <div class="pub-item" data-tags="deep-learning cardiac mri">
+      <div class="pub-year">2023</div>
+      <div class="pub-content">
+        <div class="pub-title">Resource Efficient Aortic Distensibility Calculation by End-to-End Spatiotemporal Learning of Aortic Lumen from Multicentre Multivendor Multidisease CMR Images</div>
+        <div class="pub-authors">Bohoran T.A., Parke K., Graham-Brown M.P.M., Meisuria M., Singh A., Wormleighton J., Adlam D., Davies M.J., McCann G.P., Giannakidis A.</div>
+        <div class="pub-journal">Scientific Reports (Nature) · December 2023</div>
+        <div class="pub-tags">
+          <span class="pub-tag">ConvLSTM</span>
+          <span class="pub-tag">aorta</span>
+          <span class="pub-tag">green AI</span>
+        </div>
+      </div>
+      <div class="pub-actions">
+        <a href="https://doi.org/10.1038/s41598-023-48986-6" target="_blank" class="btn btn-outline" style="font-size:0.62rem; padding:0.4rem 0.8rem; color:var(--paper); border-color:rgba(255,255,255,0.2);">DOI →</a>
+      </div>
+    </div>
+
+    <div class="pub-item" data-tags="deep-learning mri">
+      <div class="pub-year">2022</div>
+      <div class="pub-content">
+        <div class="pub-title">Knee Injury Detection Using Deep Learning on MRI Studies: A Systematic Review</div>
+        <div class="pub-authors">Siouras A., Moustakidis S., Giannakidis A., Chalatsis G., Liampas I., Vlychou M., Hantes M., Tasoulis S., Tsaopoulos D.</div>
+        <div class="pub-journal">Diagnostics · Vol. 12(2), p.537</div>
+        <div class="pub-tags">
+          <span class="pub-tag">systematic review</span>
+          <span class="pub-tag">knee MRI</span>
+          <span class="pub-tag">ACL</span>
+        </div>
+      </div>
+      <div class="pub-actions">
+        <a href="https://doi.org/10.3390/diagnostics12020537" target="_blank" class="btn btn-outline" style="font-size:0.62rem; padding:0.4rem 0.8rem; color:var(--paper); border-color:rgba(255,255,255,0.2);">DOI →</a>
+      </div>
+    </div>
+
+    <div class="pub-item" data-tags="cardiac mri">
+      <div class="pub-year">2020</div>
+      <div class="pub-content">
+        <div class="pub-title">3D Late Gadolinium Enhancement Cardiovascular Magnetic Resonance Predicts Inducibility of Ventricular Tachycardia in Adults with Repaired Tetralogy of Fallot</div>
+        <div class="pub-authors">Ghonim S., Ernst S., Keegan J., Giannakidis A., Spadotto V., Voges I., Smith G.C., Boutsikou M., Montanaro C., Wong T., et al.</div>
+        <div class="pub-journal">Circulation: Arrhythmia and Electrophysiology · Vol. 13(11):8321</div>
+        <div class="pub-tags">
+          <span class="pub-tag">late gadolinium</span>
+          <span class="pub-tag">congenital heart</span>
+          <span class="pub-tag">CMR</span>
+        </div>
+      </div>
+      <div class="pub-actions">
+        <a href="#" class="btn btn-outline" style="font-size:0.62rem; padding:0.4rem 0.8rem; color:var(--paper); border-color:rgba(255,255,255,0.2);">View →</a>
+      </div>
+    </div>
+
+    <div class="pub-item" data-tags="mri cardiac">
+      <div class="pub-year">2016</div>
+      <div class="pub-content">
+        <div class="pub-title">On the Averaging of Cardiac Diffusion Tensor MRI Data: The Effect of Distance Function Selection</div>
+        <div class="pub-authors">Giannakidis A., Melkus G., Yang G., Gullberg G.T.</div>
+        <div class="pub-journal">Physics in Medicine and Biology · Vol. 61(21), 7765–7786</div>
+        <div class="pub-tags">
+          <span class="pub-tag">diffusion tensor</span>
+          <span class="pub-tag">cardiac MRI</span>
+          <span class="pub-tag">tensor averaging</span>
+        </div>
+      </div>
+      <div class="pub-actions">
+        <a href="https://pubmed.ncbi.nlm.nih.gov/27754986/" target="_blank" class="btn btn-outline" style="font-size:0.62rem; padding:0.4rem 0.8rem; color:var(--paper); border-color:rgba(255,255,255,0.2);">PubMed →</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:3rem; padding-top:2rem; border-top:1px solid rgba(255,255,255,0.08); display:flex; gap:1rem; flex-wrap:wrap;">
+    <a href="https://scholar.google.com/citations?user=uijTN6cAAAAJ&hl=en" target="_blank" class="btn btn-outline" style="color:var(--paper); border-color:rgba(255,255,255,0.2);">Google Scholar →</a>
+    <a href="https://www.researchgate.net/profile/Archontis-Giannakidis" target="_blank" class="btn btn-outline" style="color:var(--paper); border-color:rgba(255,255,255,0.2);">ResearchGate →</a>
+    <a href="https://dblp.uni-trier.de/pid/72/8232.html" target="_blank" class="btn btn-outline" style="color:var(--paper); border-color:rgba(255,255,255,0.2);">DBLP →</a>
+  </div>
+</section>
+
+<!-- CODE FOR PUBLICATIONS -->
+<section id="code" style="border:none;">
+  <div class="section-header">
+    <span class="section-num">03 — Code</span>
+    <h2>Code & Repositories</h2>
+  </div>
+
+  <p style="color:rgba(255,255,255,0.5); font-size:0.9rem; max-width:580px; margin-bottom:3rem; line-height:1.8;">
+    Selected code, implementations and research notebooks associated with published work. Each card links to the relevant repository or supplementary material.
+  </p>
+
+  <div class="code-pub-grid">
+
+    <div class="code-pub-card">
+      <h3>Attention-Based RV Quantification</h3>
+      <p>Deep learning pipeline for right ventricular volume estimation from 2D echocardiography using attention mechanisms. Associated with JASE 2024 paper.</p>
+      <div class="code-block" data-lang="Python">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cm"># Attention-based RV Quantifier (2DE)</span>
+<span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+<span class="kw">class</span> <span class="cls">RVAttentionNet</span>(nn.<span class="cls">Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, in_ch=<span class="num">1</span>, base=<span class="num">32</span>):
+        <span class="fn">super</span>().__init__()
+        self.encoder = <span class="cls">UNetEncoder</span>(in_ch, base)
+        self.attn    = <span class="cls">SpatialAttention</span>(base*<span class="num">8</span>)
+        self.head    = nn.<span class="cls">Linear</span>(base*<span class="num">8</span>, <span class="num">2</span>)
+    
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        feats = self.<span class="fn">encoder</span>(x)
+        feats = self.<span class="fn">attn</span>(feats)
+        <span class="kw">return</span> self.<span class="fn">head</span>(feats.<span class="fn">mean</span>(dim=[<span class="num">2</span>,<span class="num">3</span>]))</pre>
+      </div>
+      <br>
+      <a href="https://github.com/archontis-giannakidis" target="_blank" class="gh-link">
+        ⌥ View on GitHub
+      </a>
+    </div>
+
+    <div class="code-pub-card">
+      <h3>Aortic Distensibility — ConvLSTM U-Net</h3>
+      <p>Bi-directional ConvLSTM U-Net with dense connections for end-to-end spatiotemporal aortic lumen segmentation. Scientific Reports 2023.</p>
+      <div class="code-block" data-lang="Python">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cm"># Bi-directional ConvLSTM U-Net</span>
+<span class="kw">class</span> <span class="cls">BidirConvLSTMUNet</span>(nn.<span class="cls">Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, T=<span class="num">30</span>, ch=<span class="num">1</span>):
+        <span class="fn">super</span>().__init__()
+        self.lstm_fwd = <span class="cls">ConvLSTM</span>(ch, <span class="num">64</span>, direction=<span class="str">'fwd'</span>)
+        self.lstm_bwd = <span class="cls">ConvLSTM</span>(ch, <span class="num">64</span>, direction=<span class="str">'bwd'</span>)
+        self.decoder  = <span class="cls">DenseDecoder</span>(<span class="num">128</span>)
+    
+    <span class="kw">def</span> <span class="fn">forward</span>(self, video):
+        <span class="cm"># video: (B, T, C, H, W)</span>
+        h_f = self.<span class="fn">lstm_fwd</span>(video)
+        h_b = self.<span class="fn">lstm_bwd</span>(video.<span class="fn">flip</span>(<span class="num">1</span>))
+        h   = torch.<span class="fn">cat</span>([h_f, h_b], dim=<span class="num">2</span>)
+        <span class="kw">return</span> self.<span class="fn">decoder</span>(h)</pre>
+      </div>
+      <br>
+      <a href="https://doi.org/10.1038/s41598-023-48986-6" target="_blank" class="gh-link">
+        ⌥ Scientific Reports Paper
+      </a>
+    </div>
+
+    <div class="code-pub-card">
+      <h3>ACL Hybrid Novelty Detection</h3>
+      <p>Reformulates ACL tear classification as novelty detection using aleatoric uncertainty to tackle class imbalance in MRI datasets. CMIG 2024.</p>
+      <div class="code-block" data-lang="Python">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cm"># Aleatoric Uncertainty Novelty Score</span>
+<span class="kw">def</span> <span class="fn">compute_novelty_score</span>(logits, T=<span class="num">50</span>):
+    <span class="cm">"""MC Dropout uncertainty estimate."""</span>
+    preds = torch.<span class="fn">stack</span>([
+        <span class="fn">dropout_forward</span>(logits) 
+        <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(T)
+    ])  <span class="cm"># (T, B, C)</span>
+    mean   = preds.<span class="fn">mean</span>(<span class="num">0</span>)
+    aleat  = -(mean * mean.<span class="fn">log</span>()).<span class="fn">sum</span>(-<span class="num">1</span>)
+    <span class="kw">return</span> aleat  <span class="cm"># higher = more novel</span></pre>
+      </div>
+      <br>
+      <a href="https://doi.org/10.1016/j.compmedimag.2024.102424" target="_blank" class="gh-link">
+        ⌥ CMIG Paper
+      </a>
+    </div>
+
+    <div class="code-pub-card">
+      <h3>Fast-Track ResNet for Arrhythmia</h3>
+      <p>Leverages dynamical systems theory to accelerate deep residual network training for ECG arrhythmia classification. SITIS 2023.</p>
+      <div class="code-block" data-lang="Python">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cm"># Dynamical Systems-Informed LR Schedule</span>
+<span class="kw">class</span> <span class="cls">LyapunovScheduler</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, opt, lambda_max=<span class="num">1.5</span>):
+        self.opt = opt
+        self.lam = lambda_max
+    
+    <span class="kw">def</span> <span class="fn">step</span>(self, loss_grad_norm):
+        <span class="cm"># Adapt lr to Lyapunov exponent estimate</span>
+        lr = <span class="num">1.0</span> / (self.lam * loss_grad_norm + <span class="num">1e-8</span>)
+        <span class="kw">for</span> g <span class="kw">in</span> self.opt.param_groups:
+            g[<span class="str">'lr'</span>] = lr.<span class="fn">clamp</span>(<span class="num">1e-5</span>, <span class="num">0.01</span>)
+        self.opt.<span class="fn">step</span>()</pre>
+      </div>
+      <br>
+      <a href="https://dblp.uni-trier.de/pid/72/8232.html" target="_blank" class="gh-link">
+        ⌥ DBLP Entry
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- CAREER -->
+<section id="career">
+  <div class="section-header">
+    <span class="section-num">04 — Career</span>
+    <h2>Experience & Education</h2>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:4rem;">
+    <div>
+      <h3 style="font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:2rem;">Positions</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-period">2019 – Present</div>
+          <div class="timeline-role">Assistant Professor in Data Science</div>
+          <div class="timeline-org">Nottingham Trent University, UK</div>
+          <div class="timeline-desc">Module Leader for Discrete Mathematics & Computational Complexity and Convex Optimisation. Supervises undergraduate, Masters and PhD candidates.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-period">2017 – 2019</div>
+          <div class="timeline-role">Postdoctoral Researcher</div>
+          <div class="timeline-org">National Heart & Lung Institute, Imperial College London</div>
+          <div class="timeline-desc">Cardiovascular MRI analysis, deep learning for cardiac segmentation, and diffusion tensor imaging.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-period">2013 – 2017</div>
+          <div class="timeline-role">Cardiac MR Image Analysis Scientist</div>
+          <div class="timeline-org">Royal Brompton Hospital, London</div>
+          <div class="timeline-desc">Clinical cardiac MRI analysis and algorithm development for automated cardiac quantification.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-period">2010 – 2013</div>
+          <div class="timeline-role">Postdoctoral Fellow</div>
+          <div class="timeline-org">Lawrence Berkeley National Laboratory, CA, USA</div>
+          <div class="timeline-desc">Life Sciences Division. Funded by the US Department of Energy.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:2rem;">Education & Affiliations</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-period">2006 – 2010</div>
+          <div class="timeline-role">PhD, Electronic Engineering</div>
+          <div class="timeline-org">University of Surrey, Guildford, UK</div>
+          <div class="timeline-desc">Subject area: Inverse Problems. Supervised by Prof. Maria Petrou.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-period">BSc</div>
+          <div class="timeline-role">Electrical & Computer Engineering</div>
+          <div class="timeline-org">Aristotle University of Thessaloniki, Greece</div>
+          <div class="timeline-desc"></div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-period">Ongoing</div>
+          <div class="timeline-role">Member — Alan Turing Institute</div>
+          <div class="timeline-org">SIG: Machine Learning & Dynamical Systems</div>
+          <div class="timeline-desc"></div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-period">Ongoing</div>
+          <div class="timeline-role">Editorial Board Member</div>
+          <div class="timeline-org">Frontiers in Physiology (2nd most cited Physiology journal)</div>
+          <div class="timeline-desc">Regular reviewer: IEEE Trans. Medical Imaging, Physics in Medicine & Biology, J. Cardiovascular Magnetic Resonance.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" style="border:none; padding:6rem 5rem;">
+  <div class="section-header">
+    <span class="section-num">05 — Contact</span>
+    <h2>Get in Touch</h2>
+  </div>
+
+  <div class="contact-grid">
+    <div class="contact-info">
+      <p>Open to collaborations in deep learning for medical imaging, Responsible AI, and data science research. Available for PhD supervision in the above areas.</p>
+      <div class="contact-details">
+        <div class="contact-detail">
+          <div class="contact-detail-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <span class="contact-detail-text">archontis.giannakidis@ntu.ac.uk</span>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon">
+            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18H5a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          </div>
+          <span class="contact-detail-text">+44 (0)115 84 83968</span>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <span class="contact-detail-text">School of Science & Technology, NTU, Nottingham</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-links">
+      <a href="https://www.ntu.ac.uk/staff-profiles/science-technology/archontis-giannakidis" target="_blank" class="ext-link">
+        <div>
+          <div class="ext-link-label">University Profile</div>
+          <div class="ext-link-name">NTU Staff Page</div>
+        </div>
+        <span class="ext-link-arrow">→</span>
+      </a>
+      <a href="https://scholar.google.com/citations?user=uijTN6cAAAAJ&hl=en" target="_blank" class="ext-link">
+        <div>
+          <div class="ext-link-label">Academic Citations</div>
+          <div class="ext-link-name">Google Scholar</div>
+        </div>
+        <span class="ext-link-arrow">→</span>
+      </a>
+      <a href="https://www.researchgate.net/profile/Archontis-Giannakidis" target="_blank" class="ext-link">
+        <div>
+          <div class="ext-link-label">Research Network</div>
+          <div class="ext-link-name">ResearchGate</div>
+        </div>
+        <span class="ext-link-arrow">→</span>
+      </a>
+      <a href="https://archimedesai.gr/en/researchers/archontis-giannakidis" target="_blank" class="ext-link">
+        <div>
+          <div class="ext-link-label">EU Research Unit</div>
+          <div class="ext-link-name">Archimedes AI</div>
+        </div>
+        <span class="ext-link-arrow">→</span>
+      </a>
+      <a href="https://www.linkedin.com/in/archontis-giannakidis-64297331/" target="_blank" class="ext-link">
+        <div>
+          <div class="ext-link-label">Professional Network</div>
+          <div class="ext-link-name">LinkedIn</div>
+        </div>
+        <span class="ext-link-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Archontis Giannakidis · Nottingham Trent University</p>
+  <p>Data Science · Deep Learning · Responsible AI</p>
+</footer>
+
+<script>
+function filterPubs(tag, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.pub-item').forEach(item => {
+    if (tag === 'all') {
+      item.classList.remove('hidden');
+    } else {
+      const tags = item.getAttribute('data-tags') || '';
+      item.classList.toggle('hidden', !tags.includes(tag));
+    }
+  });
+}
+
+function copyCode(btn) {
+  const pre = btn.nextElementSibling;
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+</script>
+</body>
+</html>
