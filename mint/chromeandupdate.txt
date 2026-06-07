@@ -6,7 +6,7 @@ sudo apt update
 sudo apt full-upgrade -y
 sudo apt autoremove -y
 sudo apt autoclean
-read -rp "Press Enter to close..."
+read -rp "Press Enter to close..." < /dev/tty
 
 chmod +x /home/m/update.sh
 
