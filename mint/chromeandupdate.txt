@@ -25,3 +25,8 @@ Type=Application
 Categories=System;
 EOF
 chmod +x ~/Desktop/update.desktop
+
+
+sudo add-apt-repository ppa:phoerious/keepassxc
+sudo apt update
+sudo apt install keepassxc
