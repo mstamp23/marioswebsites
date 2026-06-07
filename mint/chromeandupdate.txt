@@ -12,3 +12,16 @@ chmod +x /home/m/update.sh
 
 sudo visudo
 m ALL=(ALL) NOPASSWD: /usr/bin/apt
+
+cat > ~/Desktop/update.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Name=System Update
+Comment=Run system update script
+Exec=xfce4-terminal -e "bash -c '/home/m/update.sh'"
+Icon=system-software-update
+Terminal=false
+Type=Application
+Categories=System;
+EOF
+chmod +x ~/Desktop/update.desktop
