@@ -30,3 +30,5 @@ chmod +x ~/Desktop/update.desktop
 sudo add-apt-repository ppa:phoerious/keepassxc
 sudo apt update
 sudo apt install keepassxc
+
+wget -qO /tmp/viber.deb https://download.viber.com/desktop/Linux/viber.deb && sudo apt install -y /tmp/viber.deb
