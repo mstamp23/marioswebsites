@@ -1,6 +1,14 @@
 wget -qO /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt install -y /tmp/chrome.deb
 
+
+#!/bin/bash
 sudo apt update
 sudo apt full-upgrade -y
 sudo apt autoremove -y
 sudo apt autoclean
+read -rp "Press Enter to close..."
+
+chmod +x /home/m/update.sh
+
+sudo visudo
+m ALL=(ALL) NOPASSWD: /usr/bin/apt
