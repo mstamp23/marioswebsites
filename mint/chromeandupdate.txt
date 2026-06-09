@@ -11,7 +11,8 @@ read -rp "Press Enter to close..." < /dev/tty
 chmod +x /home/m/update.sh
 
 sudo visudo
-m ALL=(ALL) NOPASSWD: /usr/bin/apt
+m ALL=(ALL) NOPASSWD: /usr/local/bin/apt
+
 
 cat > ~/Desktop/update.desktop << 'EOF'
 [Desktop Entry]
