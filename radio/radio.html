@@ -7,6 +7,8 @@
 
 <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/mstamp23/marioswebsites/main/radio/radio-icon.jpg">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -135,6 +137,7 @@ header{
 }
 .cat:hover{color:var(--text);border-color:#333}
 .cat.active{background:var(--accent-dim);color:#fff;border-color:var(--accent)}
+.cat-count{opacity:.6;font-size:0.62rem;margin-left:3px}
 
 /* ── CONTENT ── */
 #content{flex:1;overflow-y:auto;padding:10px}
@@ -156,6 +159,10 @@ header{
   padding:9px 10px;border-radius:5px;
   display:flex;justify-content:space-between;align-items:center;
   cursor:pointer;transition:border-color .15s,background .15s;
+  /* Perf: skip layout/paint work for cards scrolled off screen.
+     Each card is small & uniform so a fixed intrinsic size is safe. */
+  content-visibility:auto;
+  contain-intrinsic-size:auto 38px;
 }
 .card:hover{border-color:var(--border2);background:var(--surface2)}
 .card.active{border-color:var(--accent)!important;background:#160f2a!important}
@@ -168,10 +175,27 @@ header{
 .fav:hover{color:#666}
 .fav.on{color:var(--fav)}
 
+/* ── SKELETON (shown instantly while first paint happens) ── */
+.skel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.skel-card{height:38px;border-radius:5px;background:var(--surface);
+  background-image:linear-gradient(90deg,var(--surface) 0%,var(--surface2) 50%,var(--surface) 100%);
+  background-size:200% 100%;animation:shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── LOAD-MORE SENTINEL (infinite scroll trigger, invisible) ── */
+.sentinel{height:1px}
+
 #hint{
   position:fixed;bottom:5px;right:10px;
   font-family:'IBM Plex Mono',monospace;font-size:0.5rem;color:#252525;
   pointer-events:none;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .card.retrying{animation:none;opacity:.6}
+  .player.playing::before{animation:none}
+  .skel-card{animation:none}
 }
 </style>
 </head>
@@ -198,7 +222,15 @@ header{
 </header>
 
 <div id="catbar"></div>
-<div id="content"></div>
+<div id="content">
+  <!-- Skeleton shown immediately so the page never looks "blank" while JSON loads -->
+  <div class="skel-grid" id="skeleton">
+    <div class="skel-card"></div><div class="skel-card"></div><div class="skel-card"></div>
+    <div class="skel-card"></div><div class="skel-card"></div><div class="skel-card"></div>
+    <div class="skel-card"></div><div class="skel-card"></div><div class="skel-card"></div>
+    <div class="skel-card"></div><div class="skel-card"></div><div class="skel-card"></div>
+  </div>
+</div>
 
 <div id="toast"></div>
 <div id="hint">SPACE · ← →</div>
@@ -219,7 +251,7 @@ prefetchAudio.muted = true;
 function warmUpStream(url) {
   if (!url || prefetchAudio.src === url || audio.src === url) return;
   prefetchAudio.src = url;
-  prefetchAudio.load(); 
+  prefetchAudio.load();
 }
 
 /* ── STATE ── */
@@ -230,6 +262,14 @@ let favorites = [];
 let retry = 0;
 let retryTimer = null;
 let rdsTimer = null;
+
+/* Infinite-scroll render state: how many cards per visible category
+   are actually in the DOM right now. Rendering 1000+ cards at once
+   is the single biggest perf cost in this app - this caps first paint
+   to a fixed, cheap amount of DOM work no matter how big the library gets. */
+const PAGE_SIZE = 120;
+let renderBudget = {};      // { categoryTitle: numberOfCardsRendered }
+let io = null;              // shared IntersectionObserver for "load more" sentinels
 
 try { favorites = JSON.parse(localStorage.getItem('radio_favs') || '[]'); } catch(_) {}
 
@@ -392,8 +432,11 @@ function playStation(station) {
     .then(function(){
       uiPlaying(station.name);
       startPolling(station);
-      render();
-      
+      // NOTE: no render() here on purpose. updateActiveUI() above already
+      // highlights the right card. A full render() rebuilds #content's
+      // innerHTML, which resets scrollTop to 0 as a side effect - that
+      // was causing the page to jump to the top every time you hit play.
+
       // Post-play Prefetch: warm up the "Next" station in current view after 2.5s
       setTimeout(function() {
         const list = getFilteredList();
@@ -474,46 +517,98 @@ document.addEventListener('visibilitychange', function(){
 /* ── VOLUME ── */
 volEl.oninput = function(){ audio.volume = parseFloat(this.value); };
 
-/* ── LOAD DATA ── */
+/* ── LOAD DATA (stale-while-revalidate) ──
+   1. If we have a cached copy from last visit, render it INSTANTLY
+      (no network wait at all) so the app feels immediate on repeat visits.
+   2. Then fetch the live JSON in the background and re-render only if
+      the data actually changed (cheap length+hash check). */
+const CACHE_KEY = 'radio_stations_cache_v1';
+
 async function load() {
+  let usedCache = false;
+
   try {
-    var r = await fetch('./greek_stations.json');
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      applyStationData(JSON.parse(cached));
+      usedCache = true;
+    }
+  } catch(_) {}
+
+  try {
+    var r = await fetch('./greek_stations.json', { cache: 'no-cache' });
     var raw = await r.json();
-    stations = raw.map(function(s){ return { name:(s.name||'').trim(), streamer:(s.streamer||'').trim(), category:(s.category||'Άλλα').trim() }; });
-    stations.sort(function(a,b){ return a.name.localeCompare(b.name,'el'); });
-    buildCategories();
-    render();
-    var last = null;
-    try { last = localStorage.getItem('radio_last'); } catch(_) {}
-    if (last) {
-      var s = stations.find(function(x){ return x.name === last; });
-      if (s) { current = s; nowEl.textContent = s.name; updateActiveUI(s.name); }
+
+    // Only touch the DOM again if the fresh data differs from what we
+    // already rendered from cache - avoids a pointless re-render.
+    var freshStr = JSON.stringify(raw);
+    if (!usedCache || freshStr !== localStorage.getItem(CACHE_KEY + '_raw')) {
+      applyStationData(raw);
+      try {
+        localStorage.setItem(CACHE_KEY + '_raw', freshStr);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(stations));
+      } catch(_) {}
     }
   } catch(e) {
-    nowEl.textContent = 'Could not load stations';
+    if (!usedCache) {
+      document.getElementById('skeleton')?.remove();
+      nowEl.textContent = 'Could not load stations';
+    }
     console.error(e);
+  }
+}
+
+function applyStationData(raw) {
+  stations = raw.map(function(s){ return { name:(s.name||'').trim(), streamer:(s.streamer||'').trim(), category:(s.category||'Άλλα').trim() }; });
+  stations.sort(function(a,b){ return a.name.localeCompare(b.name,'el'); });
+  buildCategories();
+  render();
+
+  var last = null;
+  try { last = localStorage.getItem('radio_last'); } catch(_) {}
+  if (last && !current) {
+    var s = stations.find(function(x){ return x.name === last; });
+    if (s) {
+      current = s;
+      nowEl.textContent = s.name;
+      updateActiveUI(s.name);
+      // Warm the last-played stream immediately so hitting PLAY/SPACE
+      // right after load starts near-instantly instead of cold-connecting.
+      warmUpStream(s.streamer);
+    }
   }
 }
 
 /* ── CATEGORIES ── */
 function buildCategories() {
+  var counts = {};
+  stations.forEach(function(s){ counts[s.category] = (counts[s.category]||0) + 1; });
+
   var cats = ['ALL', '⭐ ΑΓΑΠΗΜΕΝΑ'].concat(
     Array.from(new Set(stations.map(function(s){ return s.category; })))
       .sort(function(a,b){ return a.localeCompare(b,'el'); })
   );
   catbarEl.innerHTML = '';
+  var frag = document.createDocumentFragment();
   cats.forEach(function(c){
     var div = document.createElement('div');
     div.className = 'cat' + (c === category ? ' active' : '');
     div.textContent = c;
+    if (c !== 'ALL' && c !== '⭐ ΑΓΑΠΗΜΕΝΑ' && counts[c]) {
+      var span = document.createElement('span');
+      span.className = 'cat-count';
+      span.textContent = counts[c];
+      div.appendChild(span);
+    }
     div.addEventListener('click', function(){
       category = c;
       buildCategories();
       render();
       contentEl.scrollTop = 0;
     });
-    catbarEl.appendChild(div);
+    frag.appendChild(div);
   });
+  catbarEl.appendChild(frag);
 }
 
 /* ── FAVORITES ── */
@@ -544,8 +639,13 @@ function getFilteredList() {
 var CAT_ORDER = { 'Αθήνα':1, 'Θεσσαλονίκη':2 };
 
 function render() {
+  document.getElementById('skeleton')?.remove();
+
   var list = getFilteredList();
   contentEl.innerHTML = '';
+  renderBudget = {}; // reset pagination whenever the visible list changes
+
+  if (io) { io.disconnect(); io = null; }
 
   if (category === '⭐ ΑΓΑΠΗΜΕΝΑ') {
     appendSection('⭐ Αγαπημένα', list);
@@ -569,6 +669,7 @@ function appendSection(title, list) {
 
   var sec = document.createElement('div');
   sec.className = 'cat-section';
+  sec.dataset.section = title;
 
   var head = document.createElement('div');
   head.className = 'cat-head';
@@ -577,36 +678,92 @@ function appendSection(title, list) {
 
   var grid = document.createElement('div');
   grid.className = 'grid';
-
-  list.forEach(function(s){
-    var card = document.createElement('div');
-    card.className = 'card' + (current && current.name === s.name ? ' active' : '');
-    card.dataset.name = s.name;
-
-    // PREFETCH LISTENERS
-    card.addEventListener('mouseenter', function() { warmUpStream(s.streamer); });
-    card.addEventListener('touchstart', function() { warmUpStream(s.streamer); }, {passive: true});
-
-    var name = document.createElement('span');
-    name.className = 'st-name';
-    name.textContent = s.name;
-
-    var fav = document.createElement('span');
-    fav.className = 'fav' + (favorites.indexOf(s.name) !== -1 ? ' on' : '');
-    fav.textContent = '★';
-    fav.addEventListener('click', function(e){ toggleFav(e, s.name); });
-
-    card.appendChild(name);
-    card.appendChild(fav);
-    card.addEventListener('click', function(){ playStation(s); });
-    grid.appendChild(card);
-  });
-
   sec.appendChild(grid);
+
   contentEl.appendChild(sec);
+
+  renderBudget[title] = 0;
+  fillGridPage(grid, list, title);
 }
 
-searchEl.oninput = render;
+/* Renders the next PAGE_SIZE cards for a section into `grid`, using a
+   DocumentFragment so the browser only reflows once per page instead of
+   once per card. Attaches an IntersectionObserver sentinel so the next
+   page loads automatically as the user scrolls near the bottom. */
+function fillGridPage(grid, list, title) {
+  var start = renderBudget[title] || 0;
+  var end = Math.min(start + PAGE_SIZE, list.length);
+  var frag = document.createDocumentFragment();
+
+  for (var i = start; i < end; i++) {
+    frag.appendChild(buildCard(list[i]));
+  }
+  grid.appendChild(frag);
+  renderBudget[title] = end;
+
+  // remove any previous sentinel for this grid, add a new one if more remain
+  var oldSentinel = grid.parentElement.querySelector('.sentinel');
+  if (oldSentinel) oldSentinel.remove();
+
+  if (end < list.length) {
+    var sentinel = document.createElement('div');
+    sentinel.className = 'sentinel';
+    grid.parentElement.appendChild(sentinel);
+
+    if (!io) {
+      io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if (entry.isIntersecting) {
+            var sec = entry.target.parentElement;
+            var secTitle = sec.dataset.section;
+            var secGrid = sec.querySelector('.grid');
+            // Re-derive the current list for this section (search/category
+            // could have changed since; guard by just re-filtering)
+            var currentList = getFilteredList().filter(function(s){
+              return (category === 'ALL' || category === '⭐ ΑΓΑΠΗΜΕΝΑ') ? s.category === secTitle : true;
+            });
+            if (currentList.length) fillGridPage(secGrid, currentList, secTitle);
+            io.unobserve(entry.target);
+          }
+        });
+      }, { root: contentEl, rootMargin: '400px' });
+    }
+    io.observe(sentinel);
+  }
+}
+
+function buildCard(s) {
+  var card = document.createElement('div');
+  card.className = 'card' + (current && current.name === s.name ? ' active' : '');
+  card.dataset.name = s.name;
+
+  card.addEventListener('mouseenter', function() { warmUpStream(s.streamer); });
+  card.addEventListener('touchstart', function() { warmUpStream(s.streamer); }, {passive: true});
+
+  var name = document.createElement('span');
+  name.className = 'st-name';
+  name.textContent = s.name;
+
+  var fav = document.createElement('span');
+  fav.className = 'fav' + (favorites.indexOf(s.name) !== -1 ? ' on' : '');
+  fav.textContent = '★';
+  fav.addEventListener('click', function(e){ toggleFav(e, s.name); });
+
+  card.appendChild(name);
+  card.appendChild(fav);
+  card.addEventListener('click', function(){ playStation(s); });
+  return card;
+}
+
+/* ── DEBOUNCED SEARCH ──
+   Re-rendering on every keystroke is wasted work once the library is in
+   the thousands - debounce so typing feels smooth instead of janky. */
+let searchDebounce = null;
+searchEl.oninput = function(){
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(render, 120);
+};
+
 load();
 </script>
 </body>
