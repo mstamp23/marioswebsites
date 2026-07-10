@@ -432,7 +432,10 @@ function playStation(station) {
     .then(function(){
       uiPlaying(station.name);
       startPolling(station);
-      render();
+      // NOTE: no render() here on purpose. updateActiveUI() above already
+      // highlights the right card. A full render() rebuilds #content's
+      // innerHTML, which resets scrollTop to 0 as a side effect - that
+      // was causing the page to jump to the top every time you hit play.
 
       // Post-play Prefetch: warm up the "Next" station in current view after 2.5s
       setTimeout(function() {
