@@ -241,7 +241,16 @@ header{
 /* ── THE PLAYER ENGINE ── */
 const audio = new Audio();
 audio.preload = 'none';
-audio.crossOrigin = 'anonymous';
+// NOTE: deliberately NOT setting audio.crossOrigin = 'anonymous' here.
+// Doing so forces every stream request into strict CORS mode, and most
+// Icecast/Shoutcast radio servers (which is what the vast majority of
+// these /stream-style URLs are) never send Access-Control-Allow-Origin
+// headers at all. With crossOrigin set, the browser then refuses to load
+// the audio entirely - a perfectly live stream fails 100% of the time in
+// the player even though ffmpeg (which ignores CORS) validated it as live.
+// This app doesn't use the Web Audio API or canvas, so there's no actual
+// need for CORS-clean media here - removing it fixes playback for any
+// station whose server doesn't happen to send that header.
 audio.volume = 0.7;
 
 /* ── PREFETCH ENGINE ── */
@@ -250,8 +259,62 @@ prefetchAudio.muted = true;
 
 function warmUpStream(url) {
   if (!url || prefetchAudio.src === url || audio.src === url) return;
+  if (isHlsUrl(url) && !nativeHlsSupported) return; // hls.js prefetch not worth the complexity
   prefetchAudio.src = url;
   prefetchAudio.load();
+}
+
+/* ── HLS SUPPORT ──
+   Chrome, Firefox, and Edge have NO native support for HLS (.m3u8)
+   playlists in a plain <audio> element - only Safari does. Since the
+   scraper's stream-extraction regex can capture .m3u8 URLs, without this
+   any such station would fail to play 100% of the time in most browsers,
+   looking exactly like a dead station even though it's actually live. */
+const nativeHlsSupported = !!audio.canPlayType('application/vnd.apple.mpegurl');
+let hlsInstance = null;
+let hlsJsLoadPromise = null;
+
+function isHlsUrl(url) {
+  return /\.m3u8(\?|$)/i.test(url || '');
+}
+
+function loadHlsJsLibrary() {
+  if (window.Hls) return Promise.resolve();
+  if (hlsJsLoadPromise) return hlsJsLoadPromise;
+  hlsJsLoadPromise = new Promise(function(resolve, reject){
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.15/hls.min.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return hlsJsLoadPromise;
+}
+
+/* Attaches `url` to the shared <audio> element, transparently routing
+   through hls.js when the URL is an .m3u8 playlist and the browser has
+   no native HLS support. Returns a Promise that resolves once the audio
+   element is ready to have .play() called on it. */
+function attachStreamSource(url) {
+  if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+  if (isHlsUrl(url) && !nativeHlsSupported) {
+    return loadHlsJsLibrary().then(function(){
+      return new Promise(function(resolve, reject){
+        hlsInstance = new Hls();
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function(){ resolve(); });
+        hlsInstance.on(Hls.Events.ERROR, function(_evt, data){
+          if (data && data.fatal) reject(new Error('hls fatal error'));
+        });
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(audio);
+      });
+    });
+  }
+
+  audio.src = url;
+  audio.load();
+  return Promise.resolve();
 }
 
 /* ── STATE ── */
@@ -419,8 +482,6 @@ function playStation(station) {
   retry = 0;
 
   audio.pause();
-  audio.src = station.streamer;
-  audio.load();
 
   try { localStorage.setItem('radio_last', station.name); } catch(_) {}
 
@@ -428,7 +489,8 @@ function playStation(station) {
   uiLoading(station.name);
   setupMediaSession(station);
 
-  audio.play()
+  attachStreamSource(station.streamer)
+    .then(function(){ return audio.play(); })
     .then(function(){
       uiPlaying(station.name);
       startPolling(station);
@@ -462,13 +524,15 @@ function playStation(station) {
 function togglePlay() {
   if (!current) return;
   if (audio.paused) {
-    // If no src set yet, reload the stream
-    if (!audio.src || audio.src === window.location.href) {
-      audio.src = current.streamer;
-      audio.load();
-    }
     uiLoading(current.name);
-    audio.play()
+    // If no src set yet (or we're resuming a station whose src was
+    // never attached, e.g. right after page load), (re)attach it.
+    var needsAttach = !audio.src || audio.src === window.location.href ||
+                       (hlsInstance === null && isHlsUrl(current.streamer) && !nativeHlsSupported);
+    var ready = needsAttach ? attachStreamSource(current.streamer) : Promise.resolve();
+
+    ready
+      .then(function(){ return audio.play(); })
       .then(function(){
         uiPlaying(current.name);
         startPolling(current);
