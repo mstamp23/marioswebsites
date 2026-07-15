@@ -234,6 +234,7 @@ header{
 
 <div id="toast"></div>
 <div id="hint">SPACE · ← →</div>
+<input type="file" id="fav-import" accept="application/json" style="display:none" onchange="importFavorites(this.files[0])">
 
 <script>
 'use strict';
@@ -241,7 +242,16 @@ header{
 /* ── THE PLAYER ENGINE ── */
 const audio = new Audio();
 audio.preload = 'none';
-audio.crossOrigin = 'anonymous';
+// NOTE: deliberately NOT setting audio.crossOrigin = 'anonymous' here.
+// Doing so forces every stream request into strict CORS mode, and most
+// Icecast/Shoutcast radio servers (which is what the vast majority of
+// these /stream-style URLs are) never send Access-Control-Allow-Origin
+// headers at all. With crossOrigin set, the browser then refuses to load
+// the audio entirely - a perfectly live stream fails 100% of the time in
+// the player even though ffmpeg (which ignores CORS) validated it as live.
+// This app doesn't use the Web Audio API or canvas, so there's no actual
+// need for CORS-clean media here - removing it fixes playback for any
+// station whose server doesn't happen to send that header.
 audio.volume = 0.7;
 
 /* ── PREFETCH ENGINE ── */
@@ -250,8 +260,66 @@ prefetchAudio.muted = true;
 
 function warmUpStream(url) {
   if (!url || prefetchAudio.src === url || audio.src === url) return;
+  if (isHlsUrl(url) && !nativeHlsSupported) return; // hls.js prefetch not worth the complexity
+  // Respect the user's data preferences - don't spend bandwidth
+  // speculatively pre-buffering a stream they haven't asked for yet.
+  var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (conn && (conn.saveData || /^(slow-2g|2g)$/.test(conn.effectiveType || ''))) return;
   prefetchAudio.src = url;
   prefetchAudio.load();
+}
+
+/* ── HLS SUPPORT ──
+   Chrome, Firefox, and Edge have NO native support for HLS (.m3u8)
+   playlists in a plain <audio> element - only Safari does. Since the
+   scraper's stream-extraction regex can capture .m3u8 URLs, without this
+   any such station would fail to play 100% of the time in most browsers,
+   looking exactly like a dead station even though it's actually live. */
+const nativeHlsSupported = !!audio.canPlayType('application/vnd.apple.mpegurl');
+let hlsInstance = null;
+let hlsJsLoadPromise = null;
+
+function isHlsUrl(url) {
+  return /\.m3u8(\?|$)/i.test(url || '');
+}
+
+function loadHlsJsLibrary() {
+  if (window.Hls) return Promise.resolve();
+  if (hlsJsLoadPromise) return hlsJsLoadPromise;
+  hlsJsLoadPromise = new Promise(function(resolve, reject){
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.15/hls.min.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return hlsJsLoadPromise;
+}
+
+/* Attaches `url` to the shared <audio> element, transparently routing
+   through hls.js when the URL is an .m3u8 playlist and the browser has
+   no native HLS support. Returns a Promise that resolves once the audio
+   element is ready to have .play() called on it. */
+function attachStreamSource(url) {
+  if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+  if (isHlsUrl(url) && !nativeHlsSupported) {
+    return loadHlsJsLibrary().then(function(){
+      return new Promise(function(resolve, reject){
+        hlsInstance = new Hls();
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function(){ resolve(); });
+        hlsInstance.on(Hls.Events.ERROR, function(_evt, data){
+          if (data && data.fatal) reject(new Error('hls fatal error'));
+        });
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(audio);
+      });
+    });
+  }
+
+  audio.src = url;
+  audio.load();
+  return Promise.resolve();
 }
 
 /* ── STATE ── */
@@ -262,6 +330,9 @@ let favorites = [];
 let retry = 0;
 let retryTimer = null;
 let rdsTimer = null;
+let connectTimeoutTimer = null;
+let connectAttemptId = 0;
+const CONNECT_TIMEOUT_MS = 15000; // some misconfigured servers hang instead of erroring
 
 /* Infinite-scroll render state: how many cards per visible category
    are actually in the DOM right now. Rendering 1000+ cards at once
@@ -379,25 +450,47 @@ function setupMediaSession(station) {
   try { navigator.mediaSession.setActionHandler('nexttrack', function(){ prevNext(1); }); } catch(_) {}
 }
 
-/* ── RETRY ── */
+/* ── RETRY ──
+   Delay grows with each attempt (capped) instead of the attempt count
+   being capped outright - a wifi drop that comes back after a minute
+   should still recover the stream automatically instead of giving up
+   after ~15s like the old 4-attempt/2s-step schedule did. */
+const MAX_RETRIES = 10;
+const MAX_RETRY_DELAY_MS = 20000;
+
 function stopRetry() {
   clearTimeout(retryTimer);
   retryTimer = null;
+  clearTimeout(connectTimeoutTimer);
+  connectTimeoutTimer = null;
+  clearTimeout(bufferingTimer);
+  bufferingTimer = null;
   retry = 0;
 }
 
 function scheduleRetry() {
-  if (retry >= 4) {
+  if (!navigator.onLine) {
+    // Dialing a stream with no network can't succeed - don't burn the
+    // retry budget on it. The 'online' listener below resumes playback
+    // itself the instant connectivity returns.
+    if (current) setCardState(current.name, 'retrying');
+    nowEl.className = 'offline';
+    nowEl.textContent = 'Offline — waiting for connection…';
+    spinnerEl.style.display = 'none';
+    return;
+  }
+  if (retry >= MAX_RETRIES) {
     uiError();
     if (current) setCardState(current.name, 'error');
     return;
   }
   retry++;
-  showToast('Reconnecting… (' + retry + '/4)');
+  showToast('Reconnecting… (' + retry + '/' + MAX_RETRIES + ')');
   if (current) setCardState(current.name, 'retrying');
+  var delay = Math.min(1500 * retry, MAX_RETRY_DELAY_MS);
   retryTimer = setTimeout(function(){
     if (current) playStation(current);
-  }, 2000 * retry);
+  }, delay);
 }
 
 function setCardState(name, cls) {
@@ -406,10 +499,49 @@ function setCardState(name, cls) {
   });
 }
 
-/* ── AUDIO EVENTS ── */
+/* ── AUDIO EVENTS ──
+   'waiting' (and old browsers' 'stalled') fire routinely for live
+   streams on ordinary micro-buffering and do NOT mean the stream is
+   dead - reconnecting on every one of those causes far more dropouts
+   than it prevents. Instead give playback a grace window: only escalate
+   to a real reconnect if it hasn't recovered (fired 'playing') within
+   BUFFER_GRACE_MS. */
+const BUFFER_GRACE_MS = 9000;
+let bufferingTimer = null;
+
 audio.addEventListener('error', scheduleRetry);
-audio.addEventListener('stalled', scheduleRetry);
 audio.addEventListener('ended', scheduleRetry);
+audio.addEventListener('waiting', function(){
+  if (!current || audio.paused) return;
+  spinnerEl.style.display = 'inline-block';
+  if (!bufferingTimer) {
+    bufferingTimer = setTimeout(function(){
+      bufferingTimer = null;
+      scheduleRetry();
+    }, BUFFER_GRACE_MS);
+  }
+});
+audio.addEventListener('playing', function(){
+  clearTimeout(bufferingTimer);
+  bufferingTimer = null;
+  spinnerEl.style.display = 'none';
+});
+
+/* ── CONNECTIVITY ──
+   Pause retries while genuinely offline (see scheduleRetry above), and
+   reconnect immediately - no backoff wait - the moment the browser
+   reports connectivity is back. */
+window.addEventListener('offline', function(){
+  clearTimeout(retryTimer);
+  if (current) scheduleRetry();
+});
+window.addEventListener('online', function(){
+  if (current && (audio.paused || retry > 0 || (nowEl.className === 'offline'))) {
+    retry = 0;
+    clearTimeout(retryTimer);
+    playStation(current);
+  }
+});
 
 /* ── PLAY STATION ── */
 function playStation(station) {
@@ -419,8 +551,6 @@ function playStation(station) {
   retry = 0;
 
   audio.pause();
-  audio.src = station.streamer;
-  audio.load();
 
   try { localStorage.setItem('radio_last', station.name); } catch(_) {}
 
@@ -428,8 +558,24 @@ function playStation(station) {
   uiLoading(station.name);
   setupMediaSession(station);
 
-  audio.play()
+  // Some misconfigured Icecast/SSL endpoints never fire 'error' - the
+  // connection just hangs mid-handshake, which looks identical to
+  // "still loading" forever without an explicit ceiling. connectAttemptId
+  // guards against a slow, superseded attempt (e.g. user hit NEXT twice
+  // fast) firing a retry for a station that isn't current anymore.
+  var myAttempt = ++connectAttemptId;
+  clearTimeout(connectTimeoutTimer);
+  connectTimeoutTimer = setTimeout(function(){
+    if (myAttempt === connectAttemptId && current && current.name === station.name && audio.paused) {
+      scheduleRetry();
+    }
+  }, CONNECT_TIMEOUT_MS);
+
+  attachStreamSource(station.streamer)
+    .then(function(){ return audio.play(); })
     .then(function(){
+      if (myAttempt !== connectAttemptId) return; // a newer play request superseded this one
+      clearTimeout(connectTimeoutTimer);
       uiPlaying(station.name);
       startPolling(station);
       // NOTE: no render() here on purpose. updateActiveUI() above already
@@ -448,6 +594,8 @@ function playStation(station) {
       }, 2500);
     })
     .catch(function(err){
+      if (myAttempt !== connectAttemptId) return;
+      clearTimeout(connectTimeoutTimer);
       if (err && err.name === 'NotAllowedError') {
         uiStopped();
         nowEl.textContent = station.name;
@@ -462,13 +610,15 @@ function playStation(station) {
 function togglePlay() {
   if (!current) return;
   if (audio.paused) {
-    // If no src set yet, reload the stream
-    if (!audio.src || audio.src === window.location.href) {
-      audio.src = current.streamer;
-      audio.load();
-    }
     uiLoading(current.name);
-    audio.play()
+    // If no src set yet (or we're resuming a station whose src was
+    // never attached, e.g. right after page load), (re)attach it.
+    var needsAttach = !audio.src || audio.src === window.location.href ||
+                       (hlsInstance === null && isHlsUrl(current.streamer) && !nativeHlsSupported);
+    var ready = needsAttach ? attachStreamSource(current.streamer) : Promise.resolve();
+
+    ready
+      .then(function(){ return audio.play(); })
       .then(function(){
         uiPlaying(current.name);
         startPolling(current);
@@ -620,6 +770,47 @@ function toggleFav(e, name) {
   render();
 }
 
+/* Favorites live only in this browser's localStorage - clearing site data,
+   switching browsers, or a private-mode session all wipe them with no
+   warning. Export/import gives a real backup that survives that. */
+function exportFavorites() {
+  try {
+    var blob = new Blob([JSON.stringify(favorites, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'radio-favorites.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Favorites exported (' + favorites.length + ')');
+  } catch(_) {
+    showToast('Export failed');
+  }
+}
+
+function importFavorites(file) {
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    try {
+      var incoming = JSON.parse(reader.result);
+      if (!Array.isArray(incoming)) throw new Error('bad format');
+      // Merge rather than overwrite - importing an old backup should
+      // never silently delete favorites added on this device since.
+      var incomingNames = incoming.filter(function(x){ return typeof x === 'string'; });
+      favorites = Array.from(new Set(favorites.concat(incomingNames)));
+      try { localStorage.setItem('radio_favs', JSON.stringify(favorites)); } catch(_) {}
+      showToast('Imported favorites (' + incomingNames.length + ')');
+      render();
+    } catch(_) {
+      showToast('Invalid favorites file');
+    }
+  };
+  reader.readAsText(file);
+}
+
 /* ── FILTER ── */
 function getFilteredList() {
   var q = searchEl.value.toLowerCase().trim();
@@ -648,6 +839,22 @@ function render() {
   if (io) { io.disconnect(); io = null; }
 
   if (category === '⭐ ΑΓΑΠΗΜΕΝΑ') {
+    var toolbar = document.createElement('div');
+    toolbar.style.cssText = 'display:flex;gap:6px;margin-bottom:12px';
+    var expBtn = document.createElement('button');
+    expBtn.className = 'nav-btn';
+    expBtn.textContent = '↓ EXPORT BACKUP';
+    expBtn.title = 'Save your favorites to a file';
+    expBtn.onclick = exportFavorites;
+    var impBtn = document.createElement('button');
+    impBtn.className = 'nav-btn';
+    impBtn.textContent = '↑ IMPORT BACKUP';
+    impBtn.title = 'Restore favorites from a file';
+    impBtn.onclick = function(){ document.getElementById('fav-import').click(); };
+    toolbar.appendChild(expBtn);
+    toolbar.appendChild(impBtn);
+    contentEl.appendChild(toolbar);
+
     appendSection('⭐ Αγαπημένα', list);
     return;
   }
@@ -718,10 +925,17 @@ function fillGridPage(grid, list, title) {
             var secTitle = sec.dataset.section;
             var secGrid = sec.querySelector('.grid');
             // Re-derive the current list for this section (search/category
-            // could have changed since; guard by just re-filtering)
-            var currentList = getFilteredList().filter(function(s){
-              return (category === 'ALL' || category === '⭐ ΑΓΑΠΗΜΕΝΑ') ? s.category === secTitle : true;
-            });
+            // could have changed since; guard by just re-filtering).
+            //
+            // IMPORTANT: Favorites is a single flat list, not grouped by
+            // genre - its section title is the literal string
+            // '⭐ Αγαπημένα', which no station's .category ever equals.
+            // Filtering it by category===secTitle (like the genre-grouped
+            // sections need) would always produce zero results, silently
+            // capping favorites at the first PAGE_SIZE items forever.
+            var currentList = (category === '⭐ ΑΓΑΠΗΜΕΝΑ')
+              ? getFilteredList()
+              : getFilteredList().filter(function(s){ return s.category === secTitle; });
             if (currentList.length) fillGridPage(secGrid, currentList, secTitle);
             io.unobserve(entry.target);
           }
