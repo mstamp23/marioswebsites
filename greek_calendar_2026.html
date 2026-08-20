@@ -6,86 +6,88 @@
     <title>Ελληνικό Εορτολόγιο & Ημερολόγιο 2026</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #121224; color: #f0f0f5; padding: 20px; }
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: #101020; 
+            color: #f0f0f5; 
+            padding: 20px 15px; 
+        }
         .container { max-width: 1400px; margin: 0 auto; }
         
-        /* Πλαίσιο επιλεγμένης / σημερινής ημέρας */
-        .today-box {
-            background: linear-gradient(135deg, #3a1c71 0%, #d76d77 50%, #ffaf7b 100%);
-            padding: 22px 25px;
-            border-radius: 18px;
+        /* Επικεφαλίδα σελίδας */
+        .page-header {
             text-align: center;
             margin-bottom: 25px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
         }
-        .today-date { font-size: 1.8em; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .celebrating-now {
-            font-size: 1.1em;
-            background: rgba(18, 18, 36, 0.75);
-            backdrop-filter: blur(8px);
-            padding: 12px 24px;
-            border-radius: 12px;
-            color: #4ecdc4;
-            display: inline-block;
-            margin-top: 12px;
-            border: 1px solid rgba(78, 205, 196, 0.4);
-            max-width: 90%;
-            line-height: 1.5;
-            word-wrap: break-word;
+        .page-header h1 {
+            font-size: 1.8em;
+            color: #ffd700;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
         }
-        .holiday-tag {
-            display: inline-block;
-            background: #ff6b6b;
-            color: white;
-            font-weight: bold;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            margin-left: 8px;
-            vertical-align: middle;
+        .page-header p {
+            color: #8c8ca1;
+            font-size: 0.9em;
         }
 
         /* Grid Μηνών */
         .months-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
-            gap: 22px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
         }
+        
         .month { 
-            background: #1a1a2e; 
-            border-radius: 16px; 
-            padding: 16px; 
-            border: 1px solid #2e2e4a; 
+            background: #18182d; 
+            border-radius: 14px; 
+            padding: 15px; 
+            border: 1px solid #2a2a48; 
             display: flex; 
             flex-direction: column;
-            scroll-margin-top: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            scroll-margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            transition: border 0.3s ease;
         }
+        
         .month.current-month-box {
             border: 2px solid #4ecdc4;
-            box-shadow: 0 0 18px rgba(78, 205, 196, 0.25);
+            box-shadow: 0 0 16px rgba(78, 205, 196, 0.2);
         }
+        
         .month-header { 
-            text-align: center; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-weight: 700; 
-            font-size: 1.25em; 
+            font-size: 1.15em; 
             margin-bottom: 12px; 
             color: #ffd700; 
+            border-bottom: 1px solid #2a2a48;
+            padding-bottom: 6px;
         }
+        .current-badge {
+            background: #4ecdc4;
+            color: #101020;
+            font-size: 0.65em;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Πλέγμα Ημερών */
         .days-grid { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
-            gap: 4px; 
+            gap: 3px; 
             margin-bottom: 12px; 
         }
         .day-header { 
-            font-size: 0.8em; 
+            font-size: 0.78em; 
             font-weight: 600;
             text-align: center; 
-            color: #8c8ca1; 
-            padding-bottom: 6px; 
+            color: #7a7a96; 
+            padding-bottom: 4px; 
         }
         .day { 
             aspect-ratio: 1; 
@@ -93,25 +95,26 @@
             flex-direction: column;
             align-items: center; 
             justify-content: center; 
-            font-size: 0.88em; 
-            border-radius: 8px; 
-            background: #252540; 
+            font-size: 0.86em; 
+            border-radius: 6px; 
+            background: #23233c; 
             cursor: pointer;
             position: relative;
             user-select: none;
-            transition: transform 0.15s ease, background 0.15s ease;
+            transition: all 0.15s ease;
         }
         .day:hover {
-            transform: scale(1.08);
-            background: #36365a;
+            transform: scale(1.06);
+            background: #343456;
             z-index: 2;
         }
         .day.selected {
-            outline: 2px solid #ffd700;
+            outline: 2px solid #4ecdc4;
+            background: #313158;
         }
         .day.today { 
             background: #ffd700 !important; 
-            color: #121224 !important; 
+            color: #101020 !important; 
             font-weight: 800; 
             border: 2px solid #ffffff; 
         }
@@ -130,10 +133,10 @@
             background: #4ecdc4;
             border-radius: 50%;
             position: absolute;
-            bottom: 3px;
+            bottom: 2px;
         }
         .day.today.has-nameday::after {
-            background: #121224;
+            background: #101020;
         }
         .empty { 
             background: transparent; 
@@ -144,31 +147,71 @@
             background: transparent;
         }
 
-        /* Banner Αργιών */
-        .month-holiday-banner {
+        /* Πλαίσιο Εορταζόντων Μήνα */
+        .month-info-banner {
             margin-top: auto;
-            background: rgba(255, 107, 107, 0.12);
-            border-left: 3px solid #ff6b6b;
-            padding: 8px 12px;
+            background: rgba(78, 205, 196, 0.08);
+            border-left: 3px solid #4ecdc4;
+            padding: 8px 10px;
             border-radius: 4px;
             font-size: 0.82em;
+            color: #e0e0e0;
+            line-height: 1.4;
+            min-height: 46px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+        .info-title {
+            color: #4ecdc4;
+            font-weight: 600;
+            margin-bottom: 2px;
+            font-size: 0.9em;
+        }
+        .info-names {
+            color: #ffffff;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        .info-none {
+            color: #7a7a96;
+            font-style: italic;
+        }
+        .info-holiday-pill {
+            display: inline-block;
+            background: #ff5252;
+            color: #fff;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        /* Banner Αργιών */
+        .month-holiday-banner {
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 3px solid #ff6b6b;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.78em;
             color: #ff9e9e;
         }
-        .holiday-item { margin: 2px 0; font-weight: 500; }
+        .holiday-item { margin: 1px 0; font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="today-box">
-        <div id="currentDate" class="today-date"></div>
-        <div id="celebration" class="celebrating-now"></div>
+    <div class="page-header">
+        <h1>Ημερολόγιο & Εορτολόγιο 2026</h1>
+        <p>Κάντε κλικ σε οποιαδήποτε ημέρα για να δείτε ποιος γιορτάζει</p>
     </div>
     <div class="months-grid" id="calendar"></div>
 </div>
 
 <script>
-    // Επίσημες Αργίες 2026
     const holidays = {
         '1-1': 'Πρωτοχρονιά',
         '1-6': 'Θεοφάνεια',
@@ -185,9 +228,8 @@
         '12-26': 'Σύναξη της Θεοτόκου'
     };
 
-    // Καθαρισμένο Εορτολόγιο με τα Κύρια και Διαδεδομένα Ονόματα (2026)
     const namedays = {
-        // --- ΙΑΝΟΥΑΡΙΟΣ ---
+        // Ιανουάριος
         '1-1': 'Βασίλειος, Βασίλης, Βασιλική, Βάσω',
         '1-6': 'Φώτιος, Φώτης, Φωτεινή, Φανή, Θεοφάνης, Ιορδάνης, Ουρανία, Ράνια',
         '1-7': 'Ιωάννης, Γιάννης, Ιωάννα, Γιάννα, Πρόδρομος',
@@ -204,7 +246,7 @@
         '1-26': 'Ξενία, Ξένος',
         '1-30': 'Τριών Ιεραρχών (Χρυσή, Χρύσα)',
 
-        // --- ΦΕΒΡΟΥΑΡΙΟΣ ---
+        // Φεβρουάριος
         '2-1': 'Τρύφων, Τρύφωνας',
         '2-2': 'Υπαπαντή (Παναγιώτης, Πάνος, Παναγιώτα, Δέσποινα)',
         '2-3': 'Συμεών, Σίμος',
@@ -216,14 +258,14 @@
         '2-23': 'Πολύκαρπος',
         '2-28': 'Θεόδωρος, Θοδωρής, Θεοδώρα, Δώρα (Αγίων Θεοδώρων)',
 
-        // --- ΜΑΡΤΙΟΣ ---
+        // Μάρτιος
         '3-1': 'Ευδοκία',
         '3-9': 'Των Αγίων 40 Μαρτύρων (Σαράντης, Σαράντω)',
         '3-17': 'Αλέξιος, Αλέξης',
         '3-19': 'Χρύσανθος, Δαρεία',
         '3-25': 'Ευάγγελος, Βαγγέλης, Ευαγγελία, Εύα, Βαγγελιώ',
 
-        // --- ΑΠΡΙΛΙΟΣ (Πάσχα 2026: 12 Απριλίου) ---
+        // Απρίλιος (Πάσχα 2026: 12 Απριλίου)
         '4-4': 'Λάζαρος (Σάββατο του Λαζάρου)',
         '4-5': 'Βάιος, Βάγια, Δάφνη (Κυριακή των Βαΐων)',
         '4-12': 'Αναστάσιος, Τάσος, Αναστασία, Νατάσα, Πασχάλης, Λάμπρος, Λαμπρινή (Άγιο Πάσχα)',
@@ -232,14 +274,14 @@
         '4-23': 'Γεώργιος, Γιώργος, Γεωργία (Αγίου Γεωργίου)',
         '4-25': 'Μάρκος',
 
-        // --- ΜΑΙΟΣ ---
+        // Μάιος
         '5-5': 'Ειρήνη, Ρένα, Ειρηναίος, Εφραίμ',
         '5-8': 'Ιωάννης Θεολόγος, Θεολόγος, Θεολογία',
         '5-9': 'Χριστόφορος',
         '5-15': 'Αχίλλειος, Αχιλλέας',
         '5-21': 'Κωνσταντίνος, Κώστας, Κωνσταντίνα, Ντίνα, Ελένη, Έλενα, Λένα',
 
-        // --- ΙΟΥΝΙΟΣ ---
+        // Ιούνιος
         '6-1': 'Τριάδα, Τριάδος (Αγίου Πνεύματος)',
         '6-7': 'Πάντων (Αγίων Πάντων)',
         '6-8': 'Καλλιόπη, Πόπη',
@@ -249,7 +291,7 @@
         '6-29': 'Πέτρος, Παύλος, Παυλίνα',
         '6-30': 'Απόστολος, Αποστόλης, Τόλης',
 
-        // --- ΙΟΥΛΙΟΣ ---
+        // Ιούλιος
         '7-1': 'Κοσμάς, Δαμιανός, Ανάργυρος, Αναργυρούλα',
         '7-7': 'Κυριακή, Κική, Κορίνα',
         '7-8': 'Προκόπιος, Προκόπης',
@@ -263,7 +305,7 @@
         '7-27': 'Παντελεήμων, Παντελής, Παντελίτσα',
         '7-28': 'Ειρήνη Χρυσοβαλάντου, Βαλάντης, Χρυσοβαλάντω',
 
-        // --- ΑΥΓΟΥΣΤΟΣ ---
+        // Αύγουστος
         '8-6': 'Σωτήριος, Σωτήρης, Σωτηρία, Σώτος',
         '8-15': 'Μαρία, Μάριος, Παναγιώτης, Πάνος, Παναγιώτα, Γιώτα, Δέσποινα',
         '8-16': 'Γεράσιμος, Σταμάτης, Σταματία',
@@ -273,7 +315,7 @@
         '8-27': 'Φανούριος, Φανούρης, Φανουρία, Φανή',
         '8-30': 'Αλέξανδρος, Αλέκος, Αλέξης, Αλεξάνδρα, Αλεξία',
 
-        // --- ΣΕΠΤΕΜΒΡΙΟΣ ---
+        // Σεπτέμβριος
         '9-1': 'Αθηνά, Αφροδίτη, Ασπασία, Αντιγόνη, Ερατώ, Θάλεια, Κλειώ, Κλεοπάτρα, Κοραλία, Μαντώ, Πηνελόπη, Σαπφώ, Διαμαντής, Αδαμαντία, Συμεών, Σίμος, Μελέτιος, Ισμήνη',
         '9-3': 'Άνθιμος, Πολύδωρος, Φοίβος, Φοίβη, Αριστέα',
         '9-4': 'Ερμιόνη, Μωυσής, Ρόζα',
@@ -299,7 +341,7 @@
         '9-28': 'Χαρίτων, Χαρίτωνας',
         '9-29': 'Κυριάκος',
 
-        // --- ΟΚΤΩΒΡΙΟΣ ---
+        // Οκτώβριος
         '10-1': 'Ρωμανός, Ρωμάνα, Ανανίας',
         '10-2': 'Κυπριανός, Κυπριανή, Ιουστίνα, Ιουστίνη',
         '10-3': 'Διονύσιος, Διονύσης, Διονυσία, Νιόνιος, Ντένης',
@@ -331,7 +373,7 @@
         '10-30': 'Αστέριος, Αστέρης, Αστερία, Ζηνοβία, Ζήνα, Τζίνα',
         '10-31': 'Αριστόβουλος, Νάρκισσος',
 
-        // --- ΝΟΕΜΒΡΙΟΣ ---
+        // Νοέμβριος
         '11-1': 'Κοσμάς, Δαμιανός, Ανάργυρος, Αναργυρούλα, Δαβίδ, Δαυίδ',
         '11-2': 'Ακίνδυνος, Ελπιδοφόρος, Αφθόνιος',
         '11-4': 'Ιωαννίκιος',
@@ -358,7 +400,7 @@
         '11-29': 'Φαίδρα, Φιλούμενος, Φιλουμένη',
         '11-30': 'Ανδρέας, Ανδριάνα, Ανδριανή',
 
-        // --- ΔΕΚΕΜΒΡΙΟΣ ---
+        // Δεκέμβριος
         '12-1': 'Θεόκλητος, Φιλαρέτη, Αρετή, Ναούμ',
         '12-2': 'Πορφύριος, Μερόπη, Σόλων',
         '12-3': 'Γλυκέριος, Γλυκερία',
@@ -394,28 +436,61 @@
     const dayNames = ['Δε', 'Τρ', 'Τε', 'Πε', 'Πα', 'Σα', 'Κυ'];
     const dayNamesFull = ['Κυριακή', 'Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο'];
 
-    function showDateInfo(year, month, day) {
-        const dateObj = new Date(year, month, day);
-        const dayOfWeek = dayNamesFull[dateObj.getDay()];
-        const key = `${month + 1}-${day}`;
+    const revertTimers = {};
 
-        document.getElementById('currentDate').textContent = `${dayOfWeek}, ${day} ${monthNames[month]} ${year}`;
+    function renderMonthNameday(m, day, isDefault = false) {
+        const infoDiv = document.getElementById(`nameday-box-${m}`);
+        if (!infoDiv) return;
+
+        const today = new Date();
+        const isCurrentMonth = (today.getFullYear() === 2026 && today.getMonth() === m);
+        const isToday = isCurrentMonth && (today.getDate() === day);
+
+        if (!day) {
+            infoDiv.innerHTML = `<span class="info-none">Κάντε κλικ σε μια ημέρα για να δείτε εορτάζοντες</span>`;
+            return;
+        }
+
+        const dKey = `${m + 1}-${day}`;
+        const name = namedays[dKey];
+        const holiday = holidays[dKey];
+        const dateObj = new Date(2026, m, day);
+        const dayName = dayNamesFull[dateObj.getDay()];
+
+        let titleText = isToday 
+            ? `✨ Σήμερα, ${dayName} ${day} ${monthNames[m]}` 
+            : `📅 ${dayName} ${day} ${monthNames[m]}`;
+
+        let html = `<div class="info-title">${titleText}:</div><div class="info-names">`;
         
-        const celebrateDiv = document.getElementById('celebration');
-        const name = namedays[key];
-        const holiday = holidays[key];
-
-        let content = '';
         if (holiday) {
-            content += `<span class="holiday-tag">🚩 ${holiday}</span> `;
+            html += `<span class="info-holiday-pill">🚩 ${holiday}</span>`;
         }
         if (name) {
-            content += `🎉 Γιορτάζουν: <strong>${name}</strong>`;
+            html += `🎉 ${name}`;
         } else if (!holiday) {
-            content = "Δεν υπάρχει κάποια γνωστή γιορτή";
+            html += `<span class="info-none">Δεν υπάρχει κάποια γνωστή γιορτή</span>`;
         }
+        html += `</div>`;
 
-        celebrateDiv.innerHTML = content;
+        infoDiv.innerHTML = html;
+
+        // Αν έγινε κλικ από τον χρήστη (όχι αυτόματο render), ενεργοποιούμε χρονόμετρο επιστροφής
+        if (!isDefault) {
+            if (revertTimers[m]) clearTimeout(revertTimers[m]);
+            
+            revertTimers[m] = setTimeout(() => {
+                const monthEl = document.getElementById(`month-${m}`);
+                if (monthEl) {
+                    monthEl.querySelectorAll('.day.selected').forEach(el => el.classList.remove('selected'));
+                }
+                if (isCurrentMonth) {
+                    renderMonthNameday(m, today.getDate(), true);
+                } else {
+                    renderMonthNameday(m, null, true);
+                }
+            }, 4000);
+        }
     }
 
     function createCalendar() {
@@ -430,7 +505,14 @@
             const mDiv = document.createElement('div');
             mDiv.className = `month ${isThisMonth ? 'current-month-box' : ''}`;
             mDiv.id = `month-${m}`;
-            mDiv.innerHTML = `<div class="month-header">${monthNames[m]} 2026</div>`;
+
+            const badgeHtml = isThisMonth ? `<span class="current-badge">Τρέχων Μήνας</span>` : '';
+            mDiv.innerHTML = `
+                <div class="month-header">
+                    <span>${monthNames[m]} 2026</span>
+                    ${badgeHtml}
+                </div>
+            `;
             
             const grid = document.createElement('div');
             grid.className = 'days-grid';
@@ -462,17 +544,24 @@
                 dayEl.className = `day ${isToday ? 'today' : ''} ${isSunday ? 'sunday' : ''} ${hClass} ${hasNames ? 'has-nameday' : ''}`;
                 dayEl.textContent = day;
                 
-                // Δυνατότητα κλικ σε κάθε ημέρα
                 dayEl.addEventListener('click', () => {
-                    document.querySelectorAll('.day.selected').forEach(el => el.classList.remove('selected'));
+                    const parentMonth = document.getElementById(`month-${m}`);
+                    parentMonth.querySelectorAll('.day.selected').forEach(el => el.classList.remove('selected'));
                     dayEl.classList.add('selected');
-                    showDateInfo(2026, m, day);
+                    renderMonthNameday(m, day, false);
                 });
 
                 grid.appendChild(dayEl);
             }
             mDiv.appendChild(grid);
 
+            // Πλαίσιο Εορταζόντων Μήνα
+            const namedayBox = document.createElement('div');
+            namedayBox.className = 'month-info-banner';
+            namedayBox.id = `nameday-box-${m}`;
+            mDiv.appendChild(namedayBox);
+
+            // Banner Αργιών Μήνα
             if (monthHolidays.length > 0) {
                 const hBanner = document.createElement('div');
                 hBanner.className = 'month-holiday-banner';
@@ -483,12 +572,16 @@
             }
 
             calendar.appendChild(mDiv);
+
+            // Αρχική κατάσταση εορτών
+            if (isThisMonth) {
+                renderMonthNameday(m, currentDay, true);
+            } else {
+                renderMonthNameday(m, null, true);
+            }
         }
 
-        // Αρχική εμφάνιση σημερινής ημέρας
-        showDateInfo(2026, currentMonth, currentDay);
-
-        // Αυτόματο scroll στον τρέχοντα μήνα κατά το άνοιγμα
+        // Αυτόματη μεταφορά στον τρέχοντα μήνα
         const targetMonthEl = document.getElementById(`month-${currentMonth}`);
         if (targetMonthEl) {
             setTimeout(() => {
