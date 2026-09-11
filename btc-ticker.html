@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Bitcoin (BTC) Live Tracker</title>
+  <title>BTC Tracker</title>
+  
+  <!-- Home Screen / App Icons -->
+  <link rel="apple-touch-icon" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
+
   <style>
     :root {
       --bg: #0b0e14;
@@ -236,7 +241,7 @@
         const currentPrice = parseFloat(data.c);
         const priceChangePercent = parseFloat(data.P);
 
-        // Price formatting with zero decimals
+        // Price formatted with zero decimals
         priceEl.textContent = formatCurrency(currentPrice);
 
         if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
@@ -283,7 +288,7 @@
       statusText.textContent = 'Paused (0 KB Background Data)';
     }
 
-    // Zero data when minimized or tab switched
+    // Zero mobile data & battery drain when minimized
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         disconnectWebSocket();
