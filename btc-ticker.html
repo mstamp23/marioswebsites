@@ -40,9 +40,9 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 24px;
-      padding: 2.5rem 2rem;
+      padding: 2.5rem 2rem 2rem 2rem;
       width: 100%;
-      max-width: 440px;
+      max-width: 420px;
       text-align: center;
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
     }
@@ -52,7 +52,7 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
     .btc-icon {
@@ -89,7 +89,7 @@
     }
 
     .price-container {
-      margin: 1.5rem 0 1rem 0;
+      margin: 1.25rem 0 1rem 0;
       min-height: 75px;
       display: flex;
       align-items: center;
@@ -97,7 +97,7 @@
     }
 
     .price {
-      font-size: 3.3rem;
+      font-size: 3.4rem;
       font-weight: 800;
       letter-spacing: -1.5px;
       font-variant-numeric: tabular-nums;
@@ -120,7 +120,7 @@
       font-weight: 700;
       padding: 0.45rem 1.25rem;
       border-radius: 30px;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
       transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
@@ -142,37 +142,9 @@
       border: 1px solid rgba(255, 82, 82, 0.3);
     }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      border-top: 1px solid var(--border);
-      padding-top: 1.5rem;
-    }
-
-    .stat-box {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      border-radius: 12px;
-      padding: 0.75rem;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-size: 1.05rem;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-    }
-
     .footer {
-      margin-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -219,17 +191,6 @@
       <span id="change-percent">0.00%</span>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-label">24h High</div>
-        <div id="high" class="stat-value">--</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">24h Low</div>
-        <div id="low" class="stat-value">--</div>
-      </div>
-    </div>
-
     <div class="footer">
       <div id="statusDot" class="status-dot"></div>
       <span id="statusText">Connecting...</span>
@@ -240,8 +201,6 @@
     const priceEl = document.getElementById('price');
     const badgeEl = document.getElementById('badge');
     const changePercentEl = document.getElementById('change-percent');
-    const highEl = document.getElementById('high');
-    const lowEl = document.getElementById('low');
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
 
@@ -260,7 +219,6 @@
     }
 
     function connectWebSocket() {
-      // Prevent duplicate instances
       if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
         return;
       }
@@ -275,11 +233,8 @@
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-
         const currentPrice = parseFloat(data.c);
         const priceChangePercent = parseFloat(data.P);
-        const highPrice = parseFloat(data.h);
-        const lowPrice = parseFloat(data.l);
 
         // Price formatting and tick animation
         priceEl.textContent = formatCurrency(currentPrice);
@@ -299,10 +254,6 @@
         const sign = priceChangePercent >= 0 ? '+' : '';
         changePercentEl.textContent = `${sign}${priceChangePercent.toFixed(2)}%`;
         badgeEl.className = 'badge ' + (priceChangePercent >= 0 ? 'badge-up' : 'badge-down');
-
-        // 24h range stats
-        highEl.textContent = formatCurrency(highPrice);
-        lowEl.textContent = formatCurrency(lowPrice);
       };
 
       ws.onclose = () => {
@@ -324,7 +275,6 @@
     function disconnectWebSocket() {
       clearTimeout(reconnectTimeout);
       if (ws) {
-        // Remove listener to prevent auto-reconnect loops on deliberate exit
         ws.onclose = null;
         ws.close();
         ws = null;
@@ -333,7 +283,7 @@
       statusText.textContent = 'Paused (0 KB Background Data)';
     }
 
-    // Zero-data background listener
+    // Zero data when minimized or tab switched
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         disconnectWebSocket();
@@ -342,7 +292,6 @@
       }
     });
 
-    // Start on initial page load
     connectWebSocket();
   </script>
 </body>
