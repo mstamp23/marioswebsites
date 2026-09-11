@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BTC Tracker</title>
+  <title>BTC = --</title>
   
   <!-- Home Screen / App Icons -->
   <link rel="apple-touch-icon" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
@@ -170,11 +170,6 @@
       background-color: var(--green);
       box-shadow: 0 0 8px var(--green);
     }
-
-    .status-dot.paused {
-      background-color: var(--amber);
-      box-shadow: 0 0 8px var(--amber);
-    }
   </style>
 </head>
 <body>
@@ -240,10 +235,15 @@
         const data = JSON.parse(event.data);
         const currentPrice = parseFloat(data.c);
         const priceChangePercent = parseFloat(data.P);
+        const formattedPrice = formatCurrency(currentPrice);
 
-        // Price formatted with zero decimals
-        priceEl.textContent = formatCurrency(currentPrice);
+        // Update on-screen price
+        priceEl.textContent = formattedPrice;
 
+        // Dynamically update browser tab title
+        document.title = `BTC = ${formattedPrice}`;
+
+        // Color flash effect
         if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
           clearTimeout(flashTimeout);
           priceEl.classList.remove('tick-up', 'tick-down');
@@ -262,40 +262,15 @@
       };
 
       ws.onclose = () => {
-        if (document.visibilityState === 'hidden') {
-          statusDot.className = 'status-dot paused';
-          statusText.textContent = 'Paused (0 KB Background Data)';
-        } else {
-          statusDot.className = 'status-dot';
-          statusText.textContent = 'Reconnecting...';
-          reconnectTimeout = setTimeout(connectWebSocket, 2000);
-        }
+        statusDot.className = 'status-dot';
+        statusText.textContent = 'Reconnecting...';
+        reconnectTimeout = setTimeout(connectWebSocket, 2000);
       };
 
       ws.onerror = () => {
         if (ws) ws.close();
       };
     }
-
-    function disconnectWebSocket() {
-      clearTimeout(reconnectTimeout);
-      if (ws) {
-        ws.onclose = null;
-        ws.close();
-        ws = null;
-      }
-      statusDot.className = 'status-dot paused';
-      statusText.textContent = 'Paused (0 KB Background Data)';
-    }
-
-    // Zero mobile data & battery drain when minimized
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        disconnectWebSocket();
-      } else if (document.visibilityState === 'visible') {
-        connectWebSocket();
-      }
-    });
 
     connectWebSocket();
   </script>
