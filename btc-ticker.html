@@ -184,7 +184,7 @@
     </div>
 
     <div class="price-container">
-      <div id="price" class="price">--.--</div>
+      <div id="price" class="price">--</div>
     </div>
 
     <div id="badge" class="badge badge-neutral">
@@ -210,11 +210,11 @@
     let ws = null;
 
     function formatCurrency(val) {
-      return Number(val).toLocaleString('en-US', {
+      return Math.round(Number(val)).toLocaleString('en-US', {
         style: 'currency',
         currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
       });
     }
 
@@ -236,10 +236,10 @@
         const currentPrice = parseFloat(data.c);
         const priceChangePercent = parseFloat(data.P);
 
-        // Price formatting and tick animation
+        // Price formatting with zero decimals
         priceEl.textContent = formatCurrency(currentPrice);
 
-        if (previousPrice !== 0 && currentPrice !== previousPrice) {
+        if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
           clearTimeout(flashTimeout);
           priceEl.classList.remove('tick-up', 'tick-down');
           priceEl.classList.add(currentPrice > previousPrice ? 'tick-up' : 'tick-down');
