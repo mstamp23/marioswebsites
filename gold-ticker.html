@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>XAU: -- | XAG: --</title>
 
+  <!-- Gold Bar App Icons for Mobile Home Screen -->
+  <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/gold-bars.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://img.icons8.com/fluency/192/gold-bars.png">
+
   <style>
     :root {
       --bg: #0b0e14;
@@ -389,7 +393,6 @@
           const goldPrice = parseFloat(item.xauPrice);
           const silverPrice = parseFloat(item.xagPrice);
 
-          // Calculate from official previous close if direct % is 0 or missing
           let goldChg = parseFloat(item.pcXau);
           if ((isNaN(goldChg) || goldChg === 0) && item.xauClose) {
             goldChg = ((goldPrice - parseFloat(item.xauClose)) / parseFloat(item.xauClose)) * 100;
@@ -408,7 +411,6 @@
           return;
         }
       } catch (err) {
-        // Fallback secondary endpoint
         try {
           const [gRes, sRes] = await Promise.all([
             fetch('https://api.gold-api.com/price/XAU'),
@@ -420,7 +422,6 @@
           const gPrice = parseFloat(gData.price);
           const sPrice = parseFloat(sData.price);
 
-          // Calculate daily delta against local daily baseline
           const gChg = getSessionChange('xau_base', gPrice);
           const sChg = getSessionChange('xag_base', sPrice);
 
