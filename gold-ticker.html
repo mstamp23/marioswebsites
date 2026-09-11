@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Au: -- | Ag: --</title>
+
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card-bg: #151a23;
+      --card-border: #232a36;
+      --text-main: #f0f4f8;
+      --text-muted: #8b949e;
+      --green: #00e676;
+      --green-bg: rgba(0, 230, 118, 0.12);
+      --red: #ff5252;
+      --red-bg: rgba(255, 82, 82, 0.12);
+      --gold-primary: #ffd700;
+      --silver-primary: #e0e6ed;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 24px;
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      transition: border-color 0.3s ease;
+    }
+
+    .card-gold {
+      border-color: rgba(255, 215, 0, 0.25);
+    }
+
+    .card-silver {
+      border-color: rgba(224, 230, 237, 0.25);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 0.75rem;
+    }
+
+    .bar-icon {
+      width: 48px;
+      height: 34px;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+    }
+
+    .title-group {
+      text-align: left;
+    }
+
+    .title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      display: block;
+      line-height: 1.1;
+    }
+
+    .title-gold {
+      color: var(--gold-primary);
+    }
+
+    .title-silver {
+      color: var(--silver-primary);
+    }
+
+    .pair {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .price-container {
+      margin: 0.75rem 0;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .price {
+      font-size: 3.5rem;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.25s ease;
+    }
+
+    .tick-up {
+      color: var(--green) !important;
+    }
+
+    .tick-down {
+      color: var(--red) !important;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      padding: 0.4rem 1.25rem;
+      border-radius: 30px;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .badge-neutral {
+      color: var(--text-muted);
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+    }
+
+    .badge-up {
+      color: var(--green);
+      background-color: var(--green-bg);
+      border: 1px solid rgba(0, 230, 118, 0.35);
+    }
+
+    .badge-down {
+      color: var(--red);
+      background-color: var(--red-bg);
+      border: 1px solid rgba(255, 82, 82, 0.35);
+    }
+
+    .footer {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background-color: #555;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .status-dot.connected {
+      background-color: var(--green);
+      box-shadow: 0 0 10px var(--green);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- GOLD (XAU) CARD -->
+    <div class="card card-gold">
+      <div class="header">
+        <svg class="bar-icon" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="goldTop" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#FFF5B8"/>
+              <stop offset="50%" stop-color="#FFD700"/>
+              <stop offset="100%" stop-color="#FDB813"/>
+            </linearGradient>
+            <linearGradient id="goldFront" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#E5A800"/>
+              <stop offset="100%" stop-color="#996F00"/>
+            </linearGradient>
+            <linearGradient id="goldSide" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#D49A00"/>
+              <stop offset="100%" stop-color="#805C00"/>
+            </linearGradient>
+          </defs>
+          <polygon points="12,6 48,6 56,18 4,18" fill="url(#goldTop)" stroke="#805C00" stroke-width="1.2"/>
+          <polygon points="4,18 56,18 50,34 10,34" fill="url(#goldFront)" stroke="#805C00" stroke-width="1.2"/>
+          <polygon points="56,18 60,10 52,26 50,34" fill="url(#goldSide)"/>
+          <text x="30" y="14" font-size="6.5" font-weight="900" fill="#7A5300" text-anchor="middle" font-family="sans-serif">999.9</text>
+          <text x="30" y="28" font-size="8" font-weight="900" fill="#FFF2A3" text-anchor="middle" font-family="sans-serif">GOLD</text>
+        </svg>
+
+        <div class="title-group">
+          <span class="title title-gold">Gold</span>
+          <span class="pair">XAU / USD (1 oz)</span>
+        </div>
+      </div>
+
+      <div class="price-container">
+        <div id="gold-price" class="price">--</div>
+      </div>
+
+      <div id="gold-badge" class="badge badge-neutral">
+        <span id="gold-change">0.00%</span>
+      </div>
+    </div>
+
+    <!-- SILVER (XAG) CARD -->
+    <div class="card card-silver">
+      <div class="header">
+        <svg class="bar-icon" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="silverTop" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="50%" stop-color="#E2E8F0"/>
+              <stop offset="100%" stop-color="#CBD5E1"/>
+            </linearGradient>
+            <linearGradient id="silverFront" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#94A3B8"/>
+              <stop offset="100%" stop-color="#475569"/>
+            </linearGradient>
+            <linearGradient id="silverSide" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#64748B"/>
+              <stop offset="100%" stop-color="#334155"/>
+            </linearGradient>
+          </defs>
+          <polygon points="12,6 48,6 56,18 4,18" fill="url(#silverTop)" stroke="#475569" stroke-width="1.2"/>
+          <polygon points="4,18 56,18 50,34 10,34" fill="url(#silverFront)" stroke="#475569" stroke-width="1.2"/>
+          <polygon points="56,18 60,10 52,26 50,34" fill="url(#silverSide)"/>
+          <text x="30" y="14" font-size="6.5" font-weight="900" fill="#334155" text-anchor="middle" font-family="sans-serif">999.0</text>
+          <text x="30" y="28" font-size="7.5" font-weight="900" fill="#F8FAFC" text-anchor="middle" font-family="sans-serif">SILVER</text>
+        </svg>
+
+        <div class="title-group">
+          <span class="title title-silver">Silver</span>
+          <span class="pair">XAG / USD (1 oz)</span>
+        </div>
+      </div>
+
+      <div class="price-container">
+        <div id="silver-price" class="price">--</div>
+      </div>
+
+      <div id="silver-badge" class="badge badge-neutral">
+        <span id="silver-change">0.00%</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Connecting to Live Metals Feed...</span>
+    </div>
+
+  </div>
+
+  <script>
+    const goldPriceEl = document.getElementById('gold-price');
+    const goldBadgeEl = document.getElementById('gold-badge');
+    const goldChangeEl = document.getElementById('gold-change');
+
+    const silverPriceEl = document.getElementById('silver-price');
+    const silverBadgeEl = document.getElementById('silver-badge');
+    const silverChangeEl = document.getElementById('silver-change');
+
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    let prevGoldPrice = 0;
+    let prevSilverPrice = 0;
+    let goldFlashTimeout = null;
+    let silverFlashTimeout = null;
+    let reconnectTimeout = null;
+    let ws = null;
+
+    let currentGoldDisplay = '--';
+    let currentSilverDisplay = '--';
+
+    function formatPrice(val, decimals = 2) {
+      return Number(val).toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function updateTabTitle() {
+      document.title = `Au: ${currentGoldDisplay} | Ag: ${currentSilverDisplay}`;
+    }
+
+    function updateGold(price, changePercent) {
+      currentGoldDisplay = formatPrice(price, 2);
+      goldPriceEl.textContent = currentGoldDisplay;
+
+      if (prevGoldPrice !== 0 && price !== prevGoldPrice) {
+        clearTimeout(goldFlashTimeout);
+        goldPriceEl.classList.remove('tick-up', 'tick-down');
+        goldPriceEl.classList.add(price > prevGoldPrice ? 'tick-up' : 'tick-down');
+
+        goldFlashTimeout = setTimeout(() => {
+          goldPriceEl.classList.remove('tick-up', 'tick-down');
+        }, 350);
+      }
+      prevGoldPrice = price;
+
+      const sign = changePercent >= 0 ? '+' : '';
+      goldChangeEl.textContent = `${sign}${changePercent.toFixed(2)}%`;
+      goldBadgeEl.className = 'badge ' + (changePercent >= 0 ? 'badge-up' : 'badge-down');
+
+      updateTabTitle();
+    }
+
+    function updateSilver(price, changePercent) {
+      currentSilverDisplay = formatPrice(price, 2);
+      silverPriceEl.textContent = currentSilverDisplay;
+
+      if (prevSilverPrice !== 0 && price !== prevSilverPrice) {
+        clearTimeout(silverFlashTimeout);
+        silverPriceEl.classList.remove('tick-up', 'tick-down');
+        silverPriceEl.classList.add(price > prevSilverPrice ? 'tick-up' : 'tick-down');
+
+        silverFlashTimeout = setTimeout(() => {
+          silverPriceEl.classList.remove('tick-up', 'tick-down');
+        }, 350);
+      }
+      prevSilverPrice = price;
+
+      const sign = changePercent >= 0 ? '+' : '';
+      silverChangeEl.textContent = `${sign}${changePercent.toFixed(2)}%`;
+      silverBadgeEl.className = 'badge ' + (changePercent >= 0 ? 'badge-up' : 'badge-down');
+
+      updateTabTitle();
+    }
+
+    function connectWebSocket() {
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+
+      clearTimeout(reconnectTimeout);
+      // Connect to Binance USD-M Combined Feed for Gold (XAUUSDT) and Silver (XAGUSDT)
+      ws = new WebSocket('wss://fstream.binance.com/stream?streams=xauusdt@ticker/xagusdt@ticker');
+
+      ws.onopen = () => {
+        statusDot.className = 'status-dot connected';
+        statusText.textContent = 'Live Feed (Binance WebSocket)';
+      };
+
+      ws.onmessage = (event) => {
+        const payload = JSON.parse(event.data);
+        const data = payload.data || payload;
+
+        if (!data || !data.s) return;
+
+        const symbol = data.s.toUpperCase();
+        const price = parseFloat(data.c);
+        const changePercent = parseFloat(data.P);
+
+        if (symbol === 'XAUUSDT') {
+          updateGold(price, changePercent);
+        } else if (symbol === 'XAGUSDT') {
+          updateSilver(price, changePercent);
+        }
+      };
+
+      ws.onclose = () => {
+        statusDot.className = 'status-dot';
+        statusText.textContent = 'Reconnecting...';
+        reconnectTimeout = setTimeout(connectWebSocket, 2000);
+      };
+
+      ws.onerror = () => {
+        if (ws) ws.close();
+      };
+    }
+
+    connectWebSocket();
+  </script>
+</body>
+</html>
