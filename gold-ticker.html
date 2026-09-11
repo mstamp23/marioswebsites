@@ -317,7 +317,6 @@
     }
 
     function updateGold(price, changePercent) {
-      // Whole numbers for Gold (no decimals)
       currentGoldDisplay = formatPrice(Math.round(price), 0);
       goldPriceEl.textContent = currentGoldDisplay;
 
@@ -332,17 +331,17 @@
       }
       prevGoldPrice = price;
 
-      if (changePercent !== undefined && changePercent !== null) {
-        const sign = changePercent >= 0 ? '+' : '';
-        goldChangeEl.textContent = `${sign}${Number(changePercent).toFixed(2)}%`;
-        goldBadgeEl.className = 'badge ' + (changePercent >= 0 ? 'badge-up' : 'badge-down');
+      const numChange = parseFloat(changePercent);
+      if (!isNaN(numChange)) {
+        const sign = numChange >= 0 ? '+' : '';
+        goldChangeEl.textContent = `${sign}${numChange.toFixed(2)}%`;
+        goldBadgeEl.className = 'badge ' + (numChange > 0 ? 'badge-up' : (numChange < 0 ? 'badge-down' : 'badge-neutral'));
       }
 
       updateTabTitle();
     }
 
     function updateSilver(price, changePercent) {
-      // 2 decimal places for Silver
       currentSilverDisplay = formatPrice(price, 2);
       silverPriceEl.textContent = currentSilverDisplay;
 
@@ -357,36 +356,59 @@
       }
       prevSilverPrice = price;
 
-      if (changePercent !== undefined && changePercent !== null) {
-        const sign = changePercent >= 0 ? '+' : '';
-        silverChangeEl.textContent = `${sign}${Number(changePercent).toFixed(2)}%`;
-        silverBadgeEl.className = 'badge ' + (changePercent >= 0 ? 'badge-up' : 'badge-down');
+      const numChange = parseFloat(changePercent);
+      if (!isNaN(numChange)) {
+        const sign = numChange >= 0 ? '+' : '';
+        silverChangeEl.textContent = `${sign}${numChange.toFixed(2)}%`;
+        silverBadgeEl.className = 'badge ' + (numChange > 0 ? 'badge-up' : (numChange < 0 ? 'badge-down' : 'badge-neutral'));
       }
 
       updateTabTitle();
     }
 
+    function getSessionChange(key, currentPrice) {
+      const today = new Date().toISOString().slice(0, 10);
+      const stored = JSON.parse(localStorage.getItem(key) || '{}');
+
+      if (stored.date !== today || !stored.basePrice) {
+        localStorage.setItem(key, JSON.stringify({ date: today, basePrice: currentPrice }));
+        return 0.0;
+      }
+      return ((currentPrice - stored.basePrice) / stored.basePrice) * 100;
+    }
+
     async function fetchMetalsData() {
       try {
-        // Direct public metals feed with full CORS support
-        const response = await fetch('https://data-asg.goldprice.org/dbXRates/USD', {
-          cache: 'no-store'
-        });
-        
-        if (!response.ok) throw new Error('Primary feed unavailable');
-        
+        const response = await fetch('https://data-asg.goldprice.org/dbXRates/USD', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Primary source blocked');
+
         const data = await response.json();
         const item = data.items && data.items[0];
 
         if (item) {
-          updateGold(parseFloat(item.xauPrice), parseFloat(item.pcXau));
-          updateSilver(parseFloat(item.xagPrice), parseFloat(item.pcXag));
+          const goldPrice = parseFloat(item.xauPrice);
+          const silverPrice = parseFloat(item.xagPrice);
+
+          // Calculate from official previous close if direct % is 0 or missing
+          let goldChg = parseFloat(item.pcXau);
+          if ((isNaN(goldChg) || goldChg === 0) && item.xauClose) {
+            goldChg = ((goldPrice - parseFloat(item.xauClose)) / parseFloat(item.xauClose)) * 100;
+          }
+
+          let silverChg = parseFloat(item.pcXag);
+          if ((isNaN(silverChg) || silverChg === 0) && item.xagClose) {
+            silverChg = ((silverPrice - parseFloat(item.xagClose)) / parseFloat(item.xagClose)) * 100;
+          }
+
+          updateGold(goldPrice, goldChg);
+          updateSilver(silverPrice, silverChg);
+
           statusDot.className = 'status-dot connected';
           statusText.textContent = `Live Feed (Updated ${new Date().toLocaleTimeString()})`;
           return;
         }
       } catch (err) {
-        // Fallback secondary endpoint if primary times out
+        // Fallback secondary endpoint
         try {
           const [gRes, sRes] = await Promise.all([
             fetch('https://api.gold-api.com/price/XAU'),
@@ -395,8 +417,16 @@
           const gData = await gRes.json();
           const sData = await sRes.json();
 
-          updateGold(parseFloat(gData.price), 0);
-          updateSilver(parseFloat(sData.price), 0);
+          const gPrice = parseFloat(gData.price);
+          const sPrice = parseFloat(sData.price);
+
+          // Calculate daily delta against local daily baseline
+          const gChg = getSessionChange('xau_base', gPrice);
+          const sChg = getSessionChange('xag_base', sPrice);
+
+          updateGold(gPrice, gChg);
+          updateSilver(sPrice, sChg);
+
           statusDot.className = 'status-dot connected';
           statusText.textContent = `Live Feed (Updated ${new Date().toLocaleTimeString()})`;
         } catch (e2) {
@@ -409,7 +439,6 @@
     function startPolling() {
       fetchMetalsData();
       if (!pollInterval) {
-        // Poll every 15 seconds (well within free tier limits)
         pollInterval = setInterval(fetchMetalsData, 15000);
       }
     }
@@ -421,7 +450,6 @@
       statusText.textContent = 'Paused (0 KB Background Data)';
     }
 
-    // Auto-pause when minimizing on mobile or switching tabs
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         stopPolling();
