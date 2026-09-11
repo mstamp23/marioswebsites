@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bitcoin (BTC) Live Tracker</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card-bg: #151a23;
+      --border: #232a36;
+      --text-main: #f0f4f8;
+      --text-muted: #8b949e;
+      --green: #00e676;
+      --green-bg: rgba(0, 230, 118, 0.12);
+      --red: #ff5252;
+      --red-bg: rgba(255, 82, 82, 0.12);
+      --btc-orange: #f7931a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .btc-icon {
+      width: 40px;
+      height: 40px;
+      background-color: var(--btc-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 24px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(247, 147, 26, 0.35);
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .pair {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-left: 2px;
+    }
+
+    /* Big Price Display */
+    .price-container {
+      margin: 1.5rem 0 1rem 0;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .price {
+      font-size: 3.2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.25s ease;
+    }
+
+    /* Tick Flash Animations */
+    .tick-up {
+      color: var(--green) !important;
+    }
+
+    .tick-down {
+      color: var(--red) !important;
+    }
+
+    /* 24h Change Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 0.45rem 1.1rem;
+      border-radius: 30px;
+      margin-bottom: 2rem;
+    }
+
+    .badge-up {
+      color: var(--green);
+      background-color: var(--green-bg);
+      border: 1px solid rgba(0, 230, 118, 0.25);
+    }
+
+    .badge-down {
+      color: var(--red);
+      background-color: var(--red-bg);
+      border: 1px solid rgba(255, 82, 82, 0.25);
+    }
+
+    /* 24h High / Low Stats Bar */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      padding: 0.75rem;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Footer connection indicator */
+    .footer {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #555;
+    }
+
+    .status-dot.connected {
+      background-color: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="header">
+      <div class="btc-icon">&#8383;</div>
+      <div>
+        <span class="title">Bitcoin</span>
+        <span class="pair">BTC / USD</span>
+      </div>
+    </div>
+
+    <div class="price-container">
+      <div id="price" class="price">--.--</div>
+    </div>
+
+    <div id="badge" class="badge">
+      <span id="change-percent">0.00%</span>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">24h High</div>
+        <div id="high" class="stat-value">--</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">24h Low</div>
+        <div id="low" class="stat-value">--</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Connecting to Binance stream...</span>
+    </div>
+  </div>
+
+  <script>
+    const priceEl = document.getElementById('price');
+    const badgeEl = document.getElementById('badge');
+    const changePercentEl = document.getElementById('change-percent');
+    const highEl = document.getElementById('high');
+    const lowEl = document.getElementById('low');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    let previousPrice = 0;
+    let flashTimeout = null;
+    let ws = null;
+
+    function formatCurrency(val) {
+      return Number(val).toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function connectWebSocket() {
+      // Direct 24-hour ticker stream for BTC/USDT
+      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
+
+      ws.onopen = () => {
+        statusDot.classList.add('connected');
+        statusText.textContent = 'Live Feed (Binance WebSocket)';
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        const currentPrice = parseFloat(data.c);      // Current close price
+        const priceChangePercent = parseFloat(data.P);// 24h percentage change
+        const highPrice = parseFloat(data.h);         // 24h high
+        const lowPrice = parseFloat(data.l);          // 24h low
+
+        // Update Price and Flash Indicator
+        priceEl.textContent = formatCurrency(currentPrice);
+
+        if (previousPrice !== 0 && currentPrice !== previousPrice) {
+          clearTimeout(flashTimeout);
+          priceEl.classList.remove('tick-up', 'tick-down');
+          
+          if (currentPrice > previousPrice) {
+            priceEl.classList.add('tick-up');
+          } else {
+            priceEl.classList.add('tick-down');
+          }
+
+          flashTimeout = setTimeout(() => {
+            priceEl.classList.remove('tick-up', 'tick-down');
+          }, 350);
+        }
+        previousPrice = currentPrice;
+
+        // Update 24h Percentage Change
+        const sign = priceChangePercent >= 0 ? '+' : '';
+        changePercentEl.textContent = `${sign}${priceChangePercent.toFixed(2)}%`;
+
+        badgeEl.className = 'badge ' + (priceChangePercent >= 0 ? 'badge-up' : 'badge-down');
+
+        // Update 24h High and Low
+        highEl.textContent = formatCurrency(highPrice);
+        lowEl.textContent = formatCurrency(lowPrice);
+      };
+
+      ws.onclose = () => {
+        statusDot.classList.remove('connected');
+        statusText.textContent = 'Disconnected. Reconnecting...';
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
+    }
+
+    // Auto-reconnect when switching tabs or waking mobile device
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        if (!ws || ws.readyState === WebSocket.CLOSED) {
+          connectWebSocket();
+        }
+      }
+    });
+
+    connectWebSocket();
+  </script>
+</body>
+</html>
