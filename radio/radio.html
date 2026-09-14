@@ -5,7 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radio Purple Pro</title>
 
-<link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/mstamp23/marioswebsites/main/radio/radio-icon.jpg">
+<!-- Browser tab icon -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+
+<!-- iOS "Add to Home Screen" icon + app-like behaviour -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Radio">
+
+<!-- Android/Chrome "Add to Home Screen" icon + app-like behaviour -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#050505">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -300,8 +312,29 @@ function loadHlsJsLibrary() {
    through hls.js when the URL is an .m3u8 playlist and the browser has
    no native HLS support. Returns a Promise that resolves once the audio
    element is ready to have .play() called on it. */
+/* Fully detaches whatever the element is currently doing. Just writing a
+   new .src over an old one is *supposed* to cancel the previous network
+   fetch per spec, but on plenty of real Icecast/Shoutcast setups (and
+   especially on Android WebView/Chrome) the previous connection's
+   already-downloaded audio keeps sitting in the decode pipeline and can
+   keep coming out of the speakers for a moment alongside the new stream -
+   this is the "plays both parts of the stream" / "must reload to fix it"
+   symptom. Explicitly clearing the source and calling load() on its own,
+   *before* attaching anything new, forces the browser to actually tear
+   down the old connection and decoder state first instead of trying to
+   do both at once. */
+function hardResetAudio() {
+  try { audio.pause(); } catch(_) {}
+  try {
+    audio.removeAttribute('src');
+    while (audio.firstChild) audio.removeChild(audio.firstChild);
+    audio.load();
+  } catch(_) {}
+}
+
 function attachStreamSource(url) {
   if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+  hardResetAudio();
 
   if (isHlsUrl(url) && !nativeHlsSupported) {
     return loadHlsJsLibrary().then(function(){
