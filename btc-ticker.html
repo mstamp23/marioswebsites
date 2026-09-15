@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BTC = --</title>
-  
+
   <!-- Home Screen / App Icons -->
   <link rel="apple-touch-icon" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
   <link rel="icon" type="image/png" sizes="192x192" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
@@ -17,9 +17,7 @@
       --text-main: #f0f4f8;
       --text-muted: #8b949e;
       --green: #00e676;
-      --green-bg: rgba(0, 230, 118, 0.12);
       --red: #ff5252;
-      --red-bg: rgba(255, 82, 82, 0.12);
       --btc-orange: #f7931a;
       --amber: #ffb300;
     }
@@ -38,178 +36,264 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
+      padding: 1.25rem;
     }
 
     .card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 2.5rem 2rem 2rem 2rem;
+      border-radius: 28px;
+      padding: 1.75rem 1.5rem 1.5rem 1.5rem;
       width: 100%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+      max-width: 440px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
     }
 
+    /* Top Bar */
     .header {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 1.25rem;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .coin-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .btc-icon {
-      width: 42px;
-      height: 42px;
+      width: 36px;
+      height: 36px;
       background-color: var(--btc-orange);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
-      font-size: 24px;
+      font-size: 20px;
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(247, 147, 26, 0.35);
+      box-shadow: 0 4px 10px rgba(247, 147, 26, 0.35);
     }
 
-    .title-group {
-      text-align: left;
-    }
-
-    .title {
-      font-size: 1.4rem;
+    .coin-name {
+      font-size: 1.35rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      display: block;
-      line-height: 1.2;
+      letter-spacing: 0.3px;
     }
 
-    .pair {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .price-container {
-      margin: 1.25rem 0 1rem 0;
-      min-height: 75px;
+    .live-badge {
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.4; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Big Price */
+    .price-wrap {
+      margin: 0.5rem 0 0.25rem 0;
     }
 
     .price {
       font-size: 3.4rem;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: -1.5px;
       font-variant-numeric: tabular-nums;
-      transition: color 0.25s ease;
+      line-height: 1.1;
+      transition: color 0.2s ease;
     }
 
-    .tick-up {
-      color: var(--green) !important;
-    }
+    .tick-up { color: var(--green) !important; }
+    .tick-down { color: var(--red) !important; }
 
-    .tick-down {
-      color: var(--red) !important;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      font-weight: 700;
-      padding: 0.45rem 1.25rem;
-      border-radius: 30px;
-      margin-bottom: 1.5rem;
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    }
-
-    .badge-neutral {
-      color: var(--text-muted);
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-    }
-
-    .badge-up {
-      color: var(--green);
-      background-color: var(--green-bg);
-      border: 1px solid rgba(0, 230, 118, 0.3);
-    }
-
-    .badge-down {
-      color: var(--red);
-      background-color: var(--red-bg);
-      border: 1px solid rgba(255, 82, 82, 0.3);
-    }
-
-    .footer {
-      border-top: 1px solid var(--border);
-      padding-top: 1.25rem;
+    /* Past Hour Change */
+    .change-row {
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 8px;
+      margin-bottom: 1.25rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .change-val {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .change-val.up { color: var(--green); }
+    .change-val.down { color: var(--red); }
+
+    .change-label {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    /* SVG Chart Area */
+    .chart-container {
+      width: 100%;
+      height: 140px;
+      position: relative;
+      margin-top: 0.5rem;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .baseline-grid {
+      stroke: rgba(255, 255, 255, 0.07);
+      stroke-dasharray: 4 4;
+      stroke-width: 1;
+    }
+
+    .chart-line {
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.3s ease;
+    }
+
+    .chart-area {
+      transition: fill 0.3s ease;
+    }
+
+    .tip-dot {
+      transition: cx 0.1s ease, cy 0.1s ease, fill 0.3s ease;
+    }
+
+    /* Footer status */
+    .footer {
+      border-top: 1px solid var(--border);
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       font-size: 0.75rem;
       color: var(--text-muted);
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: #555;
-      transition: background-color 0.3s, box-shadow 0.3s;
+    .status-text {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .status-dot.connected {
-      background-color: var(--green);
-      box-shadow: 0 0 8px var(--green);
+    .status-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #555;
     }
+
+    .status-indicator.connected { background-color: var(--green); }
+    .status-indicator.paused { background-color: var(--amber); }
   </style>
 </head>
 <body>
 
   <div class="card">
     <div class="header">
-      <div class="btc-icon">&#8383;</div>
-      <div class="title-group">
-        <span class="title">Bitcoin</span>
-        <span class="pair">BTC / USDT</span>
+      <div class="coin-info">
+        <div class="btc-icon">&#8383;</div>
+        <span class="coin-name">Bitcoin</span>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span>Live</span>
       </div>
     </div>
 
-    <div class="price-container">
+    <div class="price-wrap">
       <div id="price" class="price">--</div>
     </div>
 
-    <div id="badge" class="badge badge-neutral">
-      <span id="change-percent">0.00%</span>
+    <div class="change-row">
+      <span id="change-percent" class="change-val">0.00%</span>
+      <span class="change-label">past hour</span>
+    </div>
+
+    <div class="chart-container">
+      <svg id="chart-svg" viewBox="0 0 380 140" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad-green" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#00e676" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#00e676" stop-opacity="0.0"/>
+          </linearGradient>
+          <linearGradient id="grad-red" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ff5252" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#ff5252" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Subtle Baseline reference -->
+        <line x1="0" y1="70" x2="380" y2="70" class="baseline-grid" />
+
+        <!-- Area Fill -->
+        <path id="chart-fill" class="chart-area" d="" fill="url(#grad-green)"/>
+        <!-- Line -->
+        <path id="chart-path" class="chart-line" d="" stroke="#00e676"/>
+        <!-- Active Live Pulsing Tip -->
+        <circle id="tip-glow" class="tip-dot" cx="-10" cy="-10" r="7" fill="#00e676" opacity="0.4"/>
+        <circle id="tip-core" class="tip-dot" cx="-10" cy="-10" r="3.5" fill="#00e676"/>
+      </svg>
     </div>
 
     <div class="footer">
-      <div id="statusDot" class="status-dot"></div>
-      <span id="statusText">Connecting...</span>
+      <div class="status-text">
+        <div id="statusDot" class="status-indicator"></div>
+        <span id="statusLabel">Initializing 1-hour buffer...</span>
+      </div>
+      <span>1H Range</span>
     </div>
   </div>
 
   <script>
     const priceEl = document.getElementById('price');
-    const badgeEl = document.getElementById('badge');
     const changePercentEl = document.getElementById('change-percent');
+    const chartPath = document.getElementById('chart-path');
+    const chartFill = document.getElementById('chart-fill');
+    const tipCore = document.getElementById('tip-core');
+    const tipGlow = document.getElementById('tip-glow');
     const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
+    const statusLabel = document.getElementById('statusLabel');
 
+    let priceHistory = []; // 60 data points (1 per minute)
     let previousPrice = 0;
     let flashTimeout = null;
     let reconnectTimeout = null;
     let ws = null;
+    let lastMinuteBucket = 0;
 
-    function formatCurrency(val) {
+    const SVG_WIDTH = 380;
+    const SVG_HEIGHT = 140;
+    const PADDING_Y = 16;
+
+    function formatPrice(val) {
       return Math.round(Number(val)).toLocaleString('en-US', {
         style: 'currency',
         currency: 'USD',
@@ -218,6 +302,117 @@
       });
     }
 
+    // Step 1: Initial 1-Hour History Fetch (Runs only once on load -> 0 quota impact)
+    async function loadPastHourHistory() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60');
+        const data = await res.json();
+        
+        // Extract the close prices for the past 60 minutes
+        priceHistory = data.map(candle => parseFloat(candle[4]));
+        lastMinuteBucket = Math.floor(Date.now() / 60000);
+        
+        if (priceHistory.length > 0) {
+          const latest = priceHistory[priceHistory.length - 1];
+          updateUI(latest);
+        }
+        connectWebSocket();
+      } catch (err) {
+        statusLabel.textContent = 'REST failed, connecting WebSocket directly...';
+        connectWebSocket();
+      }
+    }
+
+    // Step 2: Draw the smooth 1-hour SVG chart
+    function renderChart(isUp) {
+      if (priceHistory.length < 2) return;
+
+      const min = Math.min(...priceHistory);
+      const max = Math.max(...priceHistory);
+      const range = (max - min) === 0 ? 1 : (max - min);
+
+      const points = priceHistory.map((val, idx) => {
+        const x = (idx / (priceHistory.length - 1)) * SVG_WIDTH;
+        const normalizedY = (val - min) / range;
+        // Invert Y for SVG coordinates
+        const y = SVG_HEIGHT - PADDING_Y - (normalizedY * (SVG_HEIGHT - PADDING_Y * 2));
+        return { x, y };
+      });
+
+      // Build smooth SVG path
+      let dLine = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+      for (let i = 1; i < points.length; i++) {
+        dLine += ` L ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}`;
+      }
+
+      // Build closed Area Path
+      const dFill = `${dLine} L ${SVG_WIDTH} ${SVG_HEIGHT} L 0 ${SVG_HEIGHT} Z`;
+
+      chartPath.setAttribute('d', dLine);
+      chartFill.setAttribute('d', dFill);
+
+      const color = isUp ? '#00e676' : '#ff5252';
+      chartPath.setAttribute('stroke', color);
+      chartFill.setAttribute('fill', isUp ? 'url(#grad-green)' : 'url(#grad-red)');
+
+      // Position the live pulsing dot at the chart's tip
+      const lastPoint = points[points.length - 1];
+      tipCore.setAttribute('cx', lastPoint.x);
+      tipCore.setAttribute('cy', lastPoint.y);
+      tipCore.setAttribute('fill', color);
+
+      tipGlow.setAttribute('cx', lastPoint.x);
+      tipGlow.setAttribute('cy', lastPoint.y);
+      tipGlow.setAttribute('fill', color);
+    }
+
+    // Step 3: Real-Time UI Engine
+    function updateUI(currentPrice) {
+      const formatted = formatPrice(currentPrice);
+      priceEl.textContent = formatted;
+      document.title = `BTC = ${formatted}`;
+
+      // Price Flash animation on change
+      if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
+        clearTimeout(flashTimeout);
+        priceEl.classList.remove('tick-up', 'tick-down');
+        priceEl.classList.add(currentPrice > previousPrice ? 'tick-up' : 'tick-down');
+
+        flashTimeout = setTimeout(() => {
+          priceEl.classList.remove('tick-up', 'tick-down');
+        }, 300);
+      }
+      previousPrice = currentPrice;
+
+      // Update 1-Hour Moving Buffer
+      const currentMinute = Math.floor(Date.now() / 60000);
+      if (currentMinute > lastMinuteBucket) {
+        priceHistory.push(currentPrice);
+        if (priceHistory.length > 60) priceHistory.shift(); // Keep strictly 60 minutes
+        lastMinuteBucket = currentMinute;
+      } else {
+        // Update the active minute tip in real-time
+        if (priceHistory.length > 0) {
+          priceHistory[priceHistory.length - 1] = currentPrice;
+        } else {
+          priceHistory.push(currentPrice);
+        }
+      }
+
+      // Calculate strictly 1-Hour % change
+      const baseHourPrice = priceHistory[0] || currentPrice;
+      const pastHourPercent = ((currentPrice - baseHourPrice) / baseHourPrice) * 100;
+      const isUp = pastHourPercent >= 0;
+
+      const sign = isUp ? '+' : '';
+      changePercentEl.textContent = `${sign}${pastHourPercent.toFixed(2)}%`;
+      changePercentEl.className = `change-val ${isUp ? 'up' : 'down'}`;
+
+      // Redraw SVG sparkline
+      renderChart(isUp);
+    }
+
+    // Step 4: Stream Live Binance Ticks (WebSocket)
     function connectWebSocket() {
       if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
         return;
@@ -227,44 +422,25 @@
       ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
 
       ws.onopen = () => {
-        statusDot.className = 'status-dot connected';
-        statusText.textContent = 'Live Feed (Binance WebSocket)';
+        statusDot.className = 'status-indicator connected';
+        statusLabel.textContent = 'Sub-second Live Stream';
       };
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         const currentPrice = parseFloat(data.c);
-        const priceChangePercent = parseFloat(data.P);
-        const formattedPrice = formatCurrency(currentPrice);
-
-        // Update on-screen price
-        priceEl.textContent = formattedPrice;
-
-        // Dynamically update browser tab title
-        document.title = `BTC = ${formattedPrice}`;
-
-        // Color flash effect
-        if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
-          clearTimeout(flashTimeout);
-          priceEl.classList.remove('tick-up', 'tick-down');
-          priceEl.classList.add(currentPrice > previousPrice ? 'tick-up' : 'tick-down');
-
-          flashTimeout = setTimeout(() => {
-            priceEl.classList.remove('tick-up', 'tick-down');
-          }, 350);
-        }
-        previousPrice = currentPrice;
-
-        // 24h percentage badge
-        const sign = priceChangePercent >= 0 ? '+' : '';
-        changePercentEl.textContent = `${sign}${priceChangePercent.toFixed(2)}%`;
-        badgeEl.className = 'badge ' + (priceChangePercent >= 0 ? 'badge-up' : 'badge-down');
+        updateUI(currentPrice);
       };
 
       ws.onclose = () => {
-        statusDot.className = 'status-dot';
-        statusText.textContent = 'Reconnecting...';
-        reconnectTimeout = setTimeout(connectWebSocket, 2000);
+        if (document.visibilityState === 'hidden') {
+          statusDot.className = 'status-indicator paused';
+          statusLabel.textContent = 'Paused (0 KB Background Data)';
+        } else {
+          statusDot.className = 'status-indicator';
+          statusLabel.textContent = 'Reconnecting...';
+          reconnectTimeout = setTimeout(connectWebSocket, 2000);
+        }
       };
 
       ws.onerror = () => {
@@ -272,7 +448,28 @@
       };
     }
 
-    connectWebSocket();
+    function disconnectWebSocket() {
+      clearTimeout(reconnectTimeout);
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+      }
+      statusDot.className = 'status-indicator paused';
+      statusLabel.textContent = 'Paused (0 KB Background Data)';
+    }
+
+    // Zero-data & zero-battery listener when phone minimized / screen off
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        disconnectWebSocket();
+      } else if (document.visibilityState === 'visible') {
+        loadPastHourHistory();
+      }
+    });
+
+    // Start everything
+    loadPastHourHistory();
   </script>
 </body>
 </html>
