@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BTC = --</title>
+  
+  <!-- Home Screen / App Icons -->
+  <link rel="apple-touch-icon" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
+
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card-bg: #151a23;
+      --border: #232a36;
+      --text-main: #f0f4f8;
+      --text-muted: #8b949e;
+      --green: #00e676;
+      --green-bg: rgba(0, 230, 118, 0.12);
+      --red: #ff5252;
+      --red-bg: rgba(255, 82, 82, 0.12);
+      --btc-orange: #f7931a;
+      --amber: #ffb300;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2.5rem 2rem 2rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 1.25rem;
+    }
+
+    .btc-icon {
+      width: 42px;
+      height: 42px;
+      background-color: var(--btc-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 24px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(247, 147, 26, 0.35);
+    }
+
+    .title-group {
+      text-align: left;
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: block;
+      line-height: 1.2;
+    }
+
+    .pair {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .price-container {
+      margin: 1.25rem 0 1rem 0;
+      min-height: 75px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .price {
+      font-size: 3.4rem;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.25s ease;
+    }
+
+    .tick-up {
+      color: var(--green) !important;
+    }
+
+    .tick-down {
+      color: var(--red) !important;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 0.45rem 1.25rem;
+      border-radius: 30px;
+      margin-bottom: 1.5rem;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .badge-neutral {
+      color: var(--text-muted);
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+    }
+
+    .badge-up {
+      color: var(--green);
+      background-color: var(--green-bg);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+    }
+
+    .badge-down {
+      color: var(--red);
+      background-color: var(--red-bg);
+      border: 1px solid rgba(255, 82, 82, 0.3);
+    }
+
+    .footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #555;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .status-dot.connected {
+      background-color: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="header">
+      <div class="btc-icon">&#8383;</div>
+      <div class="title-group">
+        <span class="title">Bitcoin</span>
+        <span class="pair">BTC / USDT</span>
+      </div>
+    </div>
+
+    <div class="price-container">
+      <div id="price" class="price">--</div>
+    </div>
+
+    <div id="badge" class="badge badge-neutral">
+      <span id="change-percent">0.00%</span>
+    </div>
+
+    <div class="footer">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
+
+  <script>
+    const priceEl = document.getElementById('price');
+    const badgeEl = document.getElementById('badge');
+    const changePercentEl = document.getElementById('change-percent');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    let previousPrice = 0;
+    let flashTimeout = null;
+    let reconnectTimeout = null;
+    let ws = null;
+
+    function formatCurrency(val) {
+      return Math.round(Number(val)).toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      });
+    }
+
+    function connectWebSocket() {
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+
+      clearTimeout(reconnectTimeout);
+      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
+
+      ws.onopen = () => {
+        statusDot.className = 'status-dot connected';
+        statusText.textContent = 'Live Feed (Binance WebSocket)';
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const currentPrice = parseFloat(data.c);
+        const priceChangePercent = parseFloat(data.P);
+        const formattedPrice = formatCurrency(currentPrice);
+
+        // Update on-screen price
+        priceEl.textContent = formattedPrice;
+
+        // Dynamically update browser tab title
+        document.title = `BTC = ${formattedPrice}`;
+
+        // Color flash effect
+        if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
+          clearTimeout(flashTimeout);
+          priceEl.classList.remove('tick-up', 'tick-down');
+          priceEl.classList.add(currentPrice > previousPrice ? 'tick-up' : 'tick-down');
+
+          flashTimeout = setTimeout(() => {
+            priceEl.classList.remove('tick-up', 'tick-down');
+          }, 350);
+        }
+        previousPrice = currentPrice;
+
+        // 24h percentage badge
+        const sign = priceChangePercent >= 0 ? '+' : '';
+        changePercentEl.textContent = `${sign}${priceChangePercent.toFixed(2)}%`;
+        badgeEl.className = 'badge ' + (priceChangePercent >= 0 ? 'badge-up' : 'badge-down');
+      };
+
+      ws.onclose = () => {
+        statusDot.className = 'status-dot';
+        statusText.textContent = 'Reconnecting...';
+        reconnectTimeout = setTimeout(connectWebSocket, 2000);
+      };
+
+      ws.onerror = () => {
+        if (ws) ws.close();
+      };
+    }
+
+    connectWebSocket();
+  </script>
+</body>
+</html>
