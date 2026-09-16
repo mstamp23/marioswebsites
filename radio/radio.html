@@ -532,55 +532,6 @@ function setCardState(name, cls) {
   });
 }
 
-/* ── PRE-BUFFER BEFORE PLAYING ──
-   Calling play() the instant a new src is attached starts the browser
-   "cold" - it has to decode and output audio while it's still receiving
-   the very first packets, which is exactly what causes a few stutters/
-   glitches at the start of some stations before things settle down.
-   Instead, give the element a brief window to build up a small buffer
-   first, and only call play() once there's actually a cushion of audio
-   ahead of the playhead. Capped at MAX_PREBUFFER_WAIT_MS so a server that
-   never reports a healthy buffered range still starts promptly instead of
-   hanging - a short cushion is a nice-to-have, not worth stalling for. */
-const MIN_PREBUFFER_S = 1.2;
-const MAX_PREBUFFER_WAIT_MS = 3000;
-
-function bufferedAheadSeconds(el) {
-  try {
-    var b = el.buffered;
-    if (!b || !b.length) return 0;
-    return b.end(b.length - 1) - el.currentTime;
-  } catch(_) { return 0; }
-}
-
-function primeThenPlay(el) {
-  return new Promise(function(resolve, reject){
-    var settled = false;
-    var poll, fallback;
-    function cleanup() {
-      clearTimeout(fallback);
-      clearInterval(poll);
-      el.removeEventListener('canplay', check);
-      el.removeEventListener('progress', check);
-    }
-    function finish() {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      el.play().then(resolve, reject);
-    }
-    // readyState 3 = HAVE_FUTURE_DATA (enough to start playing smoothly)
-    function check() {
-      if (el.readyState >= 3 && bufferedAheadSeconds(el) >= MIN_PREBUFFER_S) finish();
-    }
-    el.addEventListener('canplay', check);
-    el.addEventListener('progress', check);
-    poll = setInterval(check, 150);
-    fallback = setTimeout(finish, MAX_PREBUFFER_WAIT_MS);
-    check(); // already warmed up (e.g. via warmUpStream)? don't wait at all
-  });
-}
-
 /* ── AUDIO EVENTS ──
    'waiting' (and old browsers' 'stalled') fire routinely for live
    streams on ordinary micro-buffering and do NOT mean the stream is
@@ -654,7 +605,7 @@ function playStation(station) {
   }, CONNECT_TIMEOUT_MS);
 
   attachStreamSource(station.streamer)
-    .then(function(){ return primeThenPlay(audio); })
+    .then(function(){ return audio.play(); })
     .then(function(){
       if (myAttempt !== connectAttemptId) return; // a newer play request superseded this one
       clearTimeout(connectTimeoutTimer);
@@ -700,7 +651,7 @@ function togglePlay() {
     var ready = needsAttach ? attachStreamSource(current.streamer) : Promise.resolve();
 
     ready
-      .then(function(){ return primeThenPlay(audio); })
+      .then(function(){ return audio.play(); })
       .then(function(){
         uiPlaying(current.name);
         startPolling(current);
