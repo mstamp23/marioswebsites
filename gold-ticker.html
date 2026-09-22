@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>XAU: -- | XAG: --</title>
 
-  <!-- Gold Bar App Icons for Mobile Home Screen -->
+  <!-- Mobile Home Screen Shortcut Icons -->
   <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/gold-bars.png">
   <link rel="icon" type="image/png" sizes="192x192" href="https://img.icons8.com/fluency/192/gold-bars.png">
 
@@ -17,9 +17,7 @@
       --text-main: #f0f4f8;
       --text-muted: #8b949e;
       --green: #00e676;
-      --green-bg: rgba(0, 230, 118, 0.12);
       --red: #ff5252;
-      --red-bg: rgba(255, 82, 82, 0.12);
       --gold-primary: #ffd700;
       --silver-primary: #e0e6ed;
       --amber: #ffb300;
@@ -54,15 +52,17 @@
     .card {
       background-color: var(--card-bg);
       border: 2px solid var(--card-border);
-      border-radius: 24px;
-      padding: 1.75rem 1.5rem;
+      border-radius: 26px;
+      padding: 1.75rem 1.5rem 1.25rem 1.5rem;
       text-align: center;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
       transition: border-color 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
 
     .card-gold {
-      border-color: rgba(255, 215, 0, 0.25);
+      border-color: rgba(255, 215, 0, 0.28);
     }
 
     .card-silver {
@@ -74,7 +74,7 @@
       align-items: center;
       justify-content: center;
       gap: 14px;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
     }
 
     .bar-icon {
@@ -88,7 +88,7 @@
     }
 
     .title {
-      font-size: 1.6rem;
+      font-size: 1.65rem;
       font-weight: 800;
       letter-spacing: 0.5px;
       display: block;
@@ -104,65 +104,69 @@
     }
 
     .pair {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       font-weight: 700;
       letter-spacing: 0.5px;
     }
 
     .price-container {
-      margin: 0.75rem 0;
-      min-height: 70px;
+      margin: 0.5rem 0 0.25rem 0;
+      min-height: 65px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .price {
-      font-size: 3.5rem;
+      font-size: 3.6rem;
       font-weight: 900;
       letter-spacing: -1.5px;
       font-variant-numeric: tabular-nums;
+      line-height: 1.1;
       transition: color 0.25s ease;
     }
 
-    .tick-up {
-      color: var(--green) !important;
+    .tick-up { color: var(--green) !important; }
+    .tick-down { color: var(--red) !important; }
+
+    /* SVG 1-Year Sparkline Chart */
+    .chart-container {
+      width: 100%;
+      height: 95px;
+      position: relative;
+      margin-top: 0.75rem;
     }
 
-    .tick-down {
-      color: var(--red) !important;
+    svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
     }
 
-    .badge {
-      display: inline-flex;
+    .chart-line {
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .tip-dot {
+      transition: cx 0.2s ease, cy 0.2s ease;
+    }
+
+    .chart-footer {
+      display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      font-weight: 800;
-      padding: 0.4rem 1.25rem;
-      border-radius: 30px;
-      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    }
-
-    .badge-neutral {
+      justify-content: space-between;
+      font-size: 0.75rem;
       color: var(--text-muted);
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
+      font-weight: 600;
+      margin-top: 4px;
+      padding: 0 4px;
     }
 
-    .badge-up {
-      color: var(--green);
-      background-color: var(--green-bg);
-      border: 1px solid rgba(0, 230, 118, 0.35);
-    }
-
-    .badge-down {
-      color: var(--red);
-      background-color: var(--red-bg);
-      border: 1px solid rgba(255, 82, 82, 0.35);
-    }
-
+    /* Overall Status Footer */
     .footer {
       margin-top: 0.5rem;
       display: flex;
@@ -197,7 +201,7 @@
 
   <div class="container">
     
-    <!-- GOLD (XAU) CARD -->
+    <!-- ΧΡΥΣΟΣ (XAU) CARD -->
     <div class="card card-gold">
       <div class="header">
         <svg class="bar-icon" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -220,11 +224,11 @@
           <polygon points="4,18 56,18 50,34 10,34" fill="url(#goldFront)" stroke="#805C00" stroke-width="1.2"/>
           <polygon points="56,18 60,10 52,26 50,34" fill="url(#goldSide)"/>
           <text x="30" y="14" font-size="6.5" font-weight="900" fill="#7A5300" text-anchor="middle" font-family="sans-serif">999.9</text>
-          <text x="30" y="28" font-size="8" font-weight="900" fill="#FFF2A3" text-anchor="middle" font-family="sans-serif">GOLD</text>
+          <text x="30" y="28" font-size="7" font-weight="900" fill="#FFF2A3" text-anchor="middle" font-family="sans-serif">ΧΡΥΣΟΣ</text>
         </svg>
 
         <div class="title-group">
-          <span class="title title-gold">Gold</span>
+          <span class="title title-gold">ΧΡΥΣΟΣ</span>
           <span class="pair">XAU / USD (1 oz)</span>
         </div>
       </div>
@@ -233,12 +237,28 @@
         <div id="gold-price" class="price">--</div>
       </div>
 
-      <div id="gold-badge" class="badge badge-neutral">
-        <span id="gold-change">0.00%</span>
+      <!-- 1-Year Gold Chart -->
+      <div class="chart-container">
+        <svg viewBox="0 0 380 95" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#ffd700" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#ffd700" stop-opacity="0.0"/>
+            </linearGradient>
+          </defs>
+          <path id="gold-chart-fill" fill="url(#grad-gold)" d=""/>
+          <path id="gold-chart-path" class="chart-line" stroke="#ffd700" d=""/>
+          <circle id="gold-tip" class="tip-dot" cx="-10" cy="-10" r="4" fill="#ffd700"/>
+        </svg>
+      </div>
+      <div class="chart-footer">
+        <span>Πριν 1 Έτος</span>
+        <span>Τάση 12 Μηνών</span>
+        <span>Σήμερα</span>
       </div>
     </div>
 
-    <!-- SILVER (XAG) CARD -->
+    <!-- ΑΣΗΜΙ (XAG) CARD -->
     <div class="card card-silver">
       <div class="header">
         <svg class="bar-icon" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -261,11 +281,11 @@
           <polygon points="4,18 56,18 50,34 10,34" fill="url(#silverFront)" stroke="#475569" stroke-width="1.2"/>
           <polygon points="56,18 60,10 52,26 50,34" fill="url(#silverSide)"/>
           <text x="30" y="14" font-size="6.5" font-weight="900" fill="#334155" text-anchor="middle" font-family="sans-serif">999.0</text>
-          <text x="30" y="28" font-size="7.5" font-weight="900" fill="#F8FAFC" text-anchor="middle" font-family="sans-serif">SILVER</text>
+          <text x="30" y="28" font-size="7" font-weight="900" fill="#F8FAFC" text-anchor="middle" font-family="sans-serif">ΑΣΗΜΙ</text>
         </svg>
 
         <div class="title-group">
-          <span class="title title-silver">Silver</span>
+          <span class="title title-silver">ΑΣΗΜΙ</span>
           <span class="pair">XAG / USD (1 oz)</span>
         </div>
       </div>
@@ -274,29 +294,47 @@
         <div id="silver-price" class="price">--</div>
       </div>
 
-      <div id="silver-badge" class="badge badge-neutral">
-        <span id="silver-change">0.00%</span>
+      <!-- 1-Year Silver Chart -->
+      <div class="chart-container">
+        <svg viewBox="0 0 380 95" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="grad-silver" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#e0e6ed" stop-opacity="0.32"/>
+              <stop offset="100%" stop-color="#e0e6ed" stop-opacity="0.0"/>
+            </linearGradient>
+          </defs>
+          <path id="silver-chart-fill" fill="url(#grad-silver)" d=""/>
+          <path id="silver-chart-path" class="chart-line" stroke="#e0e6ed" d=""/>
+          <circle id="silver-tip" class="tip-dot" cx="-10" cy="-10" r="4" fill="#e0e6ed"/>
+        </svg>
+      </div>
+      <div class="chart-footer">
+        <span>Πριν 1 Έτος</span>
+        <span>Τάση 12 Μηνών</span>
+        <span>Σήμερα</span>
       </div>
     </div>
 
     <div class="footer">
       <div id="statusDot" class="status-dot"></div>
-      <span id="statusText">Connecting...</span>
+      <span id="statusText">Σύνδεση με τιμές spot...</span>
     </div>
 
   </div>
 
   <script>
     const goldPriceEl = document.getElementById('gold-price');
-    const goldBadgeEl = document.getElementById('gold-badge');
-    const goldChangeEl = document.getElementById('gold-change');
-
     const silverPriceEl = document.getElementById('silver-price');
-    const silverBadgeEl = document.getElementById('silver-badge');
-    const silverChangeEl = document.getElementById('silver-change');
-
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
+
+    const goldChartPath = document.getElementById('gold-chart-path');
+    const goldChartFill = document.getElementById('gold-chart-fill');
+    const goldTip = document.getElementById('gold-tip');
+
+    const silverChartPath = document.getElementById('silver-chart-path');
+    const silverChartFill = document.getElementById('silver-chart-fill');
+    const silverTip = document.getElementById('silver-tip');
 
     let prevGoldPrice = 0;
     let prevSilverPrice = 0;
@@ -306,6 +344,13 @@
 
     let currentGoldDisplay = '--';
     let currentSilverDisplay = '--';
+
+    let goldHistory1Y = [];
+    let silverHistory1Y = [];
+
+    const SVG_W = 380;
+    const SVG_H = 95;
+    const PAD_Y = 10;
 
     function formatPrice(val, decimals = 2) {
       return Number(val).toLocaleString('en-US', {
@@ -320,7 +365,85 @@
       document.title = `XAU: ${currentGoldDisplay} | XAG: ${currentSilverDisplay}`;
     }
 
-    function updateGold(price, changePercent) {
+    // Generic SVG Sparkline Renderer
+    function drawChart(history, pathEl, fillEl, tipEl) {
+      if (!history || history.length < 2) return;
+
+      const min = Math.min(...history);
+      const max = Math.max(...history);
+      const range = (max - min) === 0 ? 1 : (max - min);
+
+      const points = history.map((val, idx) => {
+        const x = (idx / (history.length - 1)) * SVG_W;
+        const normY = (val - min) / range;
+        const y = SVG_H - PAD_Y - (normY * (SVG_H - PAD_Y * 2));
+        return { x, y };
+      });
+
+      let dLine = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+      for (let i = 1; i < points.length; i++) {
+        dLine += ` L ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}`;
+      }
+
+      const dFill = `${dLine} L ${SVG_W} ${SVG_H} L 0 ${SVG_H} Z`;
+
+      pathEl.setAttribute('d', dLine);
+      fillEl.setAttribute('d', dFill);
+
+      const lastPoint = points[points.length - 1];
+      tipEl.setAttribute('cx', lastPoint.x);
+      tipEl.setAttribute('cy', lastPoint.y);
+    }
+
+    // Step 1: 1-Year History Loader with 24-Hour localStorage Caching (Zero Quota Waste)
+    async function loadYearHistory() {
+      const today = new Date().toISOString().slice(0, 10);
+      const cached = JSON.parse(localStorage.getItem('metals_1y_cache') || '{}');
+
+      if (cached.date === today && cached.gold?.length > 10 && cached.silver?.length > 10) {
+        goldHistory1Y = cached.gold;
+        silverHistory1Y = cached.silver;
+        drawChart(goldHistory1Y, goldChartPath, goldChartFill, goldTip);
+        drawChart(silverHistory1Y, silverChartPath, silverChartFill, silverTip);
+        return;
+      }
+
+      // 1. Fetch 365 daily candles for 1 oz Gold (PAXG)
+      try {
+        const resG = await fetch('https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1d&limit=365');
+        const dataG = await resG.json();
+        goldHistory1Y = dataG.map(c => parseFloat(c[4]));
+      } catch (e) {
+        // Fallback default trend if network blip
+        goldHistory1Y = [2600, 2650, 2700, 2750, 2800, 2850];
+      }
+
+      // 2. Fetch 365 daily candles for Silver (Kinesis Silver)
+      try {
+        const resS = await fetch('https://api.coingecko.com/api/v3/coins/kinesis-silver/market_chart?vs_currency=usd&days=365&interval=daily');
+        const dataS = await resS.json();
+        if (dataS.prices && dataS.prices.length > 0) {
+          silverHistory1Y = dataS.prices.map(p => p[1]);
+        }
+      } catch (e) {
+        // Fallback proportional ratio baseline if external endpoint blocks
+        silverHistory1Y = goldHistory1Y.map(p => p / 84);
+      }
+
+      // Save to cache so it never requests again today
+      if (goldHistory1Y.length > 5 && silverHistory1Y.length > 5) {
+        localStorage.setItem('metals_1y_cache', JSON.stringify({
+          date: today,
+          gold: goldHistory1Y,
+          silver: silverHistory1Y
+        }));
+      }
+
+      drawChart(goldHistory1Y, goldChartPath, goldChartFill, goldTip);
+      drawChart(silverHistory1Y, silverChartPath, silverChartFill, silverTip);
+    }
+
+    function updateGold(price) {
       currentGoldDisplay = formatPrice(Math.round(price), 0);
       goldPriceEl.textContent = currentGoldDisplay;
 
@@ -335,17 +458,16 @@
       }
       prevGoldPrice = price;
 
-      const numChange = parseFloat(changePercent);
-      if (!isNaN(numChange)) {
-        const sign = numChange >= 0 ? '+' : '';
-        goldChangeEl.textContent = `${sign}${numChange.toFixed(2)}%`;
-        goldBadgeEl.className = 'badge ' + (numChange > 0 ? 'badge-up' : (numChange < 0 ? 'badge-down' : 'badge-neutral'));
+      // Update live tip of the 1Y chart
+      if (goldHistory1Y.length > 0) {
+        goldHistory1Y[goldHistory1Y.length - 1] = price;
+        drawChart(goldHistory1Y, goldChartPath, goldChartFill, goldTip);
       }
 
       updateTabTitle();
     }
 
-    function updateSilver(price, changePercent) {
+    function updateSilver(price) {
       currentSilverDisplay = formatPrice(price, 2);
       silverPriceEl.textContent = currentSilverDisplay;
 
@@ -360,27 +482,16 @@
       }
       prevSilverPrice = price;
 
-      const numChange = parseFloat(changePercent);
-      if (!isNaN(numChange)) {
-        const sign = numChange >= 0 ? '+' : '';
-        silverChangeEl.textContent = `${sign}${numChange.toFixed(2)}%`;
-        silverBadgeEl.className = 'badge ' + (numChange > 0 ? 'badge-up' : (numChange < 0 ? 'badge-down' : 'badge-neutral'));
+      // Update live tip of the 1Y chart
+      if (silverHistory1Y.length > 0) {
+        silverHistory1Y[silverHistory1Y.length - 1] = price;
+        drawChart(silverHistory1Y, silverChartPath, silverChartFill, silverTip);
       }
 
       updateTabTitle();
     }
 
-    function getSessionChange(key, currentPrice) {
-      const today = new Date().toISOString().slice(0, 10);
-      const stored = JSON.parse(localStorage.getItem(key) || '{}');
-
-      if (stored.date !== today || !stored.basePrice) {
-        localStorage.setItem(key, JSON.stringify({ date: today, basePrice: currentPrice }));
-        return 0.0;
-      }
-      return ((currentPrice - stored.basePrice) / stored.basePrice) * 100;
-    }
-
+    // Step 2: Live Spot Price Polling
     async function fetchMetalsData() {
       try {
         const response = await fetch('https://data-asg.goldprice.org/dbXRates/USD', { cache: 'no-store' });
@@ -390,27 +501,14 @@
         const item = data.items && data.items[0];
 
         if (item) {
-          const goldPrice = parseFloat(item.xauPrice);
-          const silverPrice = parseFloat(item.xagPrice);
-
-          let goldChg = parseFloat(item.pcXau);
-          if ((isNaN(goldChg) || goldChg === 0) && item.xauClose) {
-            goldChg = ((goldPrice - parseFloat(item.xauClose)) / parseFloat(item.xauClose)) * 100;
-          }
-
-          let silverChg = parseFloat(item.pcXag);
-          if ((isNaN(silverChg) || silverChg === 0) && item.xagClose) {
-            silverChg = ((silverPrice - parseFloat(item.xagClose)) / parseFloat(item.xagClose)) * 100;
-          }
-
-          updateGold(goldPrice, goldChg);
-          updateSilver(silverPrice, silverChg);
-
+          updateGold(parseFloat(item.xauPrice));
+          updateSilver(parseFloat(item.xagPrice));
           statusDot.className = 'status-dot connected';
-          statusText.textContent = `Live Feed (Updated ${new Date().toLocaleTimeString()})`;
+          statusText.textContent = `Live Feed (Ενημέρωση ${new Date().toLocaleTimeString()})`;
           return;
         }
       } catch (err) {
+        // Fallback secondary endpoint
         try {
           const [gRes, sRes] = await Promise.all([
             fetch('https://api.gold-api.com/price/XAU'),
@@ -419,20 +517,14 @@
           const gData = await gRes.json();
           const sData = await sRes.json();
 
-          const gPrice = parseFloat(gData.price);
-          const sPrice = parseFloat(sData.price);
-
-          const gChg = getSessionChange('xau_base', gPrice);
-          const sChg = getSessionChange('xag_base', sPrice);
-
-          updateGold(gPrice, gChg);
-          updateSilver(sPrice, sChg);
+          updateGold(parseFloat(gData.price));
+          updateSilver(parseFloat(sData.price));
 
           statusDot.className = 'status-dot connected';
-          statusText.textContent = `Live Feed (Updated ${new Date().toLocaleTimeString()})`;
+          statusText.textContent = `Live Feed (Ενημέρωση ${new Date().toLocaleTimeString()})`;
         } catch (e2) {
           statusDot.className = 'status-dot';
-          statusText.textContent = 'Retrying feed connection...';
+          statusText.textContent = 'Επανασύνδεση...';
         }
       }
     }
@@ -448,7 +540,7 @@
       clearInterval(pollInterval);
       pollInterval = null;
       statusDot.className = 'status-dot paused';
-      statusText.textContent = 'Paused (0 KB Background Data)';
+      statusText.textContent = 'Σε παύση (0 KB Background Data)';
     }
 
     document.addEventListener('visibilitychange', () => {
@@ -459,6 +551,8 @@
       }
     });
 
+    // Start
+    loadYearHistory();
     startPolling();
   </script>
 </body>
