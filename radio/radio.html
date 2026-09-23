@@ -266,19 +266,47 @@ audio.preload = 'none';
 // station whose server doesn't happen to send that header.
 audio.volume = 0.7;
 
-/* ── PREFETCH ENGINE ── */
-const prefetchAudio = new Audio();
-prefetchAudio.muted = true;
+/* ── PREFETCH ENGINE ──
+   Live radio is not a normal VOD file: speculative buffering can create a
+   second live connection, waste bandwidth and, on some browsers/WebViews,
+   leave old decoder/network state around. Keep preloading strictly
+   conservative and abortable. It is disabled while the real player is
+   connecting/buffering and only warms the next station after stable playback. */
+let prefetchAudio = null;
+let prefetchUrl = '';
+let prefetchTimer = null;
 
-function warmUpStream(url) {
-  if (!url || prefetchAudio.src === url || audio.src === url) return;
-  if (isHlsUrl(url) && !nativeHlsSupported) return; // hls.js prefetch not worth the complexity
-  // Respect the user's data preferences - don't spend bandwidth
-  // speculatively pre-buffering a stream they haven't asked for yet.
+function cancelPrefetch() {
+  clearTimeout(prefetchTimer);
+  prefetchTimer = null;
+  if (prefetchAudio) {
+    try { prefetchAudio.pause(); } catch(_) {}
+    try { prefetchAudio.removeAttribute('src'); prefetchAudio.load(); } catch(_) {}
+  }
+  prefetchAudio = null;
+  prefetchUrl = '';
+}
+
+function warmUpStream(url, delayMs) {
+  cancelPrefetch();
+  if (!url || audio.src === url || (current && current.streamer === url)) return;
+  if (isHlsUrl(url)) return; // Never open a second HLS pipeline just to prefetch.
+
   var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   if (conn && (conn.saveData || /^(slow-2g|2g)$/.test(conn.effectiveType || ''))) return;
-  prefetchAudio.src = url;
-  prefetchAudio.load();
+
+  // Only warm after a short delay, giving the active player priority.
+  prefetchTimer = setTimeout(function() {
+    prefetchTimer = null;
+    if (!current || audio.paused || bufferingTimer || retryTimer || !navigator.onLine) return;
+
+    var a = new Audio();
+    a.preload = 'metadata';
+    a.muted = true;
+    prefetchAudio = a;
+    prefetchUrl = url;
+    try { a.src = url; a.load(); } catch(_) { cancelPrefetch(); }
+  }, delayMs == null ? 3000 : delayMs);
 }
 
 /* ── HLS SUPPORT ──
@@ -496,8 +524,7 @@ function stopRetry() {
   retryTimer = null;
   clearTimeout(connectTimeoutTimer);
   connectTimeoutTimer = null;
-  clearTimeout(bufferingTimer);
-  bufferingTimer = null;
+  clearBufferTimers();
   retry = 0;
 }
 
@@ -540,24 +567,77 @@ function setCardState(name, cls) {
    to a real reconnect if it hasn't recovered (fired 'playing') within
    BUFFER_GRACE_MS. */
 const BUFFER_GRACE_MS = 9000;
+const HARD_STALL_MS = 18000;
+const MIN_RECONNECT_GAP_MS = 5000;
 let bufferingTimer = null;
+let hardStallTimer = null;
+let lastReconnectAt = 0;
+let playbackGeneration = 0;
 
-audio.addEventListener('error', scheduleRetry);
-audio.addEventListener('ended', scheduleRetry);
+function clearBufferTimers() {
+  clearTimeout(bufferingTimer);
+  bufferingTimer = null;
+  clearTimeout(hardStallTimer);
+  hardStallTimer = null;
+}
+
+audio.addEventListener('error', function() {
+  if (Date.now() - lastReconnectAt < MIN_RECONNECT_GAP_MS) return;
+  scheduleRetry();
+});
+audio.addEventListener('ended', function() {
+  if (Date.now() - lastReconnectAt >= MIN_RECONNECT_GAP_MS) scheduleRetry();
+});
+
 audio.addEventListener('waiting', function(){
   if (!current || audio.paused) return;
   spinnerEl.style.display = 'inline-block';
-  if (!bufferingTimer) {
-    bufferingTimer = setTimeout(function(){
-      bufferingTimer = null;
+
+  clearTimeout(bufferingTimer);
+  bufferingTimer = setTimeout(function(){
+    bufferingTimer = null;
+    if (!current || audio.paused || audio.readyState >= 3) return;
+
+    // First give the browser a grace period. Only a long, confirmed stall
+    // triggers a reconnect, avoiding the "back/forward" effect caused by
+    // reconnecting during normal live-stream jitter.
+    clearTimeout(hardStallTimer);
+    hardStallTimer = setTimeout(function(){
+      hardStallTimer = null;
+      if (!current || audio.paused || audio.readyState >= 3) return;
+      if (Date.now() - lastReconnectAt < MIN_RECONNECT_GAP_MS) return;
       scheduleRetry();
-    }, BUFFER_GRACE_MS);
+    }, Math.max(0, HARD_STALL_MS - BUFFER_GRACE_MS));
+  }, BUFFER_GRACE_MS);
+});
+
+audio.addEventListener('stalled', function() {
+  if (!current || audio.paused) return;
+  // Treat stalled exactly like waiting; do not reconnect immediately.
+  audio.dispatchEvent(new Event('waiting'));
+});
+
+audio.addEventListener('playing', function(){
+  clearBufferTimers();
+  spinnerEl.style.display = 'none';
+  // A stable player means speculative prefetch is safe again.
+  if (current) {
+    const list = getFilteredList();
+    const idx = list.findIndex(function(x){ return x.name === current.name; });
+    if (idx !== -1 && list.length > 1) {
+      const nextS = list[(idx + 1) % list.length];
+      warmUpStream(nextS.streamer, 2500);
+    }
   }
 });
-audio.addEventListener('playing', function(){
-  clearTimeout(bufferingTimer);
-  bufferingTimer = null;
-  spinnerEl.style.display = 'none';
+
+audio.addEventListener('timeupdate', function(){
+  // Live streams can advance in small steps even when readyState is not ideal.
+  // Seeing progress means we should never force a reconnect from a stale timer.
+  if (!audio.paused) {
+    clearTimeout(hardStallTimer);
+    hardStallTimer = null;
+  }
 });
 
 /* ── CONNECTIVITY ──
@@ -580,8 +660,12 @@ window.addEventListener('online', function(){
 function playStation(station) {
   stopRetry();
   stopPolling();
+  cancelPrefetch();
   current = station;
   retry = 0;
+  playbackGeneration++;
+  const myGeneration = playbackGeneration;
+  lastReconnectAt = Date.now();
 
   audio.pause();
 
@@ -599,7 +683,8 @@ function playStation(station) {
   var myAttempt = ++connectAttemptId;
   clearTimeout(connectTimeoutTimer);
   connectTimeoutTimer = setTimeout(function(){
-    if (myAttempt === connectAttemptId && current && current.name === station.name && audio.paused) {
+    if (myAttempt === connectAttemptId && myGeneration === playbackGeneration &&
+        current && current.name === station.name && audio.paused) {
       scheduleRetry();
     }
   }, CONNECT_TIMEOUT_MS);
@@ -607,7 +692,7 @@ function playStation(station) {
   attachStreamSource(station.streamer)
     .then(function(){ return audio.play(); })
     .then(function(){
-      if (myAttempt !== connectAttemptId) return; // a newer play request superseded this one
+      if (myAttempt !== connectAttemptId || myGeneration !== playbackGeneration) return; // newer play request superseded this one
       clearTimeout(connectTimeoutTimer);
       uiPlaying(station.name);
       startPolling(station);
@@ -616,18 +701,10 @@ function playStation(station) {
       // innerHTML, which resets scrollTop to 0 as a side effect - that
       // was causing the page to jump to the top every time you hit play.
 
-      // Post-play Prefetch: warm up the "Next" station in current view after 2.5s
-      setTimeout(function() {
-        const list = getFilteredList();
-        const idx = list.findIndex(x => x.name === station.name);
-        if (idx !== -1) {
-          const nextS = list[(idx + 1) % list.length];
-          warmUpStream(nextS.streamer);
-        }
-      }, 2500);
+
     })
     .catch(function(err){
-      if (myAttempt !== connectAttemptId) return;
+      if (myAttempt !== connectAttemptId || myGeneration !== playbackGeneration) return;
       clearTimeout(connectTimeoutTimer);
       if (err && err.name === 'NotAllowedError') {
         uiStopped();
@@ -660,7 +737,9 @@ function togglePlay() {
       .catch(function(){});
   } else {
     audio.pause();
+    cancelPrefetch();
     stopPolling();
+    clearBufferTimers();
     uiStopped();
     nowEl.textContent = current.name;
     nowEl.className = '';
@@ -694,8 +773,14 @@ document.addEventListener('keydown', function(e){
 
 /* ── VISIBILITY ── */
 document.addEventListener('visibilitychange', function(){
-  if (!document.hidden && current && !audio.paused) startPolling(current);
+  if (document.hidden) {
+    cancelPrefetch();
+  } else if (current && !audio.paused) {
+    startPolling(current);
+  }
 });
+
+window.addEventListener('pagehide', cancelPrefetch);
 
 /* ── VOLUME ── */
 volEl.oninput = function(){ audio.volume = parseFloat(this.value); };
@@ -755,9 +840,9 @@ function applyStationData(raw) {
       current = s;
       nowEl.textContent = s.name;
       updateActiveUI(s.name);
-      // Warm the last-played stream immediately so hitting PLAY/SPACE
-      // right after load starts near-instantly instead of cold-connecting.
-      warmUpStream(s.streamer);
+      // Do not open a live stream before the user presses PLAY.
+      // Keeping the URL only makes resume immediate without creating a
+      // competing connection in the background.
     }
   }
 }
@@ -984,8 +1069,9 @@ function buildCard(s) {
   card.className = 'card' + (current && current.name === s.name ? ' active' : '');
   card.dataset.name = s.name;
 
-  card.addEventListener('mouseenter', function() { warmUpStream(s.streamer); });
-  card.addEventListener('touchstart', function() { warmUpStream(s.streamer); }, {passive: true});
+  // Do not open a second live connection on touch/hover. The real player
+  // gets the network exclusively; next-station warming happens only after
+  // stable playback.
 
   var name = document.createElement('span');
   name.className = 'st-name';
