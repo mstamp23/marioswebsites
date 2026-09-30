@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BTC = --</title>
 
+  <!-- Early connection setup: DNS + TLS start before scripts run -->
+  <link rel="preconnect" href="https://api.binance.com">
+  <link rel="preconnect" href="https://stream.binance.com:9443">
+
   <!-- Home Screen / App Icons -->
   <link rel="apple-touch-icon" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
   <link rel="icon" type="image/png" sizes="192x192" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
@@ -120,8 +124,11 @@
       letter-spacing: -1.5px;
       font-variant-numeric: tabular-nums;
       line-height: 1.1;
-      transition: color 0.2s ease;
+      transition: color 0.2s ease, opacity 0.3s ease;
     }
+
+    /* Cached (not yet live) price is shown dimmed */
+    .price.stale { opacity: 0.45; }
 
     .tick-up { color: var(--green) !important; }
     .tick-down { color: var(--red) !important; }
@@ -282,16 +289,19 @@
     const statusDot = document.getElementById('statusDot');
     const statusLabel = document.getElementById('statusLabel');
 
-    let priceHistory = []; // 60 data points (1 per minute)
+    let priceHistory = []; // up to 60 data points (1 per minute)
     let previousPrice = 0;
     let flashTimeout = null;
     let reconnectTimeout = null;
     let ws = null;
     let lastMinuteBucket = 0;
+    let lastSave = 0;
 
     const SVG_WIDTH = 380;
     const SVG_HEIGHT = 140;
     const PADDING_Y = 16;
+    const CACHE_KEY = 'btc_ticker_cache_v1';
+    const HOUR_MS = 60 * 60 * 1000;
 
     function formatPrice(val) {
       return Math.round(Number(val)).toLocaleString('en-US', {
@@ -302,28 +312,41 @@
       });
     }
 
-    // Step 1: Initial 1-Hour History Fetch (Runs only once on load -> 0 quota impact)
-    async function loadPastHourHistory() {
+    /* ---------- Cache (localStorage) ---------- */
+
+    function saveCache(force) {
+      const now = Date.now();
+      if (!force && now - lastSave < 5000) return; // throttle writes
+      lastSave = now;
       try {
-        const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60');
-        const data = await res.json();
-        
-        // Extract the close prices for the past 60 minutes
-        priceHistory = data.map(candle => parseFloat(candle[4]));
-        lastMinuteBucket = Math.floor(Date.now() / 60000);
-        
-        if (priceHistory.length > 0) {
-          const latest = priceHistory[priceHistory.length - 1];
-          updateUI(latest);
-        }
-        connectWebSocket();
-      } catch (err) {
-        statusLabel.textContent = 'REST failed, connecting WebSocket directly...';
-        connectWebSocket();
-      }
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          ts: now,
+          price: previousPrice,
+          history: priceHistory
+        }));
+      } catch (e) { /* storage full / disabled: ignore */ }
     }
 
-    // Step 2: Draw the smooth 1-hour SVG chart
+    // Instantly show the last known state so there is no empty "--" gap
+    function restoreFromCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (!cached || !cached.price) return;
+
+        const fresh = (Date.now() - cached.ts) < HOUR_MS;
+        if (fresh && Array.isArray(cached.history) && cached.history.length > 1) {
+          priceHistory = cached.history;
+          lastMinuteBucket = Math.floor(Date.now() / 60000);
+        }
+
+        priceEl.classList.add('stale');
+        statusLabel.textContent = 'Cached price, connecting...';
+        updateUI(cached.price);
+      } catch (e) { /* corrupted cache: ignore */ }
+    }
+
+    /* ---------- Chart ---------- */
+
     function renderChart(isUp) {
       if (priceHistory.length < 2) return;
 
@@ -334,18 +357,15 @@
       const points = priceHistory.map((val, idx) => {
         const x = (idx / (priceHistory.length - 1)) * SVG_WIDTH;
         const normalizedY = (val - min) / range;
-        // Invert Y for SVG coordinates
         const y = SVG_HEIGHT - PADDING_Y - (normalizedY * (SVG_HEIGHT - PADDING_Y * 2));
         return { x, y };
       });
 
-      // Build smooth SVG path
       let dLine = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
       for (let i = 1; i < points.length; i++) {
         dLine += ` L ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}`;
       }
 
-      // Build closed Area Path
       const dFill = `${dLine} L ${SVG_WIDTH} ${SVG_HEIGHT} L 0 ${SVG_HEIGHT} Z`;
 
       chartPath.setAttribute('d', dLine);
@@ -355,7 +375,6 @@
       chartPath.setAttribute('stroke', color);
       chartFill.setAttribute('fill', isUp ? 'url(#grad-green)' : 'url(#grad-red)');
 
-      // Position the live pulsing dot at the chart's tip
       const lastPoint = points[points.length - 1];
       tipCore.setAttribute('cx', lastPoint.x);
       tipCore.setAttribute('cy', lastPoint.y);
@@ -366,13 +385,14 @@
       tipGlow.setAttribute('fill', color);
     }
 
-    // Step 3: Real-Time UI Engine
+    /* ---------- Real-time UI ---------- */
+
     function updateUI(currentPrice) {
       const formatted = formatPrice(currentPrice);
       priceEl.textContent = formatted;
       document.title = `BTC = ${formatted}`;
 
-      // Price Flash animation on change
+      // Flash animation on change
       if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
         clearTimeout(flashTimeout);
         priceEl.classList.remove('tick-up', 'tick-down');
@@ -384,22 +404,19 @@
       }
       previousPrice = currentPrice;
 
-      // Update 1-Hour Moving Buffer
+      // Update 1-hour moving buffer
       const currentMinute = Math.floor(Date.now() / 60000);
       if (currentMinute > lastMinuteBucket) {
         priceHistory.push(currentPrice);
-        if (priceHistory.length > 60) priceHistory.shift(); // Keep strictly 60 minutes
+        if (priceHistory.length > 60) priceHistory.shift();
         lastMinuteBucket = currentMinute;
+      } else if (priceHistory.length > 0) {
+        priceHistory[priceHistory.length - 1] = currentPrice;
       } else {
-        // Update the active minute tip in real-time
-        if (priceHistory.length > 0) {
-          priceHistory[priceHistory.length - 1] = currentPrice;
-        } else {
-          priceHistory.push(currentPrice);
-        }
+        priceHistory.push(currentPrice);
       }
 
-      // Calculate strictly 1-Hour % change
+      // Strict 1-hour % change
       const baseHourPrice = priceHistory[0] || currentPrice;
       const pastHourPercent = ((currentPrice - baseHourPrice) / baseHourPrice) * 100;
       const isUp = pastHourPercent >= 0;
@@ -408,11 +425,36 @@
       changePercentEl.textContent = `${sign}${pastHourPercent.toFixed(2)}%`;
       changePercentEl.className = `change-val ${isUp ? 'up' : 'down'}`;
 
-      // Redraw SVG sparkline
       renderChart(isUp);
+      saveCache(false);
     }
 
-    // Step 4: Stream Live Binance Ticks (WebSocket)
+    /* ---------- 1-hour history (REST, runs in parallel with WebSocket) ---------- */
+
+    async function loadPastHourHistory() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=60');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const closes = data.map(candle => parseFloat(candle[4]));
+        if (closes.length < 2) return;
+
+        // If a live tick already arrived, keep it as the latest point
+        if (previousPrice !== 0) closes[closes.length - 1] = previousPrice;
+
+        priceHistory = closes;
+        lastMinuteBucket = Math.floor(Date.now() / 60000);
+        updateUI(closes[closes.length - 1]);
+      } catch (err) {
+        // WebSocket keeps running; the chart just builds up from live ticks
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          statusLabel.textContent = 'History unavailable, using live stream';
+        }
+      }
+    }
+
+    /* ---------- Live stream (WebSocket) ---------- */
+
     function connectWebSocket() {
       if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
         return;
@@ -429,6 +471,8 @@
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         const currentPrice = parseFloat(data.c);
+        if (!isFinite(currentPrice)) return;
+        priceEl.classList.remove('stale'); // first live tick replaces cached price
         updateUI(currentPrice);
       };
 
@@ -459,17 +503,25 @@
       statusLabel.textContent = 'Paused (0 KB Background Data)';
     }
 
-    // Zero-data & zero-battery listener when phone minimized / screen off
+    function start() {
+      connectWebSocket();      // start the live stream immediately...
+      loadPastHourHistory();   // ...while the 1-hour history loads in parallel
+    }
+
+    // Zero-data & zero-battery when the tab is hidden / screen off
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
+        saveCache(true);
         disconnectWebSocket();
-      } else if (document.visibilityState === 'visible') {
-        loadPastHourHistory();
+      } else {
+        priceEl.classList.add('stale'); // dim until the first fresh tick arrives
+        start();
       }
     });
 
-    // Start everything
-    loadPastHourHistory();
+    // Boot: show cached data instantly, then go live
+    restoreFromCache();
+    start();
   </script>
 </body>
 </html>
