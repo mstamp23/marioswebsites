@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>US debt clock</title>
+<style>
+:root{--bg:#0b1017;--panel:#121a25;--line:#243246;--ink:#e8edf4;--mute:#8b9bb0;--gold:#f2c46d;--teal:#62b6cb;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Ubuntu,"Noto Sans",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:clamp(16px,4vw,40px)}
+h1{font-size:1rem;font-weight:500;color:var(--mute);margin:0 0 .4rem}
+.num{font-family:"DejaVu Sans Mono","Liberation Mono",Consolas,monospace;font-variant-numeric:tabular-nums}
+#debt{font-size:clamp(1.4rem,6.2vw,4rem);color:var(--gold);letter-spacing:-.02em;line-height:1.1;overflow-wrap:anywhere}
+.sub{color:var(--mute);margin:.5rem 0 0;max-width:60ch}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:24px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+.card small{display:block;color:var(--mute)}
+.big{font-size:clamp(1.4rem,4vw,2.1rem);margin-top:4px}
+.chart-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tabs{display:flex;gap:6px}
+button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:4px;padding:4px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#07222a}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#readout{color:var(--mute);min-height:1.5em}
+canvas{display:block;width:100%;height:280px}
+#status{color:var(--mute);font-size:.875rem;margin-top:18px}
+#gdpnote{color:var(--mute);font-size:.875rem;margin-top:8px}
+#gdpnote button{padding:0 8px;font-size:.8125rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>US national debt, total public debt outstanding</h1>
+  <div id="debt" class="num">Loading…</div>
+  <p class="sub">Projected second by second from the latest official Treasury record, using the average growth of the past 12 months.</p>
+
+  <div class="row">
+    <div class="card">
+      <small>Debt to GDP</small>
+      <div id="ratio" class="num big">…</div>
+      <div id="gdpnote"></div>
+    </div>
+    <div class="card">
+      <small>Growth right now</small>
+      <div id="rate" class="num big">…</div>
+      <div id="official" class="sub"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chart-head">
+      <div class="tabs" role="group" aria-label="Chart range">
+        <button data-d="31">1 month</button>
+        <button data-d="183">6 months</button>
+        <button data-d="365" aria-pressed="true">1 year</button>
+        <button data-d="1826">5 years</button>
+      </div>
+      <div id="readout" class="num"></div>
+    </div>
+    <canvas id="chart" aria-label="Chart of total public debt over time"></canvas>
+  </div>
+
+  <div id="status" aria-live="polite"></div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const DAY = 864e5;
+const API = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny'
+          + '?fields=record_date,tot_pub_debt_out_amt&sort=-record_date&page%5Bsize%5D=1830';
+const FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=GDP';
+const GDP_FALLBACK = 32.5;            // trillions of dollars, rough estimate, used only if FRED is unreachable
+const DEBT_REFRESH = 30 * 60e3;       // Treasury publishes once per business day, so 30 minutes is plenty
+const GDP_REFRESH = 12 * 3600e3;
+
+let S = null;                          // latest official record plus growth rate
+let series = [];                       // all daily records, oldest first
+let gdp = { t: GDP_FALLBACK, src: 'rough estimate, live GDP source unreachable' };
+let range = 365, view = [], debtTimer = 0;
+
+const dayMs = s => Date.parse(s + 'T00:00:00Z');
+const iso = t => new Date(t).toISOString().slice(0, 10);
+const tn = v => '$' + (v / 1e12).toFixed(2) + 'T';
+const money = v => '$' + Math.floor(v).toLocaleString('en-US');
+
+function setStatus(msg) { $('status').textContent = msg; }
+
+async function loadDebt() {
+  clearTimeout(debtTimer);
+  try {
+    const r = await fetch(API, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const rows = (await r.json()).data.map(d => ({ t: dayMs(d.record_date), d: d.record_date, v: +d.tot_pub_debt_out_amt }));
+    const a = rows[0];
+    const b = rows.find(x => x.t <= a.t - 365 * DAY) || rows[rows.length - 1];
+    const rate = (a.v - b.v) / ((a.t - b.t) / 1000);          // dollars per second
+    // Treasury records are end of day Eastern time; -05:00 is close enough for a projection
+    S = { v: a.v, d: a.d, rate, base: Date.parse(a.d + 'T23:59:59-05:00') };
+    series = rows.reverse();
+    $('rate').textContent = '+' + money(rate) + ' per second';
+    $('official').textContent = 'Official record for ' + a.d + ': ' + money(a.v);
+    setStatus('Treasury data refreshed at ' + new Date().toLocaleTimeString() + '. Next refresh in 30 minutes.');
+    draw();
+    debtTimer = setTimeout(loadDebt, DEBT_REFRESH);
+  } catch (e) {
+    setStatus('Could not reach the Treasury API (' + e.message + '). Showing the last data and retrying in 1 minute.');
+    debtTimer = setTimeout(loadDebt, 60e3);
+  }
+}
+
+async function loadGdp() {
+  let manual = 0;
+  try { manual = parseFloat(localStorage.getItem('gdpT')); } catch (e) {}
+  if (manual > 0) {
+    gdp = { t: manual, src: 'value you entered' };
+  } else {
+    try {
+      const r = await fetch(FRED);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const lines = (await r.text()).trim().split('\n');
+      for (let i = lines.length - 1; i > 0; i--) {
+        const [d, v] = lines[i].split(',');
+        if (+v > 0) { gdp = { t: +v / 1000, src: 'FRED, quarter starting ' + d }; break; }
+      }
+    } catch (e) {
+      gdp = { t: GDP_FALLBACK, src: 'rough estimate, live GDP source unreachable' };
+    }
+  }
+  $('gdpnote').innerHTML = '';
+  $('gdpnote').append('GDP used: $' + gdp.t.toFixed(2) + 'T (' + gdp.src + ') ');
+  const b = document.createElement('button');
+  b.textContent = 'Set GDP';
+  b.onclick = () => {
+    const x = prompt('Annual nominal GDP in trillions of dollars, for example 32.5. Leave empty to go back to automatic.');
+    if (x === null) return;
+    try { x.trim() ? localStorage.setItem('gdpT', String(parseFloat(x))) : localStorage.removeItem('gdpT'); } catch (e) {}
+    loadGdp();
+  };
+  $('gdpnote').append(b);
+  setTimeout(loadGdp, GDP_REFRESH);
+}
+
+function tick() {
+  if (!S) return;
+  const v = S.v + S.rate * Math.max(0, (Date.now() - S.base) / 1000);
+  $('debt').textContent = money(v);
+  $('ratio').textContent = (v / (gdp.t * 1e12) * 100).toFixed(3) + '%';
+}
+setInterval(tick, 100);
+
+function draw(hi) {
+  if (!series.length) return;
+  const c = $('chart'), dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w * dpr; c.height = h * dpr;
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
+  const end = series[series.length - 1].t;
+  view = series.filter(p => p.t >= end - range * DAY);
+  const vmin = Math.min(...view.map(p => p.v)), vmax = Math.max(...view.map(p => p.v));
+  const pad = (vmax - vmin) * 0.08 || vmax * 0.01;
+  const lo = vmin - pad, hiV = vmax + pad;
+  const L = 58, R = 10, T = 10, B = 24;
+  const x = t => L + (t - view[0].t) / ((end - view[0].t) || 1) * (w - L - R);
+  const y = v => T + (1 - (v - lo) / (hiV - lo)) * (h - T - B);
+
+  g.font = '12px "DejaVu Sans Mono", monospace';
+  g.strokeStyle = '#243246'; g.fillStyle = '#8b9bb0'; g.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const v = lo + (hiV - lo) * i / 4, yy = Math.round(y(v)) + 0.5;
+    g.beginPath(); g.moveTo(L, yy); g.lineTo(w - R, yy); g.stroke();
+    g.textAlign = 'right'; g.fillText(tn(v), L - 6, yy + 4);
+  }
+  g.textAlign = 'left'; g.fillText(iso(view[0].t), L, h - 6);
+  g.textAlign = 'right'; g.fillText(iso(end), w - R, h - 6);
+
+  const grad = g.createLinearGradient(0, T, 0, h - B);
+  grad.addColorStop(0, 'rgba(98,182,203,.28)'); grad.addColorStop(1, 'rgba(98,182,203,0)');
+  g.beginPath();
+  view.forEach((p, i) => i ? g.lineTo(x(p.t), y(p.v)) : g.moveTo(x(p.t), y(p.v)));
+  g.strokeStyle = '#62b6cb'; g.lineWidth = 2; g.stroke();
+  g.lineTo(x(end), h - B); g.lineTo(x(view[0].t), h - B); g.closePath(); g.fillStyle = grad; g.fill();
+
+  if (hi != null && view[hi]) {
+    const p = view[hi];
+    g.beginPath(); g.arc(x(p.t), y(p.v), 4, 0, 7); g.fillStyle = '#f2c46d'; g.fill();
+    $('readout').textContent = p.d + '  ' + money(p.v);
+  } else {
+    const a = view[0], b = view[view.length - 1], ch = b.v - a.v;
+    $('readout').textContent = 'Change over range: +' + tn(ch) + ' (' + (ch / a.v * 100).toFixed(1) + '%)';
+  }
+  c._x = x;
+}
+
+$('chart').addEventListener('mousemove', e => {
+  const c = $('chart');
+  if (!c._x || !view.length) return;
+  const mx = e.clientX - c.getBoundingClientRect().left;
+  let best = 0, bd = Infinity;
+  view.forEach((p, i) => { const d = Math.abs(c._x(p.t) - mx); if (d < bd) { bd = d; best = i; } });
+  draw(best);
+});
+$('chart').addEventListener('mouseleave', () => draw());
+window.addEventListener('resize', () => draw());
+
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  range = +b.dataset.d;
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  draw();
+}));
+
+// After the computer sleeps, timers can be late, so refresh when the tab becomes visible again
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadDebt(); });
+
+loadGdp();
+loadDebt();
+</script>
+</body>
+</html>
