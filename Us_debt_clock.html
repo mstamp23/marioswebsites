@@ -70,13 +70,13 @@ const DAY = 864e5;
 const API = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny'
           + '?fields=record_date,tot_pub_debt_out_amt&sort=-record_date&page%5Bsize%5D=1830';
 const FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=GDP';
-const GDP_FALLBACK = 32.5;            // trillions of dollars, rough estimate, used only if FRED is unreachable
+const GDP_FALLBACK = 31.8;            // trillions of dollars, rough estimate (GDP was $31.22T for the 12 months to March 2026), used only if FRED is unreachable
 const DEBT_REFRESH = 30 * 60e3;       // Treasury publishes once per business day, so 30 minutes is plenty
 const GDP_REFRESH = 12 * 3600e3;
 
 let S = null;                          // latest official record plus growth rate
 let series = [];                       // all daily records, oldest first
-let gdp = { t: GDP_FALLBACK, src: 'rough estimate, live GDP source unreachable' };
+let gdp = { t: GDP_FALLBACK, src: 'rough estimate, live GDP source blocked by browser, use Set GDP for an exact value' };
 let range = 365, view = [], debtTimer = 0;
 
 const dayMs = s => Date.parse(s + 'T00:00:00Z');
@@ -124,7 +124,7 @@ async function loadGdp() {
         if (+v > 0) { gdp = { t: +v / 1000, src: 'FRED, quarter starting ' + d }; break; }
       }
     } catch (e) {
-      gdp = { t: GDP_FALLBACK, src: 'rough estimate, live GDP source unreachable' };
+      gdp = { t: GDP_FALLBACK, src: 'rough estimate, live GDP source blocked by browser, use Set GDP for an exact value' };
     }
   }
   $('gdpnote').innerHTML = '';
@@ -132,7 +132,7 @@ async function loadGdp() {
   const b = document.createElement('button');
   b.textContent = 'Set GDP';
   b.onclick = () => {
-    const x = prompt('Annual nominal GDP in trillions of dollars, for example 32.5. Leave empty to go back to automatic.');
+    const x = prompt('Annual nominal GDP in trillions of dollars, for example 31.8. Get the latest value from fred.stlouisfed.org/series/GDP and divide by 1000. Leave empty to go back to automatic.');
     if (x === null) return;
     try { x.trim() ? localStorage.setItem('gdpT', String(parseFloat(x))) : localStorage.removeItem('gdpT'); } catch (e) {}
     loadGdp();
