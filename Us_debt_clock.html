@@ -18,7 +18,7 @@ h1{font-size:1rem;font-weight:500;color:var(--mute);margin:0 0 .4rem}
 .card small{display:block;color:var(--mute)}
 .big{font-size:clamp(1.4rem,4vw,2.1rem);margin-top:4px}
 .chart-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px}
-.tabs{display:flex;gap:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
 button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:4px;padding:4px 12px;cursor:pointer}
 button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#07222a}
 button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -55,6 +55,7 @@ canvas{display:block;width:100%;height:280px}
         <button data-d="183">6 months</button>
         <button data-d="365" aria-pressed="true">1 year</button>
         <button data-d="1826">5 years</button>
+        <button id="axisBtn" aria-pressed="true" title="Start the vertical axis at $0 (honest scale) or zoom in on the range">Axis from $0</button>
       </div>
       <div id="readout" class="num"></div>
     </div>
@@ -78,10 +79,12 @@ let S = null;                          // latest official record plus growth rat
 let series = [];                       // all daily records, oldest first
 let gdp = { t: GDP_FALLBACK, src: 'rough estimate, live GDP source blocked by browser, use Set GDP for an exact value' };
 let range = 365, view = [], debtTimer = 0;
+let zeroAxis = true;                   // true: vertical axis starts at $0, false: zoomed to the data range
 
 const dayMs = s => Date.parse(s + 'T00:00:00Z');
 const iso = t => new Date(t).toISOString().slice(0, 10);
 const tn = v => '$' + (v / 1e12).toFixed(2) + 'T';
+const tn0 = v => '$' + Math.round(v / 1e12) + 'T';
 const money = v => '$' + Math.floor(v).toLocaleString('en-US');
 
 function setStatus(msg) { $('status').textContent = msg; }
@@ -158,19 +161,28 @@ function draw(hi) {
   const end = series[series.length - 1].t;
   view = series.filter(p => p.t >= end - range * DAY);
   const vmin = Math.min(...view.map(p => p.v)), vmax = Math.max(...view.map(p => p.v));
-  const pad = (vmax - vmin) * 0.08 || vmax * 0.01;
-  const lo = vmin - pad, hiV = vmax + pad;
+
+  let lo, hiV, ticks = [];
+  if (zeroAxis) {
+    lo = 0; hiV = vmax * 1.05;
+    for (let v = 0; v <= hiV; v += 1e13) ticks.push(v);
+  } else {
+    const pad = (vmax - vmin) * 0.08 || vmax * 0.01;
+    lo = vmin - pad; hiV = vmax + pad;
+    for (let i = 0; i <= 4; i++) ticks.push(lo + (hiV - lo) * i / 4);
+  }
+
   const L = 58, R = 10, T = 10, B = 24;
   const x = t => L + (t - view[0].t) / ((end - view[0].t) || 1) * (w - L - R);
   const y = v => T + (1 - (v - lo) / (hiV - lo)) * (h - T - B);
 
   g.font = '12px "DejaVu Sans Mono", monospace';
   g.strokeStyle = '#243246'; g.fillStyle = '#8b9bb0'; g.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const v = lo + (hiV - lo) * i / 4, yy = Math.round(y(v)) + 0.5;
+  ticks.forEach(v => {
+    const yy = Math.round(y(v)) + 0.5;
     g.beginPath(); g.moveTo(L, yy); g.lineTo(w - R, yy); g.stroke();
-    g.textAlign = 'right'; g.fillText(tn(v), L - 6, yy + 4);
-  }
+    g.textAlign = 'right'; g.fillText(zeroAxis ? tn0(v) : tn(v), L - 6, yy + 4);
+  });
   g.textAlign = 'left'; g.fillText(iso(view[0].t), L, h - 6);
   g.textAlign = 'right'; g.fillText(iso(end), w - R, h - 6);
 
@@ -203,11 +215,18 @@ $('chart').addEventListener('mousemove', e => {
 $('chart').addEventListener('mouseleave', () => draw());
 window.addEventListener('resize', () => draw());
 
-document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('.tabs button[data-d]').forEach(b => b.addEventListener('click', () => {
   range = +b.dataset.d;
-  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  document.querySelectorAll('.tabs button[data-d]').forEach(x => x.setAttribute('aria-pressed', x === b));
   draw();
 }));
+
+$('axisBtn').addEventListener('click', () => {
+  zeroAxis = !zeroAxis;
+  $('axisBtn').setAttribute('aria-pressed', zeroAxis);
+  $('axisBtn').textContent = zeroAxis ? 'Axis from $0' : 'Zoomed axis';
+  draw();
+});
 
 // After the computer sleeps, timers can be late, so refresh when the tab becomes visible again
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadDebt(); });
