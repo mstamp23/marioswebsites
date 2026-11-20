@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ΘΑΛΑΜΟΣ 4 — ΜΟΝΑΔΑ ΕΝΤΑΤΙΚΗΣ ΘΕΡΑΠΕΙΑΣ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Κλινικό, παγωμένο περιβάλλον ΜΕΘ */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #050607;
+      color: #d4d8dd;
+      font-family: 'IBM Plex Mono', monospace;
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Αμυδρές γραμμές ιατρικής οθόνης */
+    .clinical-scanlines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 40;
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.28) 50%
+      );
+      background-size: 100% 3px;
+    }
+
+    /* Ομαλή εμφάνιση κάθε σταδίου */
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stage-appear {
+      animation: fadeSlide 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Παλμός προειδοποίησης */
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    .pulse-alert {
+      animation: subtlePulse 1.8s infinite ease-in-out;
+    }
+
+    /* Κλείσιμο οθόνης CRT στην αποσύνδεση */
+    @keyframes crtShutdown {
+      0% {
+        transform: scale(1, 1);
+        filter: brightness(1);
+        opacity: 1;
+      }
+      45% {
+        transform: scale(1.04, 0.004);
+        filter: brightness(2.4);
+        opacity: 1;
+      }
+      85% {
+        transform: scale(0.01, 0.002);
+        filter: brightness(3);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(0, 0);
+        opacity: 0;
+      }
+    }
+
+    .crt-off {
+      animation: crtShutdown 1.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+  </style>
+</head>
+<body class="selection:bg-red-950 selection:text-red-200">
+
+  <div class="clinical-scanlines"></div>
+
+  <!-- =====================================================================
+       ΠΑΝΩ ΜΠΑΡΑ ΤΗΛΕΜΕΤΡΙΑΣ & ΠΑΛΜΟΓΡΑΦΟΣ ΗΚΓ (ECG)
+       ===================================================================== -->
+  <header id="monitor-header" class="w-full border-b border-zinc-900 bg-[#07090b]/95 z-10">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-4 pb-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] tracking-widest text-zinc-500 uppercase mb-2">
+        <div class="flex items-center gap-2.5">
+          <span id="status-dot" class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+          <span>ΜΕΘ • ΘΑΛΑΜΟΣ 04 • ΑΣΘΕΝΗΣ #04 (ΑΓΝΩΣΤΩΝ ΛΟΙΠΩΝ ΣΤΟΙΧΕΙΩΝ)</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="bpm-display" class="text-emerald-500 font-medium">44 BPM</span>
+          <span id="live-clock" class="text-zinc-400">--:--:--</span>
+        </div>
+      </div>
+
+      <!-- Canvas Παλμογράφου -->
+      <div id="ecg-container" class="w-full h-16 sm:h-20 relative rounded border border-zinc-900/90 bg-[#040506] overflow-hidden">
+        <canvas id="ecg-canvas" class="w-full h-full block"></canvas>
+        <div id="ecg-label" class="absolute top-1.5 right-2.5 text-[10px] tracking-widest text-zinc-600 uppercase">
+          ΗΚΓ • ΑΠΑΓΩΓΗ II
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       ΚΕΝΤΡΙΚΟ ΠΕΔΙΟ ΚΛΙΝΙΚΗΣ ΑΦΗΓΗΣΗΣ (4 ΚΟΦΤΑ ΣΤΑΔΙΑ)
+       ===================================================================== -->
+  <main id="main-screen" class="flex-1 flex items-center justify-center px-5 sm:px-8 py-10 z-10">
+    <div class="w-full max-w-xl space-y-8">
+      
+      <!-- Ένδειξη Σταδίου -->
+      <div class="flex items-center justify-between text-[11px] tracking-widest text-zinc-600 border-b border-zinc-900 pb-2">
+        <span id="stage-indicator">ΚΑΤΑΓΡΑΦΗ 01 / 04</span>
+        <span id="cortex-status" class="text-zinc-500">ΦΛΟΙΟΣ: ΥΠΟΞΙΑ</span>
+      </div>
+
+      <!-- Κείμενο Σταδίου -->
+      <div id="stage-content" class="min-h-[150px] sm:min-h-[170px] flex flex-col justify-center space-y-5 text-base sm:text-lg md:text-[19px] leading-relaxed font-light text-zinc-200 stage-appear">
+        <!-- Συμπληρώνεται δυναμικά -->
+      </div>
+
+      <!-- Κόκκινη ειδοποίηση ακινησίας / αλλαγής καρτέλας σε πραγματικό χρόνο -->
+      <div class="min-h-[28px]">
+        <p id="reflex-warning" class="text-xs sm:text-sm text-red-500 tracking-wide opacity-0 transition-opacity duration-500">
+          <!-- Εμφανίζεται όταν ο χρήστης παγώνει για 3 δευτερόλεπτα -->
+        </p>
+      </div>
+
+      <!-- Κουμπί Προόδου -->
+      <div class="pt-2 flex items-center justify-between">
+        <button id="next-btn" class="px-5 py-2.5 text-xs sm:text-sm tracking-widest uppercase border border-zinc-700 hover:border-zinc-400 text-zinc-200 hover:text-white bg-zinc-950/80 rounded transition-all cursor-pointer">
+          ΕΠΟΜΕΝΗ ΚΑΤΑΓΡΑΦΗ →
+        </button>
+
+        <span id="impulse-counter" class="text-[11px] text-zinc-600 tracking-wider">
+          ΝΕΥΡΩΝΙΚΟΙ ΣΠΑΣΜΟΙ: 0
+        </span>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =====================================================================
+       ΥΠΟΣΕΛΙΔΟ
+       ===================================================================== -->
+  <footer id="monitor-footer" class="w-full border-t border-zinc-900/80 py-3 px-4 sm:px-6 text-[11px] text-zinc-600 z-10">
+    <div class="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <span>ΜΗΧΑΝΙΚΗ ΥΠΟΣΤΗΡΙΞΗ: ΑΝΑΜΟΝΗ ΕΝΤΟΛΗΣ</span>
+      <span id="footer-note">Μην κλείνεις τα μάτια.</span>
+    </div>
+  </footer>
+
+  <!-- =====================================================================
+       ΤΕΛΙΚΗ ΟΘΟΝΗ ΑΠΟΣΥΝΔΕΣΗΣ (ΑΠΟΛΥΤΟ ΣΚΟΤΑΔΙ)
+       ===================================================================== -->
+  <div id="void-screen" class="fixed inset-0 bg-black z-50 hidden flex-col items-center justify-center px-6 text-center select-none">
+    <p id="final-message" class="text-sm sm:text-base md:text-lg tracking-widest text-zinc-300 font-light opacity-0 transition-opacity duration-1000 max-w-md leading-relaxed">
+      <!-- Εμφανίζεται μετά το flatline -->
+    </p>
+  </div>
+
+  <script>
+    /**
+     * ΘΑΛΑΜΟΣ 4 — ΜΟΝΑΔΑ ΕΝΤΑΤΙΚΗΣ ΘΕΡΑΠΕΙΑΣ
+     * Μινιμαλιστικός ψυχολογικός τρόμος με ECG παλμογράφο, ανίχνευση ακινησίας και CRT flatline.
+     */
+    (function () {
+      // --- 1. ΠΡΑΓΜΑΤΙΚΑ ΣΤΟΙΧΕΙΑ ΠΕΡΙΒΑΛΛΟΝΤΟΣ ΧΡΗΣΤΗ ---
+      function getSystemInfo() {
+        const ua = navigator.userAgent;
+        let os = 'Άγνωστο Σύστημα';
+        if (ua.indexOf('Win') !== -1) os = 'Windows';
+        else if (ua.indexOf('Mac') !== -1) os = 'macOS';
+        else if (ua.indexOf('Linux') !== -1) os = 'Linux';
+        else if (ua.indexOf('Android') !== -1) os = 'Android';
+        else if (ua.indexOf('iPhone') !== -1 || ua.indexOf('iPad') !== -1) os = 'iOS';
+
+        const resolution = `${window.screen.width}×${window.screen.height}`;
+        return { os, resolution };
+      }
+
+      function getCurrentTimeStr(includeSeconds = false) {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        return includeSeconds ? `${h}:${m}:${s}` : `${h}:${m}`;
+      }
+
+      const sys = getSystemInfo();
+      let currentStage = 0;
+      let isFlatlined = false;
+      let impulseCount = 0;
+
+      // --- 2. ΔΙΑΚΡΙΤΙΚΟ WEB AUDIO (ΧΤΥΠΟΣ ΚΑΡΔΙΑΣ & CONTINUOUS FLATLINE TONE) ---
+      let audioCtx = null;
+      let flatlineOsc = null;
+      let flatlineGain = null;
+
+      function initAudio() {
+        if (!audioCtx) {
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+          } catch (e) {}
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+      }
+
+      function playHeartbeatBeep() {
+        if (!audioCtx || isFlatlined) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.09);
+        } catch (e) {}
+      }
+
+      function triggerFlatlineAudio() {
+        if (!audioCtx) return;
+        try {
+          flatlineOsc = audioCtx.createOscillator();
+          flatlineGain = audioCtx.createGain();
+          flatlineOsc.type = 'sine';
+          flatlineOsc.frequency.setValueAtTime(440, audioCtx.currentTime);
+          // Χαμηλός, καθαρός ιατρικός τόνος που σβήνει ομαλά μαζί με την εικόνα
+          flatlineGain.gain.setValueAtTime(0.025, audioCtx.currentTime);
+          flatlineGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.2);
+          flatlineOsc.connect(flatlineGain);
+          flatlineGain.connect(audioCtx.destination);
+          flatlineOsc.start();
+          flatlineOsc.stop(audioCtx.currentTime + 3.3);
+        } catch (e) {}
+      }
+
+      // --- 3. ΠΑΛΜΟΓΡΑΦΟΣ ΗΚΓ (ECG CANVAS) ---
+      const canvas = document.getElementById('ecg-canvas');
+      const ctx = canvas.getContext('2d');
+      let ecgX = 0;
+      let lastBeatTime = 0;
+      let beatInterval = 1350; // Αργός παλμός (~44 BPM)
+      let prevY = 0;
+
+      function resizeCanvas() {
+        const container = document.getElementById('ecg-container');
+        if (!container) return;
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        prevY = canvas.height / 2;
+        ctx.fillStyle = '#040506';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+
+      function drawECG(timestamp) {
+        if (!canvas.width || !canvas.height) {
+          requestAnimationFrame(drawECG);
+          return;
+        }
+
+        const midY = canvas.height / 2;
+        const speed = 2.1;
+
+        // Σβήσιμο μπροστά από τον δρομέα
+        ctx.fillStyle = '#040506';
+        ctx.fillRect(ecgX, 0, 18, canvas.height);
+
+        // Λεπτό πλέγμα
+        ctx.strokeStyle = 'rgba(39, 39, 42, 0.35)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(ecgX, midY);
+        ctx.lineTo(ecgX + speed, midY);
+        ctx.stroke();
+
+        let targetY = midY;
+
+        if (!isFlatlined) {
+          const elapsedSinceBeat = timestamp - lastBeatTime;
+
+          if (elapsedSinceBeat > beatInterval) {
+            lastBeatTime = timestamp;
+            playHeartbeatBeep();
+          }
+
+          // Κυματομορφή QRS complex
+          if (elapsedSinceBeat < 40) {
+            targetY = midY - 4; // P wave
+          } else if (elapsedSinceBeat >= 70 && elapsedSinceBeat < 95) {
+            targetY = midY + 7; // Q
+          } else if (elapsedSinceBeat >= 95 && elapsedSinceBeat < 130) {
+            targetY = midY - (canvas.height * 0.38); // R spike
+          } else if (elapsedSinceBeat >= 130 && elapsedSinceBeat < 160) {
+            targetY = midY + (canvas.height * 0.22); // S dip
+          } else if (elapsedSinceBeat >= 210 && elapsedSinceBeat < 290) {
+            targetY = midY - 6; // T wave
+          } else {
+            targetY = midY + (Math.random() - 0.5) * 0.8;
+          }
+        } else {
+          // Απόλυτη ευθεία γραμμή (Flatline)
+          targetY = midY;
+        }
+
+        ctx.strokeStyle = isFlatlined ? '#dc2626' : '#10b981';
+        ctx.lineWidth = isFlatlined ? 2 : 1.7;
+        ctx.shadowBlur = isFlatlined ? 8 : 4;
+        ctx.shadowColor = isFlatlined ? '#dc2626' : '#10b981';
+
+        ctx.beginPath();
+        ctx.moveTo(ecgX, prevY);
+        ctx.lineTo(ecgX + speed, targetY);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        prevY = targetY;
+        ecgX += speed;
+        if (ecgX >= canvas.width) {
+          ecgX = 0;
+        }
+
+        requestAnimationFrame(drawECG);
+      }
+
+      // --- 4. ΟΙ 4 ΚΛΙΝΙΚΕΣ ΟΘΟΝΕΣ ΤΗΣ ΙΣΤΟΡΙΑΣ ---
+      const stageContent = document.getElementById('stage-content');
+      const stageIndicator = document.getElementById('stage-indicator');
+      const cortexStatus = document.getElementById('cortex-status');
+      const nextBtn = document.getElementById('next-btn');
+      const bpmDisplay = document.getElementById('bpm-display');
+      const statusDot = document.getElementById('status-dot');
+
+      function renderStage(index) {
+        const timeNow = getCurrentTimeStr(false);
+        stageContent.classList.remove('stage-appear');
+        void stageContent.offsetWidth; // επανεκκίνηση animation
+        stageContent.classList.add('stage-appear');
+
+        if (index === 0) {
+          stageIndicator.textContent = 'ΚΑΤΑΓΡΑΦΗ 01 / 04';
+          cortexStatus.textContent = 'ΦΛΟΙΟΣ: ΑΜΥΝΤΙΚΗ ΠΑΡΑΙΣΘΗΣΗ';
+          stageContent.innerHTML = `
+            <p>Ο ασθενής βρίσκεται σε μη αναστρέψιμο κώμα. Για να αποφύγει το σοκ της αποσύνδεσης, ο εγκέφαλός του κατασκευάζει μια γνώριμη πραγματικότητα.</p>
+            <p class="text-zinc-400">Φαντάζεται ότι είναι σπίτι του, καθισμένος μπροστά σε μια οθόνη, στις <span class="text-zinc-100 font-medium">${timeNow}</span>.</p>
+          `;
+          nextBtn.textContent = 'ΕΠΟΜΕΝΗ ΚΑΤΑΓΡΑΦΗ →';
+        } 
+        else if (index === 1) {
+          beatInterval = 1100;
+          bpmDisplay.textContent = '54 BPM';
+          stageIndicator.textContent = 'ΚΑΤΑΓΡΑΦΗ 02 / 04';
+          cortexStatus.textContent = 'ΦΛΟΙΟΣ: ΠΡΟΣΟΜΟΙΩΣΗ ΠΕΡΙΒΑΛΛΟΝΤΟΣ';
+          stageContent.innerHTML = `
+            <p>Το υποκείμενο αρνείται να δεχτεί το δωμάτιο του νοσοκομείου. Πιστεύει πως διαβάζει απλώς μια ιστορία σε περιβάλλον <span class="text-zinc-100 font-medium">${sys.os}</span> (<span class="text-zinc-100 font-medium">${sys.resolution}</span>).</p>
+            <p class="text-zinc-400">Κάθε λεπτομέρεια που βλέπεις γύρω σου είναι προβολή του οπτικού σου νεύρου.</p>
+          `;
+          nextBtn.textContent = 'ΕΠΟΜΕΝΗ ΚΑΤΑΓΡΑΦΗ →';
+        } 
+        else if (index === 2) {
+          beatInterval = 820;
+          bpmDisplay.textContent = '73 BPM';
+          bpmDisplay.classList.replace('text-emerald-500', 'text-amber-500');
+          statusDot.classList.replace('bg-emerald-500', 'bg-amber-500');
+          stageIndicator.textContent = 'ΚΑΤΑΓΡΑΦΗ 03 / 04';
+          cortexStatus.textContent = 'ΦΛΟΙΟΣ: ΕΠΙΚΕΙΜΕΝΗ ΑΠΟΣΥΝΔΕΣΗ';
+          cortexStatus.classList.replace('text-zinc-500', 'text-amber-500');
+          stageContent.innerHTML = `
+            <p>Η οικογένειά σου μόλις υπέγραψε τη διακοπή της μηχανικής υποστήριξης.</p>
+            <p class="text-zinc-400">Αυτό που νιώθεις ως κίνηση του χεριού σου πάνω στο ποντίκι είναι οι τελευταίοι νευρωνικοί σπασμοί πριν σβήσει ο φλοιός.</p>
+          `;
+          nextBtn.textContent = 'ΕΠΟΜΕΝΗ ΚΑΤΑΓΡΑΦΗ →';
+        } 
+        else if (index === 3) {
+          beatInterval = 520;
+          bpmDisplay.textContent = '115 BPM';
+          bpmDisplay.classList.replace('text-amber-500', 'text-red-500');
+          statusDot.classList.replace('bg-amber-500', 'bg-red-500');
+          stageIndicator.textContent = 'ΚΑΤΑΓΡΑΦΗ 04 / 04';
+          cortexStatus.textContent = 'ΦΛΟΙΟΣ: ΤΕΛΙΚΟ ΣΤΑΔΙΟ';
+          cortexStatus.classList.replace('text-amber-500', 'text-red-500');
+          stageContent.innerHTML = `
+            <p class="text-xl sm:text-2xl text-white font-normal">Δεν είσαι στο δωμάτιό σου.</p>
+            <p class="text-xl sm:text-2xl text-red-400 font-normal">Άκου το μηχάνημα.</p>
+          `;
+          nextBtn.textContent = 'ΣΥΝΕΧΕΙΑ';
+          nextBtn.classList.remove('border-zinc-700', 'text-zinc-200');
+          nextBtn.classList.add('border-red-700', 'bg-red-950/50', 'text-red-200', 'hover:bg-red-900/60', 'hover:border-red-500');
+        }
+      }
+
+      // --- 5. ΑΝΙΧΝΕΥΣΗ ΑΚΙΝΗΣΙΑΣ (3 ΔΕΥΤΕΡΟΛΕΠΤΑ) & VISIBILITYCHANGE ---
+      const reflexWarning = document.getElementById('reflex-warning');
+      const impulseCounterEl = document.getElementById('impulse-counter');
+      let stillnessTimer = null;
+
+      function resetStillnessTimer() {
+        if (isFlatlined) return;
+
+        impulseCount++;
+        impulseCounterEl.textContent = `ΝΕΥΡΩΝΙΚΟΙ ΣΠΑΣΜΟΙ: ${impulseCount}`;
+
+        if (reflexWarning.dataset.type === 'stillness') {
+          reflexWarning.style.opacity = '0';
+        }
+
+        clearTimeout(stillnessTimer);
+        stillnessTimer = setTimeout(() => {
+          if (isFlatlined) return;
+          reflexWarning.dataset.type = 'stillness';
+          reflexWarning.textContent = 'Μην παγώνεις. Η πίεση πέφτει. Ξέρεις ποιος είναι στον Θάλαμο 4.';
+          reflexWarning.classList.add('pulse-alert');
+          reflexWarning.style.opacity = '1';
+        }, 3000);
+      }
+
+      document.addEventListener('mousemove', resetStillnessTimer);
+      document.addEventListener('touchstart', resetStillnessTimer);
+      document.addEventListener('keydown', resetStillnessTimer);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && !isFlatlined) {
+          reflexWarning.dataset.type = 'escape';
+          reflexWarning.textContent = 'Απόπειρα διαφυγής φλοιού — Αποτυχία.';
+          reflexWarning.classList.add('pulse-alert');
+          reflexWarning.style.opacity = '1';
+        }
+      });
+
+      // --- 6. ΠΥΡΟΔΟΤΗΣΗ ΟΡΙΣΤΙΚΗΣ ΑΠΟΣΥΝΔΕΣΗΣ (FLATLINE & CRT SHUTDOWN) ---
+      function triggerFinalDisconnection() {
+        isFlatlined = true;
+        clearTimeout(stillnessTimer);
+
+        bpmDisplay.textContent = '00 BPM';
+        bpmDisplay.classList.add('text-red-600');
+        statusDot.classList.remove('bg-red-500');
+        statusDot.classList.add('bg-red-700');
+        cortexStatus.textContent = 'ΕΓΚΕΦΑΛΙΚΟΣ ΘΑΝΑΤΟΣ';
+        document.getElementById('ecg-label').textContent = 'ΑΣΥΣΤΟΛΙΑ • ΑΠΟΣΥΝΔΕΣΗ';
+        document.getElementById('ecg-label').classList.add('text-red-500');
+
+        triggerFlatlineAudio();
+
+        // Μετά από 1.4 δευτερόλεπτα flatline, σβήνει η οθόνη σαν παλιό μόνιτορ
+        setTimeout(() => {
+          document.body.classList.add('crt-off');
+        }, 1400);
+
+        // Εμφάνιση της τελικής φράσης στο απόλυτο σκοτάδι
+        setTimeout(() => {
+          document.body.classList.remove('crt-off');
+          document.getElementById('monitor-header').style.display = 'none';
+          document.getElementById('main-screen').style.display = 'none';
+          document.getElementById('monitor-footer').style.display = 'none';
+
+          const voidScreen = document.getElementById('void-screen');
+          const finalMsg = document.getElementById('final-message');
+          voidScreen.classList.remove('hidden');
+          voidScreen.classList.add('flex');
+
+          const endTime = getCurrentTimeStr(false);
+          finalMsg.innerHTML = `Ώρα αποσύνδεσης: <span class="text-red-500">${endTime}</span>.<br><span class="text-zinc-500 text-xs mt-3 block">Τώρα μπορείς να αφήσεις το ποντίκι.</span>`;
+
+          requestAnimationFrame(() => {
+            finalMsg.style.opacity = '1';
+          });
+        }, 2800);
+      }
+
+      // --- 7. ΕΚΚΙΝΗΣΗ & ΧΕΙΡΙΣΜΟΣ ΚΟΥΜΠΙΟΥ ---
+      nextBtn.addEventListener('click', () => {
+        initAudio();
+        resetStillnessTimer();
+
+        if (currentStage < 3) {
+          currentStage++;
+          renderStage(currentStage);
+        } else {
+          triggerFinalDisconnection();
+        }
+      });
+
+      function updateLiveClock() {
+        const el = document.getElementById('live-clock');
+        if (el) el.textContent = getCurrentTimeStr(true);
+      }
+
+      window.onload = function () {
+        resizeCanvas();
+        updateLiveClock();
+        setInterval(updateLiveClock, 1000);
+        renderStage(0);
+        resetStillnessTimer();
+        requestAnimationFrame(drawECG);
+      };
+    })();
+  </script>
+</body>
+</html>
