@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ΑΝΑΚΤΗΣΗ ΔΕΔΟΜΕΝΩΝ // ΠΑΓΚΟΣ #07</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #090a0c;
+      color: #d4d8df;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.55s ease-out forwards;
+    }
+
+    /* Χειρισμός εικόνων (οριζόντιες 16:9 και κάθετη 04_rain_window_night) */
+    .evidence-frame {
+      background-color: #050607;
+      border: 1px solid #1f242d;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .evidence-img-landscape {
+      width: 100%;
+      max-height: 410px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .evidence-img-portrait {
+      width: auto;
+      max-width: 100%;
+      max-height: 450px;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Διακόπτες Φάσης 4 */
+    .breaker-btn {
+      transition: all 0.18s ease;
+    }
+    .breaker-btn.tripped {
+      background-color: #064e3b;
+      border-color: #10b981;
+      color: #ecfdf5;
+    }
+  </style>
+</head>
+<body class="selection:bg-zinc-700 selection:text-white">
+
+  <!-- ΠΑΝΩ ΜΠΑΡΑ ΕΡΓΑΛΕΙΟΥ ΑΝΑΚΤΗΣΗΣ -->
+  <header class="w-full border-b border-zinc-800/90 bg-[#0c0e12] px-4 sm:px-6 py-3">
+    <div class="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-2 mono text-xs text-zinc-400">
+      <div class="flex items-center gap-2.5">
+        <span id="phase-dot" class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+        <span>SECTOR_DUMP v2.4 // ΠΑΓΚΟΣ_07 (ΕΡΓ. ΜΕΤΡΗΣΕΩΝ)</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="sector-label" class="text-zinc-500">ΤΟΜΕΑΣ 01 / 07</span>
+        <span id="clock-display" class="text-zinc-300">--:--:--</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ΚΥΡΙΟ ΠΕΡΙΕΧΟΜΕΝΟ -->
+  <main id="app-container" class="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col justify-center">
+    <div id="stage-wrapper" class="space-y-6 fade-in">
+      <!-- Εδώ φορτώνει δυναμικά κάθε στάδιο της ιστορίας -->
+    </div>
+  </main>
+
+  <!-- ΥΠΟΣΕΛΙΔΟ -->
+  <footer class="w-full border-t border-zinc-900 bg-[#08090b] px-4 sm:px-6 py-3">
+    <div class="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-2 mono text-[11px] text-zinc-500">
+      <span id="footer-left">ΠΗΓΗ: NVMe_IMAGE_ARIS_K (READ-ONLY)</span>
+      <span id="footer-right">ΚΑΤΑΣΤΑΣΗ: ΣΤΑΘΕΡΗ</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // --- 1. ΠΡΑΓΜΑΤΙΚΑ ΣΤΟΙΧΕΙΑ ΧΡΗΣΤΗ (ΓΙΑ ΤΗ ΦΑΣΗ 3) ---
+      function detectClientEnv() {
+        const ua = navigator.userAgent;
+        let os = 'Άγνωστο OS';
+        if (ua.includes('Win')) os = 'Windows';
+        else if (ua.includes('Mac')) os = 'macOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+        return {
+          os,
+          res: `${window.screen.width}×${window.screen.height}`,
+          lang: navigator.language || 'el-GR'
+        };
+      }
+
+      function formatTime(withSeconds = false) {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        return withSeconds ? `${h}:${m}:${s}` : `${h}:${m}`;
+      }
+
+      const clientEnv = detectClientEnv();
+
+      // --- 2. PRELOAD ΟΛΩΝ ΤΩΝ .JPEG ΕΙΚΟΝΩΝ ΣΤΟ BACKGROUND ---
+      const imagePaths = [
+        'img/01_bench_notes.jpeg',
+        'img/02_oscilloscope_anomaly.jpeg',
+        'img/03_empty_room_dawn.jpeg',
+        'img/04_rain_window_night.jpeg',
+        'img/05_bench_altered.jpeg',
+        'img/06_dark_screen_reflection.jpeg',
+        'img/07_breaker_panel.jpeg'
+      ];
+      imagePaths.forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+
+      // --- 3. ΚΑΤΑΣΤΑΣΗ & ΠΛΟΚΗ (7 ΣΤΑΔΙΑ ΣΕ 4 ΨΥΧΟΛΟΓΙΚΕΣ ΦΑΣΕΣ) ---
+      let step = 0;
+      let breakerSequence = [];
+      let countdownInterval = null;
+      let timeLeft = 25.0;
+      let isResolved = false;
+
+      const stageWrapper = document.getElementById('stage-wrapper');
+      const sectorLabel = document.getElementById('sector-label');
+      const phaseDot = document.getElementById('phase-dot');
+      const footerLeft = document.getElementById('footer-left');
+      const footerRight = document.getElementById('footer-right');
+
+      function updateClock() {
+        document.getElementById('clock-display').textContent = formatTime(true);
+      }
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      function renderStep(index) {
+        stageWrapper.classList.remove('fade-in');
+        void stageWrapper.offsetWidth;
+        stageWrapper.classList.add('fade-in');
+
+        sectorLabel.textContent = `ΤΟΜΕΑΣ 0${index + 1} / 07`;
+
+        // =================================================================
+        // ΦΑΣΗ 1: ΟΙΚΕΙΑ ΚΑΝΟΝΙΚΟΤΗΤΑ & Η «ΑΘΩΑ» ΑΝΩΜΑΛΙΑ
+        // =================================================================
+        if (index === 0) {
+          footerRight.textContent = 'ΦΑΣΗ 1: ΑΝΑΚΤΗΣΗ ΕΡΓΑΣΤΗΡΙΑΚΩΝ ΑΡΧΕΙΩΝ';
+          stageWrapper.innerHTML = `
+            <div class="border-l-2 border-zinc-600 pl-4 space-y-1">
+              <p class="mono text-xs text-zinc-400 uppercase tracking-wider">ΦΑΚΕΛΟΣ ΥΠΟΘΕΣΗΣ #409 // ΕΞΑΦΑΝΙΣΗ ΦΟΙΤΗΤΗ</p>
+              <h1 class="text-xl sm:text-2xl font-medium text-white">Άρης Κ., 20 ετών — Εργαστήριο Ηλεκτρονικών</h1>
+              <p class="text-sm text-zinc-400">Ανάκτηση δεδομένων από τον τοπικό δίσκο του Πάγκου #07, τέσσερις μήνες μετά την τελευταία του βάρδια.</p>
+            </div>
+
+            <div class="evidence-frame">
+              <img src="img/01_bench_notes.jpeg" alt="Πάγκος εργαστηρίου και σημειώσεις" class="evidence-img-landscape">
+            </div>
+
+            <div class="bg-[#0e1116] border border-zinc-800 rounded-md p-4 sm:p-5 space-y-3 text-sm sm:text-base leading-relaxed">
+              <div class="flex items-center justify-between mono text-xs text-zinc-500 border-b border-zinc-800 pb-2">
+                <span>ΑΡΧΕΙΟ: lab_notes_0315am.txt</span>
+                <span>03:15 π.μ.</span>
+              </div>
+              <p class="text-zinc-300">«Τρίτη συνεχόμενη νύχτα που μένω τελευταίος στον πάγκο. Αν δεν παραδώσω τη διάταξη μέχρι την Παρασκευή, χάνω το εξάμηνο. Το πολύμετρο τρελαίνεται πάλι στις χαμηλές κλίμακες, αλλά δεν έχω κουράγιο να το λύσω τώρα.»</p>
+              <div class="bg-zinc-950 border border-zinc-800/90 rounded p-3 mono text-xs text-zinc-300">
+                <span class="text-amber-400 font-medium">[ΧΕΙΡΟΓΡΑΦΗ ΥΠΕΝΘΥΜΙΣΗ ΠΑΝΩ ΑΠΟ ΤΟΝ ΠΙΝΑΚΑ]:</span><br>
+                Ποτέ μην κόβεις το φορτίο υπό τάση. Πάντα με σειρά: <strong class="text-white">1. GND (Γείωση) → 2. PHASE (Φάση) → 3. LOAD (Φορτίο)</strong>.
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="nextStep()" class="px-5 py-2.5 bg-zinc-200 hover:bg-white text-zinc-950 font-medium text-xs sm:text-sm mono rounded transition cursor-pointer">
+                ΑΝΟΙΓΜΑ ΕΠΟΜΕΝΟΥ ΤΟΜΕΑ →
+              </button>
+            </div>
+          `;
+        }
+
+        else if (index === 1) {
+          stageWrapper.innerHTML = `
+            <div class="border-l-2 border-zinc-600 pl-4 space-y-1">
+              <p class="mono text-xs text-zinc-400 uppercase tracking-wider">ΚΑΤΑΓΡΑΦΗ ΟΡΓΑΝΩΝ // ΠΑΓΚΟΣ #07</p>
+              <h2 class="text-lg sm:text-xl font-medium text-white">Μια τεχνική παραφωνία χωρίς προφανή κίνδυνο</h2>
+            </div>
+
+            <div class="evidence-frame">
+              <img src="img/02_oscilloscope_anomaly.jpeg" alt="Παλμογράφος με περιοδική αιχμή και θερμόμετρο 03.0°C" class="evidence-img-landscape">
+            </div>
+
+            <div class="bg-[#0e1116] border border-zinc-800 rounded-md p-4 sm:p-5 space-y-3 text-sm sm:text-base leading-relaxed">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mono text-xs bg-zinc-950 p-3 rounded border border-zinc-800/80">
+                <div><span class="text-zinc-500">UPS ΠΑΓΚΟΥ:</span> <span class="text-amber-400">0% (OFFLINE)</span></div>
+                <div><span class="text-zinc-500">ΑΙΣΘΗΤΗΡΑΣ ΘΕΡΜ.:</span> <span class="text-sky-400">03.0°C</span></div>
+                <div><span class="text-zinc-500">ΠΕΡΙΟΔΟΣ ΑΙΧΜΗΣ:</span> <span class="text-zinc-200">60.000 sec</span></div>
+              </div>
+              <p class="text-zinc-300">«Δεν βγάζει νόημα. Ο γενικός του πάγκου είναι κατεβασμένος και η μπαταρία του UPS είναι νεκρή. Κι όμως, ο παλμογράφος γράφει αυτή την αιχμή κάθε ένα λεπτό ακριβώς, ενώ το δωμάτιο παγώνει στους 3 βαθμούς.»</p>
+              <p class="text-zinc-400 text-sm italic">Σημείωση συστήματος: Το αρχείο καταγραφής συνέχισε να γράφει δεδομένα και τις επόμενες νύχτες, παρόλο που ο Άρης δεν ξαναπάτησε στο εργαστήριο.</p>
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="nextStep()" class="px-5 py-2.5 bg-zinc-200 hover:bg-white text-zinc-950 font-medium text-xs sm:text-sm mono rounded transition cursor-pointer">
+                ΠΡΟΣΒΑΣΗ ΣΤΑ ΠΡΟΣΩΠΙΚΑ ΑΡΧΕΙΑ →
+              </button>
+            </div>
+          `;
+        }
+
+        // =================================================================
+        // ΦΑΣΗ 2: ΤΟ ΑΝΕΠΙΛΥΤΟ ΔΡΑΜΑ (ΧΤΙΣΙΜΟ ΔΥΣΑΝΑΣΧΕΤΗΣΗΣ / ZEIGARNIK)
+        // =================================================================
+        else if (index === 2) {
+          phaseDot.classList.replace('bg-emerald-500', 'bg-sky-400');
+          footerRight.textContent = 'ΦΑΣΗ 2: ΠΡΟΣΩΠΙΚΟ ΔΙΑΜΕΡΙΣΜΑ ΑΡΗ Κ.';
+          stageWrapper.innerHTML = `
+            <div class="border-l-2 border-sky-500/70 pl-4 space-y-1">
+              <p class="mono text-xs text-sky-400/80 uppercase tracking-wider">ΗΜΕΡΟΛΟΓΙΟ ΧΡΗΣΤΗ // 05:32 Π.Μ.</p>
+              <h2 class="text-lg sm:text-xl font-medium text-white">«Δεν αντέχω άλλο να μπαίνω σε σκοτεινό δωμάτιο»</h2>
+            </div>
+
+            <div class="evidence-frame">
+              <img src="img/03_empty_room_dawn.jpeg" alt="Άδειο φοιτητικό δωμάτιο το ξημέρωμα με αναμμένο φωτιστικό" class="evidence-img-landscape">
+            </div>
+
+            <div class="bg-[#0e1116] border border-zinc-800 rounded-md p-4 sm:p-5 space-y-3 text-sm sm:text-base leading-relaxed">
+              <p class="text-zinc-300">«Όλοι στη σχολή νομίζουν ότι απλώς λιώνω στο διάβασμα. Κανείς δεν έχει καταλάβει ότι έχω τρεις εβδομάδες να κοιμηθώ πάνω από δύο ώρες. Αφήνω το φωτιστικό αναμμένο κάθε πρωί που φεύγω, απλώς για να μη γυρίζω σε άδειο σκοτάδι.»</p>
+              <p class="text-zinc-400 text-sm">«Νιώθω ότι αν σταματήσω έστω και για μια μέρα, όλα όσα προσπάθησα θα καταρρεύσουν.»</p>
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="nextStep()" class="px-5 py-2.5 bg-zinc-200 hover:bg-white text-zinc-950 font-medium text-xs sm:text-sm mono rounded transition cursor-pointer">
+                ΑΝΑΚΤΗΣΗ ΤΕΛΕΥΤΑΙΟΥ ΜΗΝΥΜΑΤΟΣ →
+              </button>
+            </div>
+          `;
+        }
+
+        else if (index === 3) {
+          stageWrapper.innerHTML = `
+            <div class="border-l-2 border-sky-500/70 pl-4 space-y-1">
+              <p class="mono text-xs text-sky-400/80 uppercase tracking-wider">ΠΡΟΧΕΙΡΟ ΕΞΕΡΧΟΜΕΝΩΝ // ΤΕΛΕΥΤΑΙΑ ΕΓΓΡΑΦΗ</p>
+              <h2 class="text-lg sm:text-xl font-medium text-white">Ένα μήνυμα που δεν έφυγε ποτέ</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-center bg-[#0e1116] border border-zinc-800 rounded-md p-4 sm:p-5">
+              <div class="evidence-frame">
+                <img src="img/04_rain_window_night.jpeg" alt="Βρεγμένο παράθυρο τη νύχτα" class="evidence-img-portrait">
+              </div>
+
+              <div class="space-y-4">
+                <div class="mono text-xs text-zinc-500 border-b border-zinc-800 pb-2">
+                  ΠΡΟΣ: Νίκο (Κολλητός)<br>
+                  ΗΜ/ΝΙΑ: Τελευταία γνωστή νύχτα
+                </div>
+                <p class="text-zinc-200 text-sm sm:text-base leading-relaxed italic">
+                  «Ρε συ, συγγνώμη που χάθηκα. Δεν είμαι καθόλου καλά τις τελευταίες μέρες, νιώθω ότι πνίγομαι και δεν μπορώ να το κουβαλήσω άλλο μόνος μου. Αν είσαι ξύπνιος πάρε με, έστω για πέντε λεπτά.»
+                </p>
+                <div class="bg-red-950/30 border border-red-900/60 rounded p-3 mono text-xs text-red-300">
+                  ΚΑΤΑΣΤΑΣΗ: ΔΕΝ ΕΣΤΑΛΗ (NO CARRIER)<br>
+                  <span class="text-zinc-400">EOF — Τέλος προσωπικού τόμου. Καμία απάντηση.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="mono text-xs text-zinc-500">Απομένουν μη εκχωρημένοι τομείς μνήμης (0x7F00)...</span>
+              <button onclick="nextStep()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-100 font-medium text-xs sm:text-sm mono rounded transition cursor-pointer">
+                ΕΛΕΓΧΟΣ UNALLOCATED SECTORS →
+              </button>
+            </div>
+          `;
+        }
+
+        // =================================================================
+        // ΦΑΣΗ 3: Η ΕΙΣΒΟΛΗ ΤΟΥ ΘΡΙΛΕΡ (ΣΠΑΣΙΜΟ ΤΗΣ ΛΟΓΙΚΗΣ)
+        // =================================================================
+        else if (index === 4) {
+          phaseDot.classList.replace('bg-sky-400', 'bg-amber-500');
+          footerLeft.textContent = `ACTIVE HOST: ${clientEnv.os.toUpperCase()} (${clientEnv.res})`;
+          footerRight.textContent = 'ΠΡΟΕΙΔΟΠΟΙΗΣΗ: ΑΛΛΟΙΩΣΗ ΑΡΧΕΙΩΝ';
+
+          const liveTime = formatTime(false);
+
+          stageWrapper.innerHTML = `
+            <div class="border-l-2 border-amber-500 pl-4 space-y-1">
+              <p class="mono text-xs text-amber-400 uppercase tracking-wider">ΣΦΑΛΜΑ ΕΠΑΛΗΘΕΥΣΗΣ // ΕΠΑΝΕΓΓΡΑΦΗ ΤΟΜΕΑ #01</p>
+              <h2 class="text-lg sm:text-xl font-medium text-white">Αυτό το αρχείο δεν έπρεπε να αλλάξει</h2>
+            </div>
+
+            <div class="evidence-frame">
+              <img src="img/05_bench_altered.jpeg" alt="Ο ίδιος πάγκος σκοτεινός και αλλοιωμένος" class="evidence-img-landscape">
+            </div>
+
+            <div class="bg-[#111318] border border-amber-900/50 rounded-md p-4 sm:p-5 space-y-3 text-sm sm:text-base leading-relaxed">
+              <div class="mono text-xs text-amber-400/90 border-b border-zinc-800 pb-2">
+                ΤΕΛΕΥΤΑΙΑ ΤΡΟΠΟΠΟΙΗΣΗ: ΣΗΜΕΡΑ, ${liveTime} • ΣΥΝΔΕΔΕΜΕΝΟΣ ΧΡΗΣΤΗΣ: ${clientEnv.os} (${clientEnv.res})
+              </div>
+              <p class="text-zinc-200">Οι σελίδες του τετραδίου είναι πλέον κενές. Το πολύμετρο έχει σβήσει. Και το παλιό laptop πάνω στον πάγκο δεν διαβάζει τον δίσκο του Άρη—χρησιμοποιεί το δικό σου πρόγραμμα περιήγησης για να κλείσει το ανοιχτό κύκλωμα.</p>
+              <p class="text-zinc-400 text-sm">Ο λόγος που ο παλμογράφος χτυπούσε κάθε 60 δευτερόλεπτα δεν ήταν βλάβη. Έψαχνε ενεργό τερματικό.</p>
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="nextStep()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs sm:text-sm mono rounded transition cursor-pointer">
+                ΑΝΑΓΝΩΣΗ LIVE BUFFER →
+              </button>
+            </div>
+          `;
+        }
+
+        else if (index === 5) {
+          phaseDot.classList.replace('bg-amber-500', 'bg-red-500');
+          footerRight.textContent = 'ΚΡΙΣΙΜΟ: ΣΥΓΧΡΟΝΙΣΜΟΣ ΟΘΟΝΗΣ';
+
+          stageWrapper.innerHTML = `
+            <div class="border-l-2 border-red-500 pl-4 space-y-1">
+              <p class="mono text-xs text-red-400 uppercase tracking-wider">ΟΠΤΙΚΗ ΕΠΙΣΤΡΟΦΗ // ΜΗ ΕΞΟΥΣΙΟΔΟΤΗΜΕΝΗ ΣΥΝΕΔΡΙΑ</p>
+              <h2 class="text-lg sm:text-xl font-medium text-white">Δεν έμεινε μόνος του εκείνο το βράδυ</h2>
+            </div>
+
+            <div class="evidence-frame">
+              <img src="img/06_dark_screen_reflection.jpeg" alt="Αντανάκλαση φιγούρας σε σβηστή οθόνη" class="evidence-img-landscape">
+            </div>
+
+            <div class="bg-[#120d0e] border border-red-900/60 rounded-md p-4 sm:p-5 space-y-3 text-sm sm:text-base leading-relaxed">
+              <p class="text-zinc-200">Εκείνος δεν πρόλαβε να στείλει το μήνυμα. Δεν πρόλαβε να φύγει από το δωμάτιο. Κάτι βρήκε το κενό και έμεινε συνδεδεμένο στη γραμμή.</p>
+              <p class="text-red-300 font-medium">Τώρα η γραμμή τερματίζει στην οθόνη σου (${clientEnv.res}). Αν δεν απομονώσεις χειροκίνητα τον πίνακα πριν ολοκληρωθεί ο συγχρονισμός, η συνεδρία κλειδώνει.</p>
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="nextStep()" class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-semibold text-xs sm:text-sm mono rounded transition cursor-pointer">
+                ΧΕΙΡΟΚΙΝΗΤΗ ΑΠΟΜΟΝΩΣΗ ΠΙΝΑΚΑ →
+              </button>
+            </div>
+          `;
+        }
+
+        // =================================================================
+        // ΦΑΣΗ 4: Η ΠΑΓΙΔΑ ΤΗΣ ΑΔΡΕΝΑΛΙΝΗΣ (ΠΑΝΙΚΟΣ VS. ΑΠΛΗ ΛΥΣΗ)
+        // =================================================================
+        else if (index === 6) {
+          footerRight.textContent = 'ΑΠΑΙΤΕΙΤΑΙ ΑΜΕΣΗ ΑΠΟΣΥΝΔΕΣΗ';
+          startFinalTrap();
+        }
+      }
+
+      // --- 4. ΜΗΧΑΝΙΣΜΟΣ ΤΕΛΙΚΟΥ ΠΙΝΑΚΑ (3 ΔΙΑΚΟΠΤΕΣ + ΠΙΕΣΗ ΧΡΟΝΟΥ) ---
+      function startFinalTrap() {
+        breakerSequence = [];
+        timeLeft = 25.0;
+        isResolved = false;
+
+        stageWrapper.innerHTML = `
+          <div class="flex items-center justify-between border-b border-red-900/60 pb-3">
+            <div>
+              <p class="mono text-xs text-red-400 uppercase">ΠΙΝΑΚΑΣ ΑΠΟΜΟΝΩΣΗΣ ΠΑΓΚΟΥ #07</p>
+              <h2 class="text-lg sm:text-xl font-semibold text-white">Κόψε την παροχή με τη σωστή σειρά</h2>
+            </div>
+            <div class="text-right mono">
+              <span class="text-[11px] text-zinc-400 block">ΣΥΓΧΡΟΝΙΣΜΟΣ ΣΕ</span>
+              <span id="timer-display" class="text-2xl font-bold text-red-500">25.0s</span>
+            </div>
+          </div>
+
+          <div class="evidence-frame">
+            <img src="img/07_breaker_panel.jpeg" alt="Βιομηχανικός πίνακας με διακόπτες GND, PHASE, LOAD" class="evidence-img-landscape">
+          </div>
+
+          <!-- Ενισχυτής συναισθηματικής πίεσης (θραύσματα από το αστάλτο μήνυμα) -->
+          <div id="pressure-feed" class="bg-zinc-950 border border-zinc-800 rounded p-3 mono text-xs text-zinc-400 text-center">
+            «...νιώθω ότι πνίγομαι και δεν μπορώ να το κουβαλήσω άλλο μόνος μου...»
+          </div>
+
+          <!-- Οι 3 Διακόπτες -->
+          <div class="grid grid-cols-3 gap-3 sm:gap-4">
+            <button id="sw-GND" onclick="toggleBreaker('GND')" class="breaker-btn py-4 px-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-700 rounded-md mono text-center cursor-pointer">
+              <span class="block text-base sm:text-lg font-bold text-white">GND</span>
+              <span id="st-GND" class="block text-[11px] text-amber-400 mt-1">ON (ΚΛΕΙΣΤΟ)</span>
+            </button>
+
+            <button id="sw-PHASE" onclick="toggleBreaker('PHASE')" class="breaker-btn py-4 px-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-700 rounded-md mono text-center cursor-pointer">
+              <span class="block text-base sm:text-lg font-bold text-white">PHASE</span>
+              <span id="st-PHASE" class="block text-[11px] text-amber-400 mt-1">ON (ΚΛΕΙΣΤΟ)</span>
+            </button>
+
+            <button id="sw-LOAD" onclick="toggleBreaker('LOAD')" class="breaker-btn py-4 px-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-700 rounded-md mono text-center cursor-pointer">
+              <span class="block text-base sm:text-lg font-bold text-white">LOAD</span>
+              <span id="st-LOAD" class="block text-[11px] text-amber-400 mt-1">ON (ΚΛΕΙΣΤΟ)</span>
+            </button>
+          </div>
+
+          <p id="breaker-feedback" class="mono text-xs text-center text-zinc-400 min-h-[20px]">
+            Επίλεξε διακόπτη για απομόνωση κυκλώματος.
+          </p>
+        `;
+
+        const quotes = [
+          '«...νιώθω ότι πνίγομαι και δεν μπορώ να το κουβαλήσω άλλο μόνος μου...»',
+          '«...Αν είσαι ξύπνιος πάρε με, έστω για πέντε λεπτά...»',
+          '«...Δεν έφυγε ποτέ από το δωμάτιο...»',
+          `«...Η συνεδρία (${clientEnv.os}) κλειδώνει...»`
+        ];
+        let qIndex = 0;
+
+        countdownInterval = setInterval(() => {
+          if (isResolved) return;
+          timeLeft -= 0.1;
+
+          if (Math.abs(timeLeft % 4) < 0.12) {
+            qIndex = (qIndex + 1) % quotes.length;
+            const feedEl = document.getElementById('pressure-feed');
+            if (feedEl) feedEl.textContent = quotes[qIndex];
+          }
+
+          const timerEl = document.getElementById('timer-display');
+          if (timerEl) {
+            timerEl.textContent = `${Math.max(0, timeLeft).toFixed(1)}s`;
+          }
+
+          if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            finishStory(false);
+          }
+        }, 100);
+      }
+
+      window.toggleBreaker = function (name) {
+        if (isResolved) return;
+        if (breakerSequence.includes(name)) return;
+
+        const expectedOrder = ['GND', 'PHASE', 'LOAD'];
+        const nextExpected = expectedOrder[breakerSequence.length];
+        const feedbackEl = document.getElementById('breaker-feedback');
+
+        if (name === nextExpected) {
+          breakerSequence.push(name);
+          const btn = document.getElementById(`sw-${name}`);
+          const st = document.getElementById(`st-${name}`);
+          btn.classList.add('tripped');
+          st.textContent = 'OFF (ΑΠΟΜΟΝΩΜΕΝΟ)';
+          st.classList.replace('text-amber-400', 'text-emerald-300');
+          feedbackEl.textContent = `Επιτυχής απομόνωση: ${breakerSequence.join(' → ')}`;
+          feedbackEl.className = 'mono text-xs text-center text-emerald-400 min-h-[20px]';
+
+          if (breakerSequence.length === 3) {
+            clearInterval(countdownInterval);
+            finishStory(true);
+          }
+        } else {
+          // Λάθος σειρά -> ανάδραση φορτίου & επαναφορά διακοπτών
+          breakerSequence = [];
+          timeLeft = Math.max(0.5, timeLeft - 3.0);
+          ['GND', 'PHASE', 'LOAD'].forEach((sw) => {
+            const btn = document.getElementById(`sw-${sw}`);
+            const st = document.getElementById(`st-${sw}`);
+            btn.classList.remove('tripped');
+            st.textContent = 'ON (ΚΛΕΙΣΤΟ)';
+            st.className = 'block text-[11px] text-amber-400 mt-1';
+          });
+          feedbackEl.textContent = 'ΣΦΑΛΜΑ ΑΚΟΛΟΥΘΙΑΣ! Ανάδραση φορτίου (-3.0s). Επαναφορά διακοπτών.';
+          feedbackEl.className = 'mono text-xs text-center text-red-400 min-h-[20px]';
+        }
+      };
+
+      function finishStory(survived) {
+        isResolved = true;
+        const endTime = formatTime(false);
+
+        if (survived) {
+          phaseDot.classList.replace('bg-red-500', 'bg-emerald-500');
+          footerRight.textContent = 'ΓΡΑΜΜΗ ΑΠΟΜΟΝΩΜΕΝΗ';
+          stageWrapper.innerHTML = `
+            <div class="bg-[#0c0f14] border border-zinc-800 rounded-md p-6 sm:p-8 space-y-4 text-center">
+              <p class="mono text-xs text-emerald-400 tracking-widest uppercase">ΑΠΟΣΥΝΔΕΣΗ ΟΛΟΚΛΗΡΩΘΗΚΕ // ${endTime}</p>
+              <h2 class="text-xl sm:text-2xl font-medium text-white">Έκοψες τη δική σου γραμμή εγκαίρως.</h2>
+              <p class="text-sm sm:text-base text-zinc-300 max-w-lg mx-auto leading-relaxed">
+                Ο συγχρονισμός με το τερματικό σου (${clientEnv.os}) διακόπηκε. Ο Πάγκος #07 όμως παραμένει ανοιχτός—και το μήνυμα του Άρη γράφει ακόμα «ΔΕΝ ΕΣΤΑΛΗ».
+              </p>
+              <div class="pt-4">
+                <button onclick="restartStory()" class="px-4 py-2 border border-zinc-700 hover:border-zinc-500 text-zinc-300 mono text-xs rounded cursor-pointer">
+                  ΕΠΑΝΕΚΚΙΝΗΣΗ ΑΝΑΚΤΗΣΗΣ
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          footerRight.textContent = 'ΣΥΓΧΡΟΝΙΣΜΟΣ ΟΛΟΚΛΗΡΩΘΗΚΕ';
+          stageWrapper.innerHTML = `
+            <div class="bg-[#120b0c] border border-red-900/70 rounded-md p-6 sm:p-8 space-y-4 text-center">
+              <p class="mono text-xs text-red-500 tracking-widest uppercase">ΧΡΟΝΟΣ ΕΞΑΝΤΛΗΘΗΚΕ // ${endTime}</p>
+              <h2 class="text-xl sm:text-2xl font-medium text-white">Ακριβώς όπως κι εκείνος, άργησες ένα δευτερόλεπτο.</h2>
+              <p class="text-sm sm:text-base text-zinc-300 max-w-lg mx-auto leading-relaxed">
+                Η λύση ήταν γραμμένη μπροστά σου από την αρχή (GND → PHASE → LOAD), αλλά η πίεση θόλωσε τη σκέψη. Η συνεδρία του Πάγκου #07 κλείδωσε πάνω στο σύστημά σου.
+              </p>
+              <div class="pt-4">
+                <button onclick="restartStory()" class="px-4 py-2 border border-red-800 hover:border-red-600 text-red-200 mono text-xs rounded cursor-pointer">
+                  ΔΟΚΙΜΑΣΕ ΞΑΝΑ
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      window.nextStep = function () {
+        if (step < 6) {
+          step++;
+          renderStep(step);
+        }
+      };
+
+      window.restartStory = function () {
+        clearInterval(countdownInterval);
+        step = 0;
+        phaseDot.className = 'w-2 h-2 rounded-full bg-emerald-500 inline-block';
+        footerLeft.textContent = 'ΠΗΓΗ: NVMe_IMAGE_ARIS_K (READ-ONLY)';
+        renderStep(0);
+      };
+
+      // Εκκίνηση
+      renderStep(0);
+    })();
+  </script>
+</body>
+</html>
