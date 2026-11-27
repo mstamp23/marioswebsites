@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://api.binance.com">
   <link rel="preconnect" href="https://stream.binance.com:9443">
 
-  <link rel="apple-touch-icon" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
+  <link rel="apple-touch-icon" href="bitcoin.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="bitcoin.png">
 
   <style>
     :root {
@@ -175,7 +175,7 @@
   <div class="card">
     <div class="header">
       <div class="coin-info">
-        <div class="btc-icon">&#8383;</div>
+        <div class="btc-icon">₿</div>
         <span class="coin-name">Bitcoin</span>
       </div>
       <div class="live-badge">
@@ -233,7 +233,7 @@
     const statusDot = document.getElementById('statusDot');
     const statusLabel = document.getElementById('statusLabel');
 
-    // Optional: URL of your Cloudflare Worker (CoinGecko fallback). Leave '' to disable.
+    // URL of your Cloudflare Worker (CoinGecko fallback). Leave '' to disable.
     const PROXY_URL = 'https://btc-proxy.mstamp23.workers.dev/';
 
     const SVG_WIDTH = 380;
@@ -257,7 +257,6 @@
       });
     }
 
-    /* Reset everything to the "--" state until fresh data arrives */
     function showLoading() {
       clearTimeout(flashTimeout);
       priceHistory = [];
@@ -318,7 +317,6 @@
       }
       previousPrice = currentPrice;
 
-      // Rolling 7-day buffer (1 point per hour, last point follows the live price)
       const currentHour = Math.floor(Date.now() / HOUR);
       if (priceHistory.length === 0) {
         priceHistory.push(currentPrice);
@@ -340,7 +338,6 @@
       renderChart(isUp);
     }
 
-    /* 7 days of hourly candles (REST, runs in parallel with the WebSocket) */
     async function loadWeekHistory() {
       try {
         const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168');
@@ -349,7 +346,6 @@
         const closes = data.map(c => parseFloat(c[4]));
         if (closes.length < 2) return;
 
-        // Keep the latest live tick if one already arrived
         if (previousPrice !== 0) closes[closes.length - 1] = previousPrice;
 
         priceHistory = closes;
@@ -363,14 +359,18 @@
       }
     }
 
-    /* Optional CoinGecko fallback through your Cloudflare Worker */
     async function fetchFallbackPrice() {
       if (!PROXY_URL || previousPrice !== 0) return;
       try {
         const res = await fetch(PROXY_URL);
+        if (!res.ok) return;
         const data = await res.json();
         const p = data && data.bitcoin && data.bitcoin.usd;
-        if (p) updateUI(p);
+        if (p) {
+          statusDot.className = 'status-indicator connected';
+          statusLabel.textContent = 'CoinGecko Fallback';
+          updateUI(p);
+        }
       } catch (e) { /* ignore */ }
     }
 
@@ -420,11 +420,10 @@
       loadWeekHistory();
     }
 
-    // Pause when the tab is hidden / screen off; reload fresh data when it returns
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         disconnectWebSocket();
-        showLoading(); // avoids a stale price in the tab title
+        showLoading();
       } else {
         start();
       }
