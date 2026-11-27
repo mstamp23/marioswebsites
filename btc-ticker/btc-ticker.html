@@ -1,1 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BTC = --</title>
 
+  <link rel="preconnect" href="https://api.binance.com">
+  <link rel="preconnect" href="https://stream.binance.com:9443">
+
+  <link rel="apple-touch-icon" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://assets.coingecko.com/coins/images/1/large/bitcoin.png">
+
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card-bg: #151a23;
+      --border: #232a36;
+      --text-main: #f0f4f8;
+      --text-muted: #8b949e;
+      --green: #00e676;
+      --red: #ff5252;
+      --btc-orange: #f7931a;
+      --amber: #ffb300;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 1.75rem 1.5rem 1.5rem 1.5rem;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .coin-info { display: flex; align-items: center; gap: 10px; }
+
+    .btc-icon {
+      width: 36px;
+      height: 36px;
+      background-color: var(--btc-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(247, 147, 26, 0.35);
+    }
+
+    .coin-name { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.3px; }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1);   opacity: 1; }
+      50%  { transform: scale(1.4); opacity: 0.4; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    .price-wrap { margin: 0.5rem 0 0.25rem 0; }
+
+    .price {
+      font-size: 3.4rem;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      transition: color 0.2s ease;
+    }
+
+    .tick-up { color: var(--green) !important; }
+    .tick-down { color: var(--red) !important; }
+
+    .change-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .change-val { font-variant-numeric: tabular-nums; }
+    .change-val.up { color: var(--green); }
+    .change-val.down { color: var(--red); }
+
+    .change-label { color: var(--text-muted); font-weight: 500; font-size: 0.95rem; }
+
+    .chart-container { width: 100%; height: 140px; margin-top: 0.5rem; }
+
+    svg { width: 100%; height: 100%; overflow: visible; }
+
+    .baseline-grid {
+      stroke: rgba(255, 255, 255, 0.07);
+      stroke-dasharray: 4 4;
+      stroke-width: 1;
+    }
+
+    .chart-line {
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.3s ease;
+    }
+
+    .chart-area { transition: fill 0.3s ease; }
+
+    .footer {
+      border-top: 1px solid var(--border);
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .status-text { display: flex; align-items: center; gap: 6px; }
+
+    .status-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #555;
+    }
+
+    .status-indicator.connected { background-color: var(--green); }
+    .status-indicator.paused { background-color: var(--amber); }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="header">
+      <div class="coin-info">
+        <div class="btc-icon">&#8383;</div>
+        <span class="coin-name">Bitcoin</span>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span>Live</span>
+      </div>
+    </div>
+
+    <div class="price-wrap">
+      <div id="price" class="price">--</div>
+    </div>
+
+    <div class="change-row">
+      <span id="change-percent" class="change-val">--</span>
+      <span class="change-label">past week</span>
+    </div>
+
+    <div class="chart-container">
+      <svg id="chart-svg" viewBox="0 0 380 140" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad-green" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#00e676" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#00e676" stop-opacity="0.0"/>
+          </linearGradient>
+          <linearGradient id="grad-red" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ff5252" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#ff5252" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+
+        <line x1="0" y1="70" x2="380" y2="70" class="baseline-grid"/>
+        <path id="chart-fill" class="chart-area" d="" fill="url(#grad-green)"/>
+        <path id="chart-path" class="chart-line" d="" stroke="#00e676"/>
+        <circle id="tip-glow" cx="-10" cy="-10" r="7" fill="#00e676" opacity="0.4"/>
+        <circle id="tip-core" cx="-10" cy="-10" r="3.5" fill="#00e676"/>
+      </svg>
+    </div>
+
+    <div class="footer">
+      <div class="status-text">
+        <div id="statusDot" class="status-indicator"></div>
+        <span id="statusLabel">Connecting...</span>
+      </div>
+      <span>7D Range</span>
+    </div>
+  </div>
+
+  <script>
+    const priceEl = document.getElementById('price');
+    const changePercentEl = document.getElementById('change-percent');
+    const chartPath = document.getElementById('chart-path');
+    const chartFill = document.getElementById('chart-fill');
+    const tipCore = document.getElementById('tip-core');
+    const tipGlow = document.getElementById('tip-glow');
+    const statusDot = document.getElementById('statusDot');
+    const statusLabel = document.getElementById('statusLabel');
+
+    // Optional: URL of your Cloudflare Worker (CoinGecko fallback). Leave '' to disable.
+    const PROXY_URL = 'https://btc-proxy.mstamp23.workers.dev/';
+
+    const SVG_WIDTH = 380;
+    const SVG_HEIGHT = 140;
+    const PADDING_Y = 16;
+    const HOUR = 3600000;
+
+    let priceHistory = [];   // 168 hourly points = 7 days
+    let previousPrice = 0;
+    let lastHourBucket = 0;
+    let flashTimeout = null;
+    let reconnectTimeout = null;
+    let ws = null;
+
+    function formatPrice(val) {
+      return Math.round(Number(val)).toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      });
+    }
+
+    /* Reset everything to the "--" state until fresh data arrives */
+    function showLoading() {
+      clearTimeout(flashTimeout);
+      priceHistory = [];
+      previousPrice = 0;
+      priceEl.textContent = '--';
+      priceEl.classList.remove('tick-up', 'tick-down');
+      document.title = 'BTC = --';
+      changePercentEl.textContent = '--';
+      changePercentEl.className = 'change-val';
+      chartPath.setAttribute('d', '');
+      chartFill.setAttribute('d', '');
+      tipCore.setAttribute('cx', -10);
+      tipGlow.setAttribute('cx', -10);
+    }
+
+    function renderChart(isUp) {
+      if (priceHistory.length < 2) return;
+
+      const min = Math.min(...priceHistory);
+      const max = Math.max(...priceHistory);
+      const range = (max - min) === 0 ? 1 : (max - min);
+
+      const points = priceHistory.map((val, idx) => ({
+        x: (idx / (priceHistory.length - 1)) * SVG_WIDTH,
+        y: SVG_HEIGHT - PADDING_Y - ((val - min) / range) * (SVG_HEIGHT - PADDING_Y * 2)
+      }));
+
+      let dLine = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+      for (let i = 1; i < points.length; i++) {
+        dLine += ` L ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}`;
+      }
+      const dFill = `${dLine} L ${SVG_WIDTH} ${SVG_HEIGHT} L 0 ${SVG_HEIGHT} Z`;
+
+      const color = isUp ? '#00e676' : '#ff5252';
+      chartPath.setAttribute('d', dLine);
+      chartPath.setAttribute('stroke', color);
+      chartFill.setAttribute('d', dFill);
+      chartFill.setAttribute('fill', isUp ? 'url(#grad-green)' : 'url(#grad-red)');
+
+      const last = points[points.length - 1];
+      [tipCore, tipGlow].forEach(el => {
+        el.setAttribute('cx', last.x);
+        el.setAttribute('cy', last.y);
+        el.setAttribute('fill', color);
+      });
+    }
+
+    function updateUI(currentPrice) {
+      const formatted = formatPrice(currentPrice);
+      priceEl.textContent = formatted;
+      document.title = `BTC = ${formatted}`;
+
+      if (previousPrice !== 0 && Math.round(currentPrice) !== Math.round(previousPrice)) {
+        clearTimeout(flashTimeout);
+        priceEl.classList.remove('tick-up', 'tick-down');
+        priceEl.classList.add(currentPrice > previousPrice ? 'tick-up' : 'tick-down');
+        flashTimeout = setTimeout(() => priceEl.classList.remove('tick-up', 'tick-down'), 300);
+      }
+      previousPrice = currentPrice;
+
+      // Rolling 7-day buffer (1 point per hour, last point follows the live price)
+      const currentHour = Math.floor(Date.now() / HOUR);
+      if (priceHistory.length === 0) {
+        priceHistory.push(currentPrice);
+        lastHourBucket = currentHour;
+      } else if (currentHour > lastHourBucket) {
+        priceHistory.push(currentPrice);
+        if (priceHistory.length > 168) priceHistory.shift();
+        lastHourBucket = currentHour;
+      } else {
+        priceHistory[priceHistory.length - 1] = currentPrice;
+      }
+
+      const base = priceHistory[0] || currentPrice;
+      const pct = ((currentPrice - base) / base) * 100;
+      const isUp = pct >= 0;
+      changePercentEl.textContent = `${isUp ? '+' : ''}${pct.toFixed(2)}%`;
+      changePercentEl.className = `change-val ${isUp ? 'up' : 'down'}`;
+
+      renderChart(isUp);
+    }
+
+    /* 7 days of hourly candles (REST, runs in parallel with the WebSocket) */
+    async function loadWeekHistory() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const closes = data.map(c => parseFloat(c[4]));
+        if (closes.length < 2) return;
+
+        // Keep the latest live tick if one already arrived
+        if (previousPrice !== 0) closes[closes.length - 1] = previousPrice;
+
+        priceHistory = closes;
+        lastHourBucket = Math.floor(Date.now() / HOUR);
+        updateUI(closes[closes.length - 1]);
+      } catch (err) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          statusLabel.textContent = 'History unavailable';
+        }
+        fetchFallbackPrice();
+      }
+    }
+
+    /* Optional CoinGecko fallback through your Cloudflare Worker */
+    async function fetchFallbackPrice() {
+      if (!PROXY_URL || previousPrice !== 0) return;
+      try {
+        const res = await fetch(PROXY_URL);
+        const data = await res.json();
+        const p = data && data.bitcoin && data.bitcoin.usd;
+        if (p) updateUI(p);
+      } catch (e) { /* ignore */ }
+    }
+
+    function connectWebSocket() {
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+
+      clearTimeout(reconnectTimeout);
+      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
+
+      ws.onopen = () => {
+        statusDot.className = 'status-indicator connected';
+        statusLabel.textContent = 'Sub-second Live Stream';
+      };
+
+      ws.onmessage = (event) => {
+        const price = parseFloat(JSON.parse(event.data).c);
+        if (isFinite(price)) updateUI(price);
+      };
+
+      ws.onclose = () => {
+        if (document.visibilityState === 'hidden') return;
+        statusDot.className = 'status-indicator';
+        statusLabel.textContent = 'Reconnecting...';
+        fetchFallbackPrice();
+        reconnectTimeout = setTimeout(connectWebSocket, 2000);
+      };
+
+      ws.onerror = () => { if (ws) ws.close(); };
+    }
+
+    function disconnectWebSocket() {
+      clearTimeout(reconnectTimeout);
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+      }
+      statusDot.className = 'status-indicator paused';
+      statusLabel.textContent = 'Paused (0 KB Background Data)';
+    }
+
+    function start() {
+      showLoading();
+      statusDot.className = 'status-indicator';
+      statusLabel.textContent = 'Connecting...';
+      connectWebSocket();
+      loadWeekHistory();
+    }
+
+    // Pause when the tab is hidden / screen off; reload fresh data when it returns
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        disconnectWebSocket();
+        showLoading(); // avoids a stale price in the tab title
+      } else {
+        start();
+      }
+    });
+
+    start();
+  </script>
+</body>
+</html>
